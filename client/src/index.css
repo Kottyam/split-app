@@ -1,0 +1,607 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  /* Indian-inspired saffron, cream, green, and navy palette */
+  --primary: oklch(0.69 0.16 55);
+  --primary-foreground: oklch(0.99 0.01 90);
+  --sidebar-primary: oklch(0.69 0.16 55);
+  --sidebar-primary-foreground: oklch(0.99 0.01 90);
+  --chart-1: oklch(0.69 0.16 55);
+  --chart-2: oklch(0.56 0.12 150);
+  --chart-3: oklch(0.33 0.07 255);
+  --chart-4: oklch(0.82 0.08 90);
+  --chart-5: oklch(0.61 0.1 150);
+  --radius: 0.65rem;
+  /* Memphis-inspired palette */
+  --color-peach-50: #fef5f1;
+  --color-peach-100: #fde8df;
+  --color-peach-200: #fdd1bf;
+  --color-mint-200: #b3e5d8;
+  --color-lilac-200: #d8c5e8;
+  --color-yellow-200: #fef3c7;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.25 0.035 255);
+  --card: oklch(0.995 0.008 90);
+  --card-foreground: oklch(0.25 0.035 255);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.235 0.015 65);
+  --secondary: oklch(0.94 0.045 88);
+  --secondary-foreground: oklch(0.3 0.045 255);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.92 0.06 150);
+  --accent-foreground: oklch(0.25 0.06 150);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.82 0.035 85);
+  --input: oklch(0.82 0.035 85);
+  --ring: oklch(0.69 0.16 55);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.235 0.015 65);
+  --sidebar-accent: oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-ring: oklch(0.623 0.214 259.815);
+}
+
+.dark {
+  --primary: var(--color-blue-700);
+  --primary-foreground: var(--color-blue-50);
+  --sidebar-primary: var(--color-blue-500);
+  --sidebar-primary-foreground: var(--color-blue-50);
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.85 0.005 65);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.85 0.005 65);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.85 0.005 65);
+  --secondary: oklch(0.24 0.006 286.033);
+  --secondary-foreground: oklch(0.7 0.005 65);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground:  oklch(0.92 0.005 65);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.488 0.243 264.376);
+  --chart-1: var(--color-blue-300);
+  --chart-2: var(--color-blue-500);
+  --chart-3: var(--color-blue-600);
+  --chart-4: var(--color-blue-700);
+  --chart-5: var(--color-blue-800);
+  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar-foreground: oklch(0.85 0.005 65);
+  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-accent-foreground:  oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.488 0.243 264.376);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: #dff1e5;
+  color: #18324b;
+}
+
+.safe-area-inset-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+.kharcha-app-shell {
+  min-height: 100dvh;
+  padding-bottom: 5.5rem;
+}
+
+.kharcha-page-header {
+  border-radius: 1rem;
+  border: 1px solid var(--kharcha-line, #d7e4dc);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6px 18px rgba(24, 50, 75, 0.06);
+}
+
+.kharcha-page-header h1 {
+  letter-spacing: -0.02em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kharcha-page-header p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kharcha-page-header button {
+  min-height: 2.5rem;
+}
+
+.kharcha-page-header nav button,
+.kharcha-page-header [aria-label*="navigation"] button {
+  min-height: 2.5rem;
+  border-radius: 0.75rem;
+  border-width: 1px;
+  font-size: 0.75rem;
+}
+
+.kharcha-page-header nav,
+.kharcha-page-header [aria-label*="navigation"] {
+  scrollbar-width: none;
+}
+
+.kharcha-page-header nav::-webkit-scrollbar,
+.kharcha-page-header [aria-label*="navigation"]::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .kharcha-page-header {
+    border-radius: 0.875rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-color: #ffffff;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+/* Android TWA-only density and safe-area adjustments. The web portal does not
+   receive this class, so its existing layout remains unchanged. */
+html.android-shell {
+  overflow-x: hidden;
+  background: #ffffff;
+}
+
+html.android-shell {
+  --android-status-offset: max(env(safe-area-inset-top), 2.75rem);
+  --android-navigation-offset: max(env(safe-area-inset-bottom), 0.75rem);
+}
+
+html.android-shell body {
+  min-width: 0;
+  overflow-x: hidden;
+  padding-top: var(--android-status-offset);
+  padding-bottom: var(--android-navigation-offset);
+}
+
+/* Keep scrolling content visually inside the app viewport instead of letting
+   it show through the transparent Android system-bar areas. */
+html.android-shell body::before,
+html.android-shell body::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: #ffffff;
+}
+
+html.android-shell body::before {
+  top: 0;
+  height: var(--android-status-offset);
+}
+
+html.android-shell body::after {
+  bottom: 0;
+  height: var(--android-navigation-offset);
+  background: #ffffff;
+}
+
+html.android-shell #root {
+  min-height: calc(100vh - var(--android-status-offset) - var(--android-navigation-offset));
+}
+
+/* Android edge-to-edge can place sticky content beneath the system status bar. */
+html.android-shell .sticky.top-0 {
+  top: var(--android-status-offset);
+}
+
+/* Some inner screens contain multi-row headers and large controls. Keeping
+   those headers in normal flow on Android prevents them from covering the
+   month selector, tabs, or action buttons while the page scrolls. */
+html.android-shell header.sticky.top-0 {
+  position: relative;
+  top: auto;
+}
+
+/* Dense inner-screen controls must wrap instead of shrinking into each other. */
+html.android-shell .android-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+html.android-shell .android-action-row > button {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+html.android-shell .android-section-header > :first-child {
+  min-width: 0;
+}
+
+html.android-shell .android-trip-tabs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: 0.25rem;
+  padding: 0.25rem;
+}
+
+html.android-shell .android-trip-tabs [role="tab"] {
+  min-height: 2.75rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Keep the active Trip tab readable even when the shared Tabs component's
+   semantic active colors resolve to a light background in the Android shell. */
+.android-trip-tabs [role="tab"][data-state="active"] {
+  background-color: #d9f1e2 !important;
+  border-color: #16834b !important;
+  color: #18324b !important;
+  text-shadow: none !important;
+}
+
+.android-trip-tabs [role="tab"][data-state="inactive"] {
+  background-color: #ffffff !important;
+  color: #18324b !important;
+}
+
+html.android-shell .android-budget-header {
+  flex-wrap: wrap;
+}
+
+html.android-shell .android-budget-edit {
+  flex: 1 1 100%;
+  width: 100%;
+  min-height: 2.75rem;
+  white-space: normal;
+}
+
+html.android-shell .android-budget-metrics > div {
+  min-width: 0;
+}
+
+html.android-shell .fixed.inset-0 {
+  padding-top: var(--android-status-offset);
+  padding-bottom: max(var(--android-navigation-offset), 1rem);
+}
+
+html.android-shell .container {
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
+}
+
+html.android-shell .text-4xl {
+  font-size: 2rem;
+  line-height: 2.25rem;
+}
+
+html.android-shell .text-3xl {
+  font-size: 1.625rem;
+  line-height: 2rem;
+}
+
+html.android-shell .text-2xl {
+  font-size: 1.375rem;
+  line-height: 1.75rem;
+}
+
+html.android-shell .p-6 {
+  padding: 1rem;
+}
+
+html.android-shell .p-5 {
+  padding: 0.875rem;
+}
+
+html.android-shell .gap-6 {
+  gap: 1rem;
+}
+
+html.android-shell .gap-5 {
+  gap: 0.875rem;
+}
+
+html.android-shell button,
+html.android-shell [role="button"] {
+  touch-action: manipulation;
+}
+
+@media (min-width: 640px) {
+  html.android-shell .container {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+/* Kharcha compact product system — presentation only. Keep this layer brand-led, light, and calm: cream canvas, deep navy type, orange primary actions, and green success/active states. */
+:root {
+  --kharcha-cream: #ffffff;
+  --kharcha-surface: #ffffff;
+  --kharcha-navy: #18324b;
+  --kharcha-green: #16834b;
+  --kharcha-green-soft: #e6f3e8;
+  --kharcha-orange: #e87817;
+  --kharcha-orange-soft: #fff0df;
+  --kharcha-line: #d7e4dc;
+  --kharcha-muted: #65747f;
+  --kharcha-radius: 1rem;
+  --kharcha-control-height: 2.75rem;
+  --kharcha-page-gutter: clamp(0.875rem, 4vw, 1.5rem);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  color: var(--kharcha-navy);
+  background: #ffffff;
+}
+
+/* Soften legacy heavy surfaces without changing their content or behavior. */
+#root .border-black,
+#root .border-gray-900,
+#root .border-gray-800 {
+  border-color: var(--kharcha-line) !important;
+}
+
+#root .border-2.border-black,
+#root .border-2.border-gray-900,
+#root .border-2.border-gray-800 {
+  border-width: 1px !important;
+}
+
+#root .text-black,
+#root .text-gray-900 {
+  color: var(--kharcha-navy) !important;
+}
+
+#root .bg-black {
+  background-color: var(--kharcha-navy) !important;
+}
+
+#root input:not([type="checkbox"]):not([type="radio"]),
+#root select,
+#root textarea {
+  border-color: var(--kharcha-line);
+  border-radius: 0.75rem;
+  background-color: var(--kharcha-surface);
+  color: var(--kharcha-navy);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+#root input:not([type="checkbox"]):not([type="radio"]):focus,
+#root select:focus,
+#root textarea:focus {
+  border-color: var(--kharcha-green);
+  box-shadow: 0 0 0 3px rgba(22, 131, 75, 0.14);
+  outline: none;
+}
+
+#root button,
+#root [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root button:not(:disabled):active,
+#root [role="button"]:not([aria-disabled="true"]):active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #root button,
+  #root [role="button"],
+  #root a {
+    transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+}
+
+@media (max-width: 640px) {
+  #root main {
+    padding-left: var(--kharcha-page-gutter);
+    padding-right: var(--kharcha-page-gutter);
+  }
+
+  #root h1 {
+    letter-spacing: -0.025em;
+  }
+
+  #root [data-slot="dialog-content"] {
+    max-height: calc(100dvh - 1rem);
+    border-radius: 1.25rem;
+  }
+}
+
+@media (min-width: 641px) {
+  #root main {
+    padding-left: var(--kharcha-page-gutter);
+    padding-right: var(--kharcha-page-gutter);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  #root *,
+  #root *::before,
+  #root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer components {
+  /* Memphis-inspired utility classes */
+  .bg-peach-50 {
+    @apply bg-[#fef5f1];
+  }
+
+  .bg-peach-100 {
+    @apply bg-[#fde8df];
+  }
+
+  .bg-peach-200 {
+    @apply bg-[#fdd1bf];
+  }
+
+  .bg-mint-200 {
+    @apply bg-[#b3e5d8];
+  }
+
+  .bg-lilac-200 {
+    @apply bg-[#d8c5e8];
+  }
+
+  .bg-yellow-200 {
+    @apply bg-[#fef3c7];
+  }
+
+  .bg-kharcha-cream {
+    background-color: #ffffff;
+  }
+
+  .bg-kharcha-saffron {
+    background-color: #e87817;
+  }
+
+  .bg-kharcha-green {
+    background-color: #16834b;
+  }
+
+  .text-kharcha-navy {
+    color: #18324b;
+  }
+
+  .border-kharcha-saffron {
+    border-color: #e87817;
+  }
+
+  .border-kharcha-green {
+    border-color: #16834b;
+  }
+
+  .drop-shadow-lg {
+    filter: drop-shadow(3px 3px 0px rgba(0, 0, 0, 0.2));
+  }
+
+  .drop-shadow-sm {
+    filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.1));
+  }
+
+  /**
+   * Custom container utility that centers content and adds responsive padding.
+   *
+   * This overrides Tailwind's default container behavior to:
+   * - Auto-center content (mx-auto)
+   * - Add responsive horizontal padding
+   * - Set max-width for large screens
+   *
+   * Usage: <div className="container">...</div>
+   *
+   * For custom widths, use max-w-* utilities directly:
+   * <div className="max-w-6xl mx-auto px-4">...</div>
+   */
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem; /* 16px - mobile padding */
+    padding-right: 1rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 2rem; /* 32px - desktop padding */
+      padding-right: 2rem;
+      max-width: 1280px; /* Standard content width */
+    }
+  }
+}

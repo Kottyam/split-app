@@ -1,0 +1,1 @@
+ALTER TABLE `sync_packages` ADD `packageToken` varchar(256);

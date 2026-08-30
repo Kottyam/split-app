@@ -1,0 +1,27 @@
+{
+  "host": "kharchasplit-rlsqgpta.manus.space",
+  "name": "Kharcha",
+  "shortName": "Kharcha",
+  "startUrl": "/",
+  "display": "standalone",
+  "themeColor": "#e87817",
+  "navigationColor": "#e87817",
+  "backgroundColor": "#fffaf3",
+  "enableNotifications": true,
+  "appId": "com.manus.kharcha.app",
+  "launcherName": "Kharcha",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "generatorApp": "manus-pwabuilder",
+  "webManifestUrl": "https://kharchasplit-rlsqgpta.manus.space/manifest.json",
+  "angular": false,
+  "features": {
+    "locationDelegation": {
+      "enabled": true
+    }
+  }
+}

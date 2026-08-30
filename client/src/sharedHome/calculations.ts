@@ -1,0 +1,369 @@
+import type { GroceryItem,
+  HouseholdExpense,
+  MonthlyBalance,
+  RentAllocationLine,
+  RentConfig,
+  RentPeriod,
+  SharedHome,
+  SharedHomeMember,
+  StayDayBasis,
+} from './types';
+
+const CENT = 100;
+const EPSILON = 0.011;
+
+export function roundMoney(value: number): number {
+  return Math.round((value + Number.EPSILON) * CENT) / CENT;
+}
+
+export function monthKeyFromDate(timestamp: number): string {
+  const date = new Date(timestamp);
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+export function monthBounds(monthKey: string): { start: number; end: number; days: number } {
+  const [yearText, monthText] = monthKey.split('-');
+  const year = Number(yearText);
+  const monthIndex = Number(monthText) - 1;
+  const startDate = new Date(Date.UTC(year, monthIndex, 1));
+  const endDate = new Date(Date.UTC(year, monthIndex + 1, 1));
+  return {
+    start: startDate.getTime(),
+    end: endDate.getTime() - 1,
+    days: Math.round((endDate.getTime() - startDate.getTime()) / 86_400_000),
+  };
+}
+
+export function getActiveMembers(home: SharedHome, at = Date.now()): SharedHomeMember[] {
+  return home.members.filter(member => {
+    if (!member.isActive) return false;
+    if (member.moveInDate > at) return false;
+    if (member.moveOutDate !== undefined && member.moveOutDate < at) return false;
+    return true;
+  });
+}
+
+export function applicableStayDays(
+  member: SharedHomeMember,
+  monthKey: string,
+  basis: StayDayBasis,
+): number {
+  const { start, end, days } = monthBounds(monthKey);
+  const moveIn = Math.max(start, member.moveInDate);
+  const moveOut = Math.min(end, member.moveOutDate ?? end);
+  if (moveOut < moveIn) return 0;
+  const calendarDays = Math.floor((moveOut - moveIn) / 86_400_000) + 1;
+  const pauses = (member.pausePeriods ?? [])
+    .map(period => ({ start: Math.max(moveIn, period.startDate), end: Math.min(moveOut, period.endDate ?? end) }))
+    .filter(period => period.end >= period.start)
+    .sort((a, b) => a.start - b.start);
+  let pausedDays = 0;
+  let coveredUntil = moveIn - 1;
+  pauses.forEach(period => {
+    const startDay = Math.max(period.start, coveredUntil + 1);
+    if (period.end >= startDay) {
+      pausedDays += Math.floor((period.end - startDay) / 86_400_000) + 1;
+      coveredUntil = period.end;
+    }
+  });
+  const applicableDays = Math.max(0, calendarDays - pausedDays);
+  if (basis === 'fixed30') return Math.min(30, applicableDays);
+  return Math.min(days, applicableDays);
+}
+
+export function validateAllocations(
+  total: number,
+  allocations: Record<string, number>,
+): { valid: boolean; difference: number } {
+  const allocated = Object.values(allocations).reduce((sum, amount) => sum + amount, 0);
+  const difference = roundMoney(total - allocated);
+  return { valid: Math.abs(difference) < EPSILON, difference };
+}
+
+function distributeByWeights(total: number, weights: Array<{ id: string; weight: number }>): Record<string, number> {
+  const positive = weights.filter(item => item.weight > 0);
+  const weightTotal = positive.reduce((sum, item) => sum + item.weight, 0);
+  if (!weightTotal) return {};
+
+  const result: Record<string, number> = {};
+  let allocated = 0;
+  positive.forEach((item, index) => {
+    const amount = index === positive.length - 1
+      ? roundMoney(total - allocated)
+      : roundMoney(total * item.weight / weightTotal);
+    result[item.id] = amount;
+    allocated = roundMoney(allocated + amount);
+  });
+  return result;
+}
+
+function roomForMember(home: SharedHome, memberId: string, at: number): { id: string; name: string } | undefined {
+  const member = home.members.find(item => item.id === memberId);
+  const assignment = member?.roomAssignments
+    .filter(item => item.startDate <= at && (item.endDate === undefined || item.endDate >= at))
+    .sort((a, b) => b.startDate - a.startDate)[0];
+  if (!assignment) return undefined;
+  const room = home.rooms.find(item => item.id === assignment.roomId);
+  return room ? { id: room.id, name: room.name } : undefined;
+}
+
+export function calculateRentAllocations(
+  home: SharedHome,
+  config: RentConfig,
+  monthKey: string,
+): { allocations: Record<string, number>; calculation: RentAllocationLine[] } {
+  const at = monthBounds(monthKey).start;
+  const active = home.members.filter(member => member.isActive && applicableStayDays(member, monthKey, config.stayDayBasis) > 0);
+  let allocations: Record<string, number> = {};
+  let rawAllocations: Record<string, number> = {};
+  let fixed30DailyRate = 0;
+
+  if (config.splitMethod === 'custom') {
+    allocations = { ...(config.customAllocations ?? {}) };
+  } else if (config.splitMethod === 'room-fixed') {
+    const roomTotals = config.roomAllocations ?? {};
+    const linesByRoom: Record<string, SharedHomeMember[]> = {};
+    active.forEach(member => {
+      const room = roomForMember(home, member.id, at);
+      if (!room) return;
+      linesByRoom[room.id] = [...(linesByRoom[room.id] ?? []), member];
+    });
+    Object.entries(linesByRoom).forEach(([roomId, members]) => {
+      const roomTotal = Number(roomTotals[roomId] ?? 0);
+      const customWithinRoom = config.roomMemberAllocations?.[roomId];
+      const split = customWithinRoom && validateAllocations(roomTotal, customWithinRoom).valid
+        ? { ...customWithinRoom }
+        : distributeByWeights(roomTotal, members.map(member => ({ id: member.id, weight: 1 })));
+      allocations = { ...allocations, ...split };
+    });
+  } else if (config.splitMethod === 'equal-room') {
+    const roomMembers: Record<string, SharedHomeMember[]> = {};
+    active.forEach(member => {
+      const room = roomForMember(home, member.id, at);
+      const roomId = room?.id ?? `unassigned-${member.id}`;
+      roomMembers[roomId] = [...(roomMembers[roomId] ?? []), member];
+    });
+    const perRoom = config.totalRent / Math.max(Object.keys(roomMembers).length, 1);
+    Object.entries(roomMembers).forEach(([roomId, members]) => {
+      const customWithinRoom = config.roomMemberAllocations?.[roomId];
+      const split = customWithinRoom && validateAllocations(perRoom, customWithinRoom).valid
+        ? { ...customWithinRoom }
+        : distributeByWeights(perRoom, members.map(member => ({ id: member.id, weight: 1 })));
+      allocations = { ...allocations, ...split };
+    });
+  } else if (config.splitMethod === 'stay-days') {
+    if (config.stayDayBasis === 'fixed30') {
+      const totalFixedStayDays = active.reduce((sum, member) => sum + applicableStayDays(member, monthKey, 'fixed30'), 0);
+      fixed30DailyRate = totalFixedStayDays > 0 ? roundMoney(config.totalRent / totalFixedStayDays) : 0;
+      rawAllocations = Object.fromEntries(active.map(member => [member.id, roundMoney(applicableStayDays(member, monthKey, 'fixed30') * fixed30DailyRate)]));
+      allocations = { ...rawAllocations };
+      const rawTotal = Object.values(rawAllocations).reduce((sum, amount) => sum + amount, 0);
+      const remainder = roundMoney(config.totalRent - rawTotal);
+      const adjustmentTarget = active.find(member => member.id === home.managerMemberId)?.id ?? active[0]?.id;
+      if (adjustmentTarget && Math.abs(remainder) >= EPSILON) {
+        allocations[adjustmentTarget] = roundMoney((allocations[adjustmentTarget] ?? 0) + remainder);
+      }
+    } else {
+      allocations = distributeByWeights(config.totalRent, active.map(member => ({
+        id: member.id,
+        weight: applicableStayDays(member, monthKey, config.stayDayBasis),
+      })));
+    }
+  } else {
+    allocations = distributeByWeights(config.totalRent, active.map(member => ({ id: member.id, weight: 1 })));
+  }
+
+  const calculation = active.map(member => {
+    const room = roomForMember(home, member.id, at);
+    const applicableDays = applicableStayDays(member, monthKey, config.stayDayBasis);
+    const allocatedAmount = roundMoney(allocations[member.id] ?? 0);
+    const calculatedAmount = roundMoney(rawAllocations[member.id] ?? allocatedAmount);
+    const adjustedAmount = rawAllocations[member.id] !== undefined && allocatedAmount !== calculatedAmount ? allocatedAmount : undefined;
+    return {
+      memberId: member.id,
+      memberName: member.name,
+      roomName: room?.name,
+      applicableDays,
+      dailyRate: fixed30DailyRate || (applicableDays > 0 ? roundMoney(calculatedAmount / applicableDays) : 0),
+      calculatedAmount,
+      adjustedAmount,
+    };
+  });
+
+  return { allocations, calculation };
+}
+
+export function splitGroceryItems(items: GroceryItem[], commonMemberIds: string[]): Record<string, number> {
+  const shares: Record<string, number> = {};
+  items.forEach(item => {
+    const itemShares = item.mode === 'common'
+      ? splitHouseholdExpense(item.amount, commonMemberIds, 'equal')
+      : item.personalMemberId ? { [item.personalMemberId]: item.amount } : {};
+    Object.entries(itemShares).forEach(([memberId, amount]) => {
+      shares[memberId] = roundMoney((shares[memberId] ?? 0) + amount);
+    });
+  });
+  return shares;
+}
+
+export function applyRentAdjustment(
+  calculation: RentAllocationLine[],
+  allocations: Record<string, number>,
+  calculatedAmount: number,
+  adjustedAmount: number,
+): { allocations: Record<string, number>; calculation: RentAllocationLine[] } {
+  if (Math.abs(adjustedAmount - calculatedAmount) < EPSILON || calculatedAmount <= 0) return { allocations, calculation };
+  const scale = adjustedAmount / calculatedAmount;
+  const adjustedAllocations = Object.fromEntries(Object.entries(allocations).map(([id, value]) => [id, roundMoney(value * scale)]));
+  const remainder = roundMoney(adjustedAmount - Object.values(adjustedAllocations).reduce((sum, value) => sum + value, 0));
+  const firstMemberId = calculation[0]?.memberId;
+  if (firstMemberId) adjustedAllocations[firstMemberId] = roundMoney((adjustedAllocations[firstMemberId] ?? 0) + remainder);
+  const adjustedCalculation = calculation.map(line => ({ ...line, adjustedAmount: roundMoney(line.calculatedAmount * scale) }));
+  return { allocations: adjustedAllocations, calculation: adjustedCalculation };
+}
+
+export function splitHouseholdExpense(
+  amount: number,
+  memberIds: string[],
+  method: 'equal' | 'percentage' | 'custom' | 'stay-days',
+  options: { custom?: Record<string, number>; percentages?: Record<string, number>; weights?: Record<string, number> } = {},
+): Record<string, number> {
+  if (method === 'custom') return { ...(options.custom ?? {}) };
+  if (method === 'percentage') {
+    const percentages = options.percentages ?? {};
+    return Object.fromEntries(memberIds.map(id => [id, roundMoney(amount * Number(percentages[id] ?? 0) / 100)]));
+  }
+  if (method === 'stay-days') {
+    return distributeByWeights(amount, memberIds.map(id => ({ id, weight: Number(options.weights?.[id] ?? 0) })));
+  }
+  return distributeByWeights(amount, memberIds.map(id => ({ id, weight: 1 })));
+}
+
+export function calculateMonthlyBalances(
+  home: SharedHome,
+  monthKey: string,
+  rentPeriod?: RentPeriod,
+  previousBalances: Record<string, number> = {},
+): MonthlyBalance[] {
+  const members = home.members;
+  const shares: Record<string, number> = {};
+  const paid: Record<string, number> = {};
+  members.forEach(member => {
+    shares[member.id] = roundMoney(rentPeriod?.allocations[member.id] ?? 0);
+    paid[member.id] = 0;
+  });
+
+  home.expenses
+    .filter(expense => expense.status === 'active' && monthKeyFromDate(expense.date) === monthKey)
+    .forEach(expense => {
+      // One-person records represent personal spending and must not create shared debt.
+      if (expense.sharedBy.length <= 1) return;
+      paid[expense.paidBy] = roundMoney((paid[expense.paidBy] ?? 0) + expense.amount);
+      Object.entries(expense.shares).forEach(([memberId, amount]) => {
+        shares[memberId] = roundMoney((shares[memberId] ?? 0) + amount);
+      });
+    });
+
+  return members.map(member => ({
+    memberId: member.id,
+    share: roundMoney(shares[member.id] ?? 0),
+    paid: roundMoney(paid[member.id] ?? 0),
+    ...(previousBalances[member.id] ? { previousBalance: roundMoney(previousBalances[member.id]) } : {}),
+    balance: roundMoney((paid[member.id] ?? 0) + (previousBalances[member.id] ?? 0) - (shares[member.id] ?? 0)),
+  }));
+}
+
+export function generateHouseholdSettlements(
+  balances: MonthlyBalance[],
+): Array<{ fromMemberId: string; toMemberId: string; amount: number }> {
+  const creditors = balances.filter(item => item.balance > EPSILON).map(item => ({ id: item.memberId, amount: item.balance }));
+  const debtors = balances.filter(item => item.balance < -EPSILON).map(item => ({ id: item.memberId, amount: Math.abs(item.balance) }));
+  const result: Array<{ fromMemberId: string; toMemberId: string; amount: number }> = [];
+  let creditorIndex = 0;
+  let debtorIndex = 0;
+
+  while (creditorIndex < creditors.length && debtorIndex < debtors.length) {
+    const creditor = creditors[creditorIndex];
+    const debtor = debtors[debtorIndex];
+    const amount = roundMoney(Math.min(creditor.amount, debtor.amount));
+    if (amount > EPSILON) result.push({ fromMemberId: debtor.id, toMemberId: creditor.id, amount });
+    creditor.amount = roundMoney(creditor.amount - amount);
+    debtor.amount = roundMoney(debtor.amount - amount);
+    if (creditor.amount <= EPSILON) creditorIndex += 1;
+    if (debtor.amount <= EPSILON) debtorIndex += 1;
+  }
+  return result;
+}
+
+export function generatePendingHouseholdSettlements(
+  balances: MonthlyBalance[],
+  recorded: Array<{ fromMemberId: string; toMemberId: string; amount: number; status?: string }>,
+): Array<{ fromMemberId: string; toMemberId: string; amount: number }> {
+  const pending = generateHouseholdSettlements(balances).map(item => ({ ...item }));
+  recorded.filter(item => item.status !== 'cancelled').forEach(payment => {
+    let remaining = payment.amount;
+    for (const item of pending) {
+      if (remaining <= EPSILON || item.fromMemberId !== payment.fromMemberId || item.toMemberId !== payment.toMemberId) continue;
+      const applied = Math.min(item.amount, remaining);
+      item.amount = roundMoney(item.amount - applied);
+      remaining = roundMoney(remaining - applied);
+    }
+  });
+  return pending.filter(item => item.amount > EPSILON);
+}
+
+export function validatePercentageSplit(percentages: Record<string, number>): boolean {
+  const total = Object.values(percentages).reduce((sum, percentage) => sum + Number(percentage || 0), 0);
+  return Math.abs(total - 100) < EPSILON;
+}
+
+export function getExpenseTotals(home: SharedHome, monthKey: string): { total: number; byCategory: Record<string, number> } {
+  const byCategory: Record<string, number> = {};
+  home.expenses
+    .filter(expense => expense.status === 'active' && monthKeyFromDate(expense.date) === monthKey)
+    .forEach(expense => {
+      byCategory[expense.category] = roundMoney((byCategory[expense.category] ?? 0) + expense.amount);
+    });
+  return { total: roundMoney(Object.values(byCategory).reduce((sum, amount) => sum + amount, 0)), byCategory };
+}
+
+export function materializeRecurringExpenses(home: SharedHome, monthKey: string): { home: SharedHome; added: HouseholdExpense[] } {
+  const [year, month] = monthKey.split('-').map(Number);
+  const monthStart = Date.UTC(year, month - 1, 1);
+  const monthEnd = monthBounds(monthKey).end;
+  const memberIds = home.members.filter(member => member.isActive).map(member => member.id);
+  const payer = home.managerMemberId ?? memberIds[0] ?? '';
+  const added: HouseholdExpense[] = [];
+  const nextRules = home.recurringRules.map(rule => {
+    if (rule.status !== 'active' || !rule.autoAdd || rule.skipNext || !payer) return rule;
+    if (rule.startDate !== undefined && monthEnd < rule.startDate) return rule;
+    if (rule.endDate !== undefined && monthStart > rule.endDate) return rule;
+    const alreadyExists = home.expenses.some(expense => expense.recurringRuleId === rule.id && monthKeyFromDate(expense.date) === monthKey);
+    if (alreadyExists) return rule;
+    const amount = Number(rule.fixedAmount ?? 0);
+    if (rule.amountMode === 'variable' || amount <= 0) return rule;
+    const sharedBy = rule.sharedBy.length ? rule.sharedBy.filter(id => memberIds.includes(id)) : memberIds;
+    const shares = splitHouseholdExpense(amount, sharedBy, rule.splitMethod === 'custom' ? 'custom' : rule.splitMethod === 'percentage' ? 'percentage' : 'equal');
+    const expense: HouseholdExpense = {
+      id: `recurring-${rule.id}-${monthKey}`,
+      kind: rule.kind,
+      name: rule.name,
+      category: rule.category,
+      amount,
+      date: monthStart,
+      billingPeriod: monthKey,
+      paidBy: payer,
+      sharedBy,
+      splitMethod: rule.splitMethod,
+      shares,
+      recurringRuleId: rule.id,
+      includeInBudget: rule.includeInBudget !== false,
+      status: 'active',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    added.push(expense);
+    return { ...rule, skipNext: false, nextDueDate: Date.UTC(year, month, 1), updatedAt: Date.now() };
+  });
+  return added.length ? { home: { ...home, expenses: [...home.expenses, ...added], recurringRules: nextRules, updatedAt: Date.now() }, added } : { home, added };
+}

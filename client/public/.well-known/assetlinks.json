@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.kharcha.splitter",
+      "sha256_cert_fingerprints": [
+        "4D:BD:34:9E:67:7D:9F:2F:98:A7:91:4D:E0:8C:FC:BB:F1:45:89:09:3C:84:84:3A:1D:D4:6C:64:D4:4E:B9:1B"
+      ]
+    }
+  }
+]

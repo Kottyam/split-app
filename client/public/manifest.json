@@ -1,0 +1,19 @@
+{
+  "name": "Kharcha - Expense Splitter",
+  "short_name": "Kharcha",
+  "description": "Split travel expenses, settle smarter, and pay with confidence.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffaf3",
+  "theme_color": "#e87817",
+  "icons": [
+    {
+      "src": "/manus-storage/kharcha-logo-transparent_b8cc8f74.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "en-IN",
+  "categories": ["finance", "travel", "productivity"]
+}
