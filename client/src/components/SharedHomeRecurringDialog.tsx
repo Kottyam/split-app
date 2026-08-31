@@ -50,6 +50,8 @@ export default function SharedHomeRecurringDialog({ open, home, initial, onOpenC
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [sharedBy, setSharedBy] = useState<string[]>([]);
+  const [paymentResponsibility, setPaymentResponsibility] = useState<'shared_payer' | 'individual_shares'>('shared_payer');
+  const [payerMemberId, setPayerMemberId] = useState('');
   const [autoAdd, setAutoAdd] = useState(true);
   const [includeInBudget, setIncludeInBudget] = useState(true);
   const [error, setError] = useState('');
@@ -63,11 +65,24 @@ export default function SharedHomeRecurringDialog({ open, home, initial, onOpenC
     setFixedAmount(initial?.fixedAmount === undefined ? '' : String(initial.fixedAmount));
     setStartDate(dateInput(initial?.startDate));
     setEndDate(dateInput(initial?.endDate));
-    setSharedBy(initial?.sharedBy?.length ? initial.sharedBy : activeMembers.map(member => member.id));
+    const members = initial?.sharedBy?.length ? initial.sharedBy : activeMembers.map(member => member.id);
+    setSharedBy(members);
+    setPaymentResponsibility(initial?.paymentResponsibility ?? 'shared_payer');
+    setPayerMemberId(initial?.payerMemberId ?? members[0] ?? activeMembers[0]?.id ?? '');
     setAutoAdd(initial?.autoAdd ?? true);
     setIncludeInBudget(initial?.includeInBudget !== false);
     setError('');
   }, [open, initial, activeMembers]);
+
+  useEffect(() => {
+    if (!sharedBy.length) {
+      setPayerMemberId('');
+      return;
+    }
+    if (!sharedBy.includes(payerMemberId)) setPayerMemberId(sharedBy[0]);
+  }, [sharedBy, payerMemberId]);
+
+  const previewShare = amountMode === 'fixed' ? Number(fixedAmount || 0) / Math.max(sharedBy.length, 1) : 0;
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -75,6 +90,10 @@ export default function SharedHomeRecurringDialog({ open, home, initial, onOpenC
     const start = dateTimestamp(startDate);
     const end = dateTimestamp(endDate);
     if (!name.trim() || !sharedBy.length || (amountMode === 'fixed' && (!amount || amount <= 0))) {
+      setError(t('sharedHomeInvalidExpense'));
+      return;
+    }
+    if (paymentResponsibility === 'shared_payer' && !payerMemberId) {
       setError(t('sharedHomeInvalidExpense'));
       return;
     }
@@ -96,6 +115,8 @@ export default function SharedHomeRecurringDialog({ open, home, initial, onOpenC
       amountMode,
       fixedAmount: amountMode === 'fixed' ? amount : undefined,
       splitMethod: initial?.splitMethod ?? 'equal',
+      payerMemberId: paymentResponsibility === 'shared_payer' ? payerMemberId : undefined,
+      paymentResponsibility,
       sharedBy,
       status: initial?.status ?? 'active',
       skipNext: initial?.skipNext ?? false,
@@ -123,6 +144,7 @@ export default function SharedHomeRecurringDialog({ open, home, initial, onOpenC
           <div className="space-y-2"><Label>{t('sharedHomeMonthlyView')}</Label><Select value="monthly" disabled><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="monthly">{t('sharedHomeMonthlyView')}</SelectItem></SelectContent></Select></div>
           <div className="space-y-2"><Label>{t('sharedHomeAmountMode')}</Label><Select value={amountMode} onValueChange={value => setAmountMode(value as 'fixed' | 'variable')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="fixed">{t('sharedHomeFixedAmount')}</SelectItem><SelectItem value="variable">{t('sharedHomeVariableAmount')}</SelectItem></SelectContent></Select></div>
           {amountMode === 'fixed' && <div className="space-y-2"><Label htmlFor="recurring-amount">{t('amount')} *</Label><Input id="recurring-amount" type="number" min="0.01" step="0.01" value={fixedAmount} onChange={event => setFixedAmount(event.target.value)} placeholder={t('sharedHomeZeroAmountPlaceholder')} /></div>}
+          <div className="space-y-2 rounded-xl border border-[#d7e4dc] bg-[#f8fbf9] p-3"><Label>{t('sharedHomePaymentResponsibility' as TranslationKey)}</Label><div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><label className="flex items-start gap-2 rounded-lg border bg-white p-2.5 text-sm"><input type="radio" name="payment-responsibility" checked={paymentResponsibility === 'shared_payer'} onChange={() => setPaymentResponsibility('shared_payer')} /><span><span className="block font-bold">{t('sharedHomeOnePaysCollects' as TranslationKey)}</span><span className="block text-xs text-gray-500">{t('sharedHomePayerCollectsHelp' as TranslationKey)}</span></span></label><label className="flex items-start gap-2 rounded-lg border bg-white p-2.5 text-sm"><input type="radio" name="payment-responsibility" checked={paymentResponsibility === 'individual_shares'} onChange={() => setPaymentResponsibility('individual_shares')} /><span><span className="block font-bold">{t('sharedHomeEachPaysOwnShare' as TranslationKey)}</span><span className="block text-xs text-gray-500">{t('sharedHomeOwnShareHelp' as TranslationKey)}</span></span></label></div>{paymentResponsibility === 'shared_payer' && <div className="mt-3 space-y-2"><Label>{t('sharedHomePaidByLabel')}</Label><Select value={payerMemberId} onValueChange={setPayerMemberId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{sharedBy.map(id => { const member = home.members.find(item => item.id === id); return member ? <SelectItem key={id} value={id}>{member.name}</SelectItem> : null; })}</SelectContent></Select></div>}{amountMode === 'fixed' && sharedBy.length > 0 && previewShare > 0 && <p className="text-xs font-semibold text-gray-600">{paymentResponsibility === 'shared_payer' ? `${t('sharedHomePayerSharePreview' as TranslationKey)} ${money(previewShare)}` : `${t('sharedHomeEachSharePreview' as TranslationKey)} ${money(previewShare)}`}</p>}</div>
           <div className="grid grid-cols-2 gap-3"><div className="space-y-2"><Label htmlFor="recurring-start">{t('sharedHomeStartDate')}</Label><Input id="recurring-start" type="date" value={startDate} onChange={event => setStartDate(event.target.value)} /></div><div className="space-y-2"><Label htmlFor="recurring-end">{t('sharedHomeEndDate')}</Label><Input id="recurring-end" type="date" value={endDate} onChange={event => setEndDate(event.target.value)} /></div></div>
           <div className="space-y-2"><Label>{t('sharedHomeSharedBy')}</Label><div className="grid grid-cols-2 gap-2">{activeMembers.map(member => <label key={member.id} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"><input type="checkbox" checked={sharedBy.includes(member.id)} onChange={() => setSharedBy(current => current.includes(member.id) ? current.filter(id => id !== member.id) : [...current, member.id])} />{member.name}</label>)}</div></div>
           <label className="flex items-start gap-2 rounded-xl border border-[#c7d8cc] bg-[#f2fbf3] px-3 py-3 text-sm"><input className="mt-0.5" type="checkbox" checked={includeInBudget} onChange={event => setIncludeInBudget(event.target.checked)} /><span><span className="block font-bold text-kharcha-navy">{t('sharedHomeIncludeInBudgetQuestion')}</span><span className="mt-1 block text-xs text-gray-600">{t('sharedHomeIncludeInBudgetHelp')}</span></span></label>
@@ -133,4 +155,8 @@ export default function SharedHomeRecurringDialog({ open, home, initial, onOpenC
       </DialogContent>
     </Dialog>
   );
+}
+
+function money(value: number): string {
+  return `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
