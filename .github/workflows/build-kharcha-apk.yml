@@ -1,5 +1,6 @@
 name: Build Split App APK
 
+# APK embeds the exact web build from this commit.
 on:
   workflow_dispatch:
   push:
