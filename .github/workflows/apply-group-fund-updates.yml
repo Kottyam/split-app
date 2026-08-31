@@ -1,0 +1,94 @@
+name: Apply Group Fund Updates and Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/apply-group-fund-updates.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-build:
+    if: "!contains(github.event.head_commit.message, '[group-fund-patched]')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch Group Fund collection UI
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('client/src/pages/GroupFundDetail.tsx')
+          s = p.read_text(encoding='utf-8')
+          original = s
+
+          # 1) Prefill collection inputs with the calculated expected amount only
+          # for recurring Default Amount funds. Variable Amount remains blank.
+          old = """setCollectionAmount('');\n                              setUpiInputAmount('');\n                              setSavedAmountInput(getSavedCollectionAmount(m)?.toString() ?? '');"""
+          new = """const defaultExpected = fund.isRecurring && fund.amountType === 'Default Amount'\n                                ? calculateExpectedAmountForPeriod(fund, m, selectedPeriod)\n                                : undefined;\n                              const defaultCollectionAmount = defaultExpected !== undefined && Number.isFinite(defaultExpected) && defaultExpected > 0\n                                ? String(defaultExpected)\n                                : '';\n                              setCollectionAmount(defaultCollectionAmount);\n                              setUpiInputAmount(defaultCollectionAmount);\n                              setSavedAmountInput(getSavedCollectionAmount(m)?.toString() ?? '');"""
+          if old not in s:
+              raise SystemExit('Expected collection-button block not found; refusing unsafe edit.')
+          s = s.replace(old, new, 1)
+
+          # 2) After a collection is recorded, show only Paid Amount. Before
+          # collection, keep the useful paid/expected context.
+          old_line = """{t('auditPaid' as any)}: <span className=\"font-black text-[#16834b]\">₹{paid.toLocaleString('en-IN')}</span> {expected > 0 ? `/ ${t('auditExpected' as any)}: ₹${expected}` : ''}"""
+          new_line = """{t('auditPaid' as any)}: <span className=\"font-black text-[#16834b]\">₹{paid.toLocaleString('en-IN')}</span> {!isCollected && expected > 0 ? `/ ${t('auditExpected' as any)}: ₹${expected}` : ''}"""
+          if old_line not in s:
+              raise SystemExit('Expected paid/expected display not found; refusing unsafe edit.')
+          s = s.replace(old_line, new_line, 1)
+
+          # 3) Saved Amount and Credit Balance are not shown in the member card.
+          s = re.sub(r"\n\s*\{getSavedCollectionAmount\(m\) !== undefined && \(\s*\n\s*<p className=\"text-xs text-\[#16834b\] font-black mt-1\">\{t\('auditSavedAmount' as any\)\}: ₹\{getSavedCollectionAmount\(m\)!\.toLocaleString\('en-IN'\)\}</p>\s*\n\s*\)\}", '', s, count=1)
+          s = re.sub(r"\n\s*\{credit > 0 && \(\s*\n\s*<p className=\"text-xs text-\[#16834b\] font-black mt-1\">\{t\('auditCreditBalance' as any\)\}: ₹\{credit\.toLocaleString\('en-IN'\)\} · \{t\('auditAmountToPay' as any\)\}: ₹\{creditApplication\.amountToPay\.toLocaleString\('en-IN'\)\}</p>\s*\n\s*\)\}", '', s, count=1)
+
+          # Remove now-unused card-only locals if they are no longer referenced.
+          s = s.replace("                  const credit = getMemberCreditBalance(m);\n                  const creditApplication = getAmountAfterCredit(expected, m);\n", '')
+
+          # 4) The action is explicitly about saving an amount for a payment link.
+          s = s.replace("{t('auditSavedAmount' as any)}", "Save Amount & Share Link")
+
+          if s == original:
+              raise SystemExit('No changes were made; refusing to commit.')
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit source changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/pages/GroupFundDetail.tsx
+          git diff --cached --quiet && { echo 'No source changes to commit.'; exit 0; }
+          git commit -m "Update Group Fund collection defaults [group-fund-patched]"
+          git push
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Build APK
+        working-directory: android-app
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kharcha-group-fund-updated-debug-apk
+          path: android-app/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
