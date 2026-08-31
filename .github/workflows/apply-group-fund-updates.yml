@@ -1,119 +1,50 @@
-name: Apply Group Fund Updates and Build APK
+name: Build Split App APK
 
 on:
   workflow_dispatch:
   push:
     paths:
+      - 'client/**'
+      - 'android-app/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
       - '.github/workflows/apply-group-fund-updates.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch-and-build:
-    if: "!contains(github.event.head_commit.message, '[group-fund-patched]')"
+  build-apk:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Patch Group Fund collection UI
-        shell: python
-        run: |
-          from pathlib import Path
-          import re
-
-          p = Path('client/src/pages/GroupFundDetail.tsx')
-          s = p.read_text(encoding='utf-8')
-          original = s
-
-          # 1) Prefill collection inputs with the calculated expected amount only
-          # for recurring Default Amount funds. Variable Amount remains blank.
-          old = """setCollectionAmount('');
-                              setUpiInputAmount('');
-                              setSavedAmountInput(getSavedCollectionAmount(m)?.toString() ?? '');"""
-          new = """const defaultExpected = fund.isRecurring && fund.amountType === 'Default Amount'
-                                ? calculateExpectedAmountForPeriod(fund, m, selectedPeriod)
-                                : undefined;
-                              const defaultCollectionAmount = defaultExpected !== undefined && Number.isFinite(defaultExpected) && defaultExpected > 0
-                                ? String(defaultExpected)
-                                : '';
-                              setCollectionAmount(defaultCollectionAmount);
-                              setUpiInputAmount(defaultCollectionAmount);
-                              setSavedAmountInput(getSavedCollectionAmount(m)?.toString() ?? '');"""
-          if old not in s:
-              raise SystemExit('Expected collection-button block not found; refusing unsafe edit.')
-          s = s.replace(old, new, 1)
-
-          # 2) After a collection is recorded, show only Paid Amount. Before
-          # collection, keep the useful paid/expected context.
-          old_line = """{t('auditPaid' as any)}: <span className=\"font-black text-[#16834b]\">₹{paid.toLocaleString('en-IN')}</span> {expected > 0 ? `/ ${t('auditExpected' as any)}: ₹${expected}` : ''}"""
-          new_line = """{t('auditPaid' as any)}: <span className=\"font-black text-[#16834b]\">₹{paid.toLocaleString('en-IN')}</span> {!isCollected && expected > 0 ? `/ ${t('auditExpected' as any)}: ₹${expected}` : ''}"""
-          if old_line not in s:
-              raise SystemExit('Expected paid/expected display not found; refusing unsafe edit.')
-          s = s.replace(old_line, new_line, 1)
-
-          # 3) Saved Amount and Credit Balance are not shown in the member card.
-          s = re.sub(r"\n\s*\{getSavedCollectionAmount\(m\) !== undefined && \(\s*\n\s*<p className=\"text-xs text-\[#16834b\] font-black mt-1\">\{t\('auditSavedAmount' as any\)\}: ₹\{getSavedCollectionAmount\(m\)!\.toLocaleString\('en-IN'\)\}</p>\s*\n\s*\)\}", '', s, count=1)
-          s = re.sub(r"\n\s*\{credit > 0 && \(\s*\n\s*<p className=\"text-xs text-\[#16834b\] font-black mt-1\">\{t\('auditCreditBalance' as any\)\}: ₹\{credit\.toLocaleString\('en-IN'\)\} · \{t\('auditAmountToPay' as any\)\}: ₹\{creditApplication\.amountToPay\.toLocaleString\('en-IN'\)\}</p>\s*\n\s*\)\}", '', s, count=1)
-          s = s.replace("                  const credit = getMemberCreditBalance(m);\n                  const creditApplication = getAmountAfterCredit(expected, m);\n", '')
-
-          # 4) The action is explicitly about saving an amount for a payment link.
-          s = s.replace("{t('auditSavedAmount' as any)}", "Save Amount & Share Link")
-
-          # 5) Recurring-only period selector. One-Time collection must not
-          # expose a month/period selector; recurring keeps its existing
-          # Daily/Weekly/Fortnightly/Monthly/Yearly/Custom period logic.
-          period_select_pattern = re.compile(r"(?P<indent>\s*)<Select\s+value=\{selectedPeriod\}[\s\S]*?</Select>")
-          matches = list(period_select_pattern.finditer(s))
-          if not matches:
-              raise SystemExit('Recurring period selector not found; refusing unsafe edit.')
-          if len(matches) != 1:
-              raise SystemExit(f'Expected exactly one selectedPeriod Select, found {len(matches)}; refusing unsafe edit.')
-          m = matches[0]
-          block = m.group(0)
-          wrapped = f"{m.group('indent')}{{fund.isRecurring && (\n{block}\n{m.group('indent')})}}"
-          s = s[:m.start()] + wrapped + s[m.end():]
-
-          # 6) One-Time collection has no month/period suffix in its
-          # collection-summary headings. Recurring keeps the existing period.
-          patterns = [
-              (r"\{t\('totalCollected' as any\)\}\s*\(\{selectedPeriod\}\)", "{fund.isRecurring ? `${t('totalCollected' as any)} (${selectedPeriod})` : t('totalCollected' as any)}"),
-              (r"\{t\('membersAndCollection' as any\)\}\s*\(\{selectedPeriod\}\)", "{fund.isRecurring ? `${t('membersAndCollection' as any)} (${selectedPeriod})` : t('membersAndCollection' as any)}"),
-          ]
-          for pattern, repl in patterns:
-              s = re.sub(pattern, repl, s, count=1)
-
-          if s == original:
-              raise SystemExit('No changes were made; refusing to commit.')
-          p.write_text(s, encoding='utf-8')
-
-      - name: Commit source changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add client/src/pages/GroupFundDetail.tsx
-          git diff --cached --quiet && { echo 'No source changes to commit.'; exit 0; }
-          git commit -m "Update Group Fund collection period UI [group-fund-patched]"
-          git push
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Set up Node 24
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '24'
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+          run_install: false
 
       - name: Install Node dependencies
-        run: npm install --no-audit --no-fund
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Build APK
+      - name: Build web client
+        run: pnpm exec vite build
+
+      - name: Build debug APK
         working-directory: android-app
         run: |
           chmod +x gradlew
@@ -122,6 +53,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: kharcha-group-fund-updated-debug-apk
+          name: split-app-debug-apk
           path: android-app/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
