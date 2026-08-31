@@ -5,6 +5,7 @@ export interface KharchaNotification {
   createdAt: string;
   read?: boolean;
   path?: string;
+  actionLabel?: string;
 }
 
 const STORAGE_KEY = 'kharcha_notifications';
