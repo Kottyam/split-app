@@ -10,6 +10,7 @@ import HelpGuideModal from '@/components/HelpGuideModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { appCategories } from '@/lib/appNavigation';
 import { getUnreadNotificationCount, subscribeToNotifications } from '@/lib/notifications';
+import { refreshAutomaticNotifications } from '@/lib/notificationEngine';
 
 export default function Home() {
   const [, navigate] = useLocation();
@@ -19,6 +20,8 @@ export default function Home() {
   const [notificationCount, setNotificationCount] = useState(() => getUnreadNotificationCount());
 
   useEffect(() => {
+    refreshAutomaticNotifications();
+    setNotificationCount(getUnreadNotificationCount());
     const unsubscribe = subscribeToNotifications(() => setNotificationCount(getUnreadNotificationCount()));
     return unsubscribe;
   }, []);
@@ -65,7 +68,6 @@ export default function Home() {
     </div>
   );
 }
-
 
 function HeaderAction({ children, label, ariaLabel, onClick, badge }: { children: React.ReactNode; label: string; ariaLabel: string; onClick: () => void; badge?: string }) {
   return <div className="flex w-12 flex-col items-center gap-1 sm:w-14"><button type="button" aria-label={ariaLabel} onClick={onClick} className="relative grid h-9 w-9 place-items-center rounded-full border border-[#d7e4dc] bg-white text-kharcha-navy shadow-sm transition-all hover:border-[#16834b] hover:bg-[#f2fbf3] sm:h-10 sm:w-10">{children}{badge !== undefined && <span aria-label={`${badge} ${label}`} className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[#e87817] px-1 text-[9px] font-black leading-none text-white">{badge}</span>}</button><span className="max-w-full truncate text-[9px] font-bold leading-none text-[#65747f] sm:text-[10px]">{label}</span></div>;
