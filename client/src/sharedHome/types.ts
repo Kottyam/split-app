@@ -10,6 +10,7 @@ export type HouseholdSplitMethod = 'equal' | 'stay-days' | 'selected' | 'room-ba
 export type HouseholdRecordStatus = 'active' | 'cancelled';
 export type RecurringFrequency = 'monthly';
 export type RecurringAmountMode = 'fixed' | 'variable';
+export type RecurringPaymentResponsibility = 'shared_payer' | 'individual_shares';
 export type RecurringStatus = 'active' | 'paused' | 'stopped';
 export type PaymentMethod = 'upi' | 'cash' | 'bank-transfer' | 'other';
 
@@ -116,6 +117,8 @@ export interface HouseholdExpense {
   shares: Record<string, number>;
   groceryItems?: GroceryItem[];
   recurringRuleId?: string;
+  /** Recurring payment responsibility used to keep individual-pay items out of shared settlements. */
+  recurringPaymentResponsibility?: RecurringPaymentResponsibility;
   notes?: string;
   receiptUrl?: string;
   status: HouseholdRecordStatus;
@@ -139,6 +142,10 @@ export interface RecurringRule {
   amountMode: RecurringAmountMode;
   fixedAmount?: number;
   splitMethod: HouseholdSplitMethod;
+  /** Person who pays the full recurring amount when responsibility is shared_payer. */
+  payerMemberId?: string;
+  /** shared_payer = one person pays then collects; individual_shares = each member pays own share. */
+  paymentResponsibility?: RecurringPaymentResponsibility;
   sharedBy: string[];
   status: RecurringStatus;
   skipNext: boolean;
