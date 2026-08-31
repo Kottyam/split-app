@@ -1150,8 +1150,6 @@ export default function GroupFundDetail() {
                   const memberContributions = getMemberPeriodContributions(m.id);
                   const paid = memberContributions.reduce((s: number, c: Contribution) => s + c.amount, 0);
                   const expected = calculateExpectedAmountForPeriod(fund, m, selectedPeriod);
-                  const credit = getMemberCreditBalance(m);
-                  const creditApplication = getAmountAfterCredit(expected, m);
                   const isCollected = memberContributions.length > 0;
                   const lastPayment = memberContributions.length > 0 ? memberContributions[memberContributions.length - 1] : undefined;
 
@@ -1168,15 +1166,9 @@ export default function GroupFundDetail() {
                           </span>
                         </div>
                         <p className="text-xs text-kharcha-navy font-medium mt-0.5">
-                          {t('auditPaid' as any)}: <span className="font-black text-[#16834b]">₹{paid.toLocaleString('en-IN')}</span> {expected > 0 ? `/ ${t('auditExpected' as any)}: ₹${expected}` : ''}
+                          {t('auditPaid' as any)}: <span className="font-black text-[#16834b]">₹{paid.toLocaleString('en-IN')}</span> {!isCollected && expected > 0 ? `/ ${t('auditExpected' as any)}: ₹${expected}` : ''}
                           {lastPayment && <span className="text-gray-600 ml-1">({t('auditPaymentMethodOnDate' as any, { method: groupFundOptionLabel(t, lastPayment.method), date: new Date(lastPayment.date).toLocaleDateString() })})</span>}
                         </p>
-                        {getSavedCollectionAmount(m) !== undefined && (
-                          <p className="text-xs text-[#16834b] font-black mt-1">{t('auditSavedAmount' as any)}: ₹{getSavedCollectionAmount(m)!.toLocaleString('en-IN')}</p>
-                        )}
-                        {credit > 0 && (
-                          <p className="text-xs text-[#16834b] font-black mt-1">{t('auditCreditBalance' as any)}: ₹{credit.toLocaleString('en-IN')} · {t('auditAmountToPay' as any)}: ₹{creditApplication.amountToPay.toLocaleString('en-IN')}</p>
-                        )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
@@ -1207,8 +1199,14 @@ export default function GroupFundDetail() {
                             onClick={() => {
                               setSelectedMemberForCollection(m);
                               setCollectionMethod('UPI');
-                              setCollectionAmount('');
-                              setUpiInputAmount('');
+                              const defaultExpected = fund.isRecurring && fund.amountType === 'Default Amount'
+                                ? calculateExpectedAmountForPeriod(fund, m, selectedPeriod)
+                                : undefined;
+                              const defaultCollectionAmount = defaultExpected !== undefined && Number.isFinite(defaultExpected) && defaultExpected > 0
+                                ? String(defaultExpected)
+                                : '';
+                              setCollectionAmount(defaultCollectionAmount);
+                              setUpiInputAmount(defaultCollectionAmount);
                               setSavedAmountInput(getSavedCollectionAmount(m)?.toString() ?? '');
                             }}
                             className="bg-[#16834b] text-white font-black h-10 px-4 text-xs rounded-xl hover:bg-green-700 border border-[#d7e4dc] shadow-sm"
@@ -1621,7 +1619,7 @@ export default function GroupFundDetail() {
 
               <div className="space-y-4 my-2">
                 <div className="rounded-xl border border-[#d7e4dc] bg-green-50 p-3 shadow-sm">
-                  <Label className="font-black text-kharcha-navy">{t('auditSavedAmount' as any)}</Label>
+                  <Label className="font-black text-kharcha-navy">Save Amount & Share Link</Label>
                   <div className="mt-2 flex gap-2">
                     <Input
                       type="number"
