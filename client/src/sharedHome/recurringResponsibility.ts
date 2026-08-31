@@ -18,6 +18,5 @@ export function resolveRecurringPayment(rule: RecurringRule, home: SharedHome): 
 }
 
 export function amountPayableByMember(rule: RecurringRule, home: SharedHome, memberId: string): number {
-  const resolved = resolveRecurringPayment(rule, home);
-  return roundMoney(resolved.shares[memberId] ?? 0);
+  return roundMoney(resolveRecurringPayment(rule, home).shares[memberId] ?? 0);
 }
