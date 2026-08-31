@@ -60,6 +60,12 @@ jobs:
       - name: Prepare Android WebView for embedded build
         run: python3 scripts/prepare_embedded_android.py
 
+      - name: Ensure embedded WebView imports compile
+        run: |
+          grep -q 'import android.webkit.WebResourceResponse;' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java || \
+            sed -i '/import android.webkit.WebResourceRequest;/a import android.webkit.WebResourceResponse;' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
+          grep -q 'import android.webkit.WebResourceResponse;' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
+
       - name: Verify embedded build is active
         run: |
           grep -q 'loadEmbeddedWebApp();' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
