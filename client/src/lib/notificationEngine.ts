@@ -74,11 +74,10 @@ function buildGroupFundNotifications(): KharchaNotification[] {
     if (!fund.isRecurring || !fund.recurringFrequency) continue;
     const currentPeriod = resolveCollectionPeriod(fund, now, 'future');
     const previousPeriod = resolveCollectionPeriod(fund, now, 'past');
-    const duePeriod = periodHasPendingCollection(fund, currentPeriod, true)
-      ? currentPeriod
-      : periodHasPendingCollection(fund, previousPeriod)
-        ? previousPeriod
-        : '';
+    const preferPrevious = fund.collectionTiming === 'previous' || fund.collectionPeriodMode === 'past';
+    const duePeriod = preferPrevious
+      ? (periodHasPendingCollection(fund, previousPeriod) ? previousPeriod : '')
+      : (periodHasPendingCollection(fund, currentPeriod, true) ? currentPeriod : periodHasPendingCollection(fund, previousPeriod) ? previousPeriod : '');
     if (!duePeriod) continue;
     add(result, `fund-collection-${fund.id}-${duePeriod}`, 'Group Fund collection pending', `${fund.name}: the ${duePeriod} collection needs attention.`, `/group-fund/${fund.id}`, 'Open collection');
   }
