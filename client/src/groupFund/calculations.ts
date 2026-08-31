@@ -223,7 +223,7 @@ function baseAmountFor(fund: GroupFund, member: GroupFundMember): number {
 
 function calculateAmountForBounds(fund: GroupFund, member: GroupFundMember, bounds: PeriodBounds, useMemberJoinDateOnly = false): number {
   const baseAmount = baseAmountFor(fund, member);
-  if (!fund.isRecurring || fund.amountType === 'Variable Amount') return baseAmount;
+  if (!fund.isRecurring) return baseAmount;
 
   const effectiveStart = new Date(useMemberJoinDateOnly ? getMemberStartTime(fund, member) : getEffectiveStartTime(fund, member));
   if (effectiveStart.getTime() > bounds.end.getTime()) return 0;
@@ -231,7 +231,11 @@ function calculateAmountForBounds(fund: GroupFund, member: GroupFundMember, boun
   const totalCycleDays = inclusiveDays(bounds.start, bounds.end);
   const eligibleDays = activeDaysBetween(member, chargeStart, bounds.end);
   if (eligibleDays <= 0) return 0;
-  if (fund.prorationRule === 'Full Amount') return baseAmount;
+
+  // A member pause overrides the normal cycle amount: paused dates are never
+  // charged. If the pause partially overlaps a cycle, only active days count.
+  if (fund.amountType === 'Variable Amount') return baseAmount;
+  if (eligibleDays === totalCycleDays) return baseAmount;
   return Number(((baseAmount / totalCycleDays) * eligibleDays).toFixed(2));
 }
 
@@ -272,9 +276,10 @@ function getBoundsForDate(fund: GroupFund, member: GroupFundMember, targetDate: 
 /** Calculate the expected amount for a target date using the same per-member recurring engine. */
 export function calculateExpectedAmount(fund: GroupFund, member: GroupFundMember, targetDate: Date = new Date()): number {
   const baseAmount = baseAmountFor(fund, member);
-  if (!fund.isRecurring || fund.amountType === 'Variable Amount' || fund.prorationRule === 'Full Amount') return baseAmount;
+  if (!fund.isRecurring) return baseAmount;
   const bounds = getBoundsForDate(fund, member, targetDate);
-  return bounds ? calculateAmountForBounds(fund, member, bounds) : baseAmount;
+  if (!bounds) return baseAmount;
+  return calculateAmountForBounds(fund, member, bounds);
 }
 
 /** Calculate the member-add Expected Amount for a specific cycle from the fund Default Amount. */
