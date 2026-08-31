@@ -71,6 +71,16 @@ function buildGroupFundNotifications(): KharchaNotification[] {
   const result: KharchaNotification[] = [];
   const now = new Date();
   for (const fund of getGroupFunds()) {
+    // One-time collections are also explicitly open until the manager closes them.
+    // closedPeriods uses the same period-label mechanism as recurring collections.
+    if (!fund.isRecurring && fund.contributionType === 'one_time') {
+      const period = resolveCollectionPeriod(fund, new Date(fund.createdAt), 'future');
+      if (period && !fund.closedPeriods?.includes(period)) {
+        add(result, `fund-close-one-time-${fund.id}-${period}`, 'Close your collection', `${fund.name}: this one-time collection is still open. Close the collection when you are finished.`, `/group-fund/${fund.id}`, 'Close collection');
+      }
+      continue;
+    }
+
     if (!fund.isRecurring || !fund.recurringFrequency) continue;
     const currentPeriod = resolveCollectionPeriod(fund, now, 'future');
     const previousPeriod = resolveCollectionPeriod(fund, now, 'past');
