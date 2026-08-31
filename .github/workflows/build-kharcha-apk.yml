@@ -1,15 +1,16 @@
 name: Build Split App APK
 
-# Build an APK that keeps the app inside the Android WebView.
-# The web UI is built on every APK build, while the Android shell uses the
-# deployed HTTPS origin so API/auth/cookie flows keep the same origin they
-# were designed for.
+# Build an APK with the exact web UI from this repository embedded locally.
+# The embedded document uses the deployed HTTPS origin as its base origin so
+# API/auth/cookie flows keep working against the existing backend, while the
+# HTML/JS/CSS bundle itself comes from this checkout rather than the live UI.
 on:
   workflow_dispatch:
   push:
     paths:
       - 'client/**'
       - 'android-app/**'
+      - 'scripts/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/build-kharcha-apk.yml'
@@ -46,16 +47,25 @@ jobs:
       - name: Install Node dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Build web app
+      - name: Build exact web app from this checkout
         run: pnpm exec vite build
 
-      - name: Verify Android source is not rewritten for file:// loading
+      - name: Embed exact web build into Android assets
         run: |
-          if grep -q 'file:///android_asset/index.html' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java; then
-            echo 'ERROR: MainActivity is configured for file:// loading, which breaks the React module/API origin.'
-            exit 1
-          fi
-          grep -q 'https://" + APP_HOST + "/?android=1' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
+          rm -rf android-app/app/src/main/assets/web
+          mkdir -p android-app/app/src/main/assets/web
+          cp -R dist/public/. android-app/app/src/main/assets/web/
+          test -s android-app/app/src/main/assets/web/index.html
+
+      - name: Prepare Android WebView for embedded build
+        run: python3 scripts/prepare_embedded_android.py
+
+      - name: Verify embedded build is active
+        run: |
+          grep -q 'loadEmbeddedWebApp();' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
+          grep -q 'loadDataWithBaseURL' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
+          grep -q 'serveEmbeddedWebRequest' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
+          test -s android-app/app/src/main/assets/web/index.html
 
       - name: Build debug APK
         working-directory: android-app
