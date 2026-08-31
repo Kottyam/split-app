@@ -27,26 +27,43 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Prepare pnpm
-        run: corepack prepare pnpm@10.4.1 --activate
-
-      - name: Verify pnpm
-        run: pnpm --version
-
       - name: Set up Node 24
         uses: actions/setup-node@v5
         with:
           node-version: '24'
           package-manager-cache: false
 
+      - name: Enable Corepack and prepare pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.4.1 --activate
+          pnpm --version
+
       - name: Install Node dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Build web client
-        run: pnpm exec vite build
+      - name: Build web app for embedded APK
+        run: pnpm exec vite build --base ./
+
+      - name: Embed current web build into APK
+        run: |
+          rm -rf android-app/app/src/main/assets
+          mkdir -p android-app/app/src/main/assets
+          cp -R dist/public/. android-app/app/src/main/assets/
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java')
+          text = path.read_text()
+          text = text.replace(
+              'private static final String APP_URL = "https://" + APP_HOST + "/?android=1";',
+              'private static final String APP_URL = "file:///android_asset/index.html?android=1";'
+          )
+          text = text.replace(
+              'return uri != null && APP_HOST.equalsIgnoreCase(uri.getHost());',
+              'return uri != null && ("file".equalsIgnoreCase(uri.getScheme()) || APP_HOST.equalsIgnoreCase(uri.getHost()));'
+          )
+          path.write_text(text)
+          PY
 
       - name: Build debug APK
         working-directory: android-app
