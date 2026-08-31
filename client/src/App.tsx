@@ -28,6 +28,7 @@ import SyncUpdates from './pages/SyncUpdates';
 import NotFound from "./pages/NotFound";
 import BottomNav from './components/BottomNav';
 
+// Keep the complete Split App feature set in the embedded Android build.
 function Router() {
   const [location] = useLocation();
 
