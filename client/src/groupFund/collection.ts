@@ -61,20 +61,18 @@ export function getCreditAfterPayment(member: GroupFundMember, expectedAmount: n
   return getMemberCreditBalance(member) + excess;
 }
 
-/** Returns a finite saved amount, including zero, without treating it as collected. */
+/** Saved amount is only a payment-link/share value; it is never treated as a collection record. */
 export function getSavedCollectionAmount(member: GroupFundMember): number | undefined {
   const amount = member.savedCollectionAmount;
   return typeof amount === 'number' && Number.isFinite(amount) && amount >= 0 ? amount : undefined;
 }
 
-/** Saved amount wins; otherwise the existing fund calculator supplies the applicable period amount. */
+/** The collection/payment UI should default to the calculated expected amount. Saved amount is reserved for sharing a payment link. */
 export function getMemberPaymentRequestAmount(
   fund: GroupFund,
   member: GroupFundMember,
   period?: string,
 ): number | undefined {
-  const saved = getSavedCollectionAmount(member);
-  if (saved !== undefined) return saved;
   const expected = period ? calculateExpectedAmountForPeriod(fund, member, period) : calculateExpectedAmount(fund, member);
   return Number.isFinite(expected) && expected > 0 ? expected : undefined;
 }
