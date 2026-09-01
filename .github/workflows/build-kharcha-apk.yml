@@ -12,7 +12,7 @@ on:
       - '.github/workflows/build-kharcha-apk.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-apk:
@@ -20,6 +20,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Restore full native Android activity if needed
+        shell: bash
+        run: |
+          ACTIVITY="android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java"
+          if grep -q 'private void pickContacts() { }' "$ACTIVITY"; then
+            git show b7c36823574239b2daeaafb14c0005ef39e00432:$ACTIVITY > "$ACTIVITY"
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add "$ACTIVITY"
+            git commit -m 'Restore full native Android activity'
+            git push
+          fi
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
