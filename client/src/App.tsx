@@ -13,6 +13,7 @@ import SharedHomes from "./pages/SharedHomes";
 import TripDetail from "./pages/TripDetail";
 import SharedView from "./pages/SharedView";
 import SharedHomeDetail from "./pages/SharedHomeDetail";
+import SharedHomeRedesign from "./pages/SharedHomeRedesign";
 import SharedHomeSharedView from './pages/SharedHomeSharedView';
 import SharedHomePaymentRequest from './pages/SharedHomePaymentRequest';
 import GroupFunds from './pages/GroupFunds';
@@ -50,7 +51,8 @@ function Router() {
       <Route path={"/notifications"} component={Notifications} />
       <Route path={"/more"} component={More} />
       <Route path={"/trip/:id"} component={TripDetail} />
-      <Route path={"/shared-home/:id"} component={SharedHomeDetail} />
+      <Route path={"/shared-home/:id/manage"} component={SharedHomeDetail} />
+      <Route path={"/shared-home/:id"} component={SharedHomeRedesign} />
       <Route path={/^\/shared-home-share\/.+$/} component={SharedHomeSharedView} />
       <Route path={/^\/shared-home-payment\/.+$/} component={SharedHomePaymentRequest} />
       <Route path={/^\/share\/.+$/} component={SharedView} />
