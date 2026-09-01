@@ -1,10 +1,5 @@
 name: Build Split App APK
 
-# Build an APK with the exact web UI from this repository embedded locally.
-# The embedded document uses the deployed HTTPS origin as its base origin so
-# API/auth/cookie flows keep working against the existing backend, while the
-# HTML/JS/CSS bundle itself comes from this checkout rather than the live UI.
-# APK compile fix: ensure WebResourceResponse is imported before Gradle build.
 on:
   workflow_dispatch:
   push:
@@ -25,61 +20,30 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
           cache: gradle
-
       - name: Set up Node 24
         uses: actions/setup-node@v5
         with:
           node-version: '24'
           package-manager-cache: false
-
       - name: Enable Corepack and prepare pnpm
         run: |
           corepack enable
           corepack prepare pnpm@10.4.1 --activate
-          pnpm --version
-
       - name: Install Node dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
-
       - name: Build exact web app from this checkout
         run: pnpm exec vite build
-
-      - name: Embed exact web build into Android assets
-        run: |
-          rm -rf android-app/app/src/main/assets/web
-          mkdir -p android-app/app/src/main/assets/web
-          cp -R dist/public/. android-app/app/src/main/assets/web/
-          test -s android-app/app/src/main/assets/web/index.html
-
-      - name: Prepare Android WebView for embedded build
-        run: python3 scripts/prepare_embedded_android.py
-
-      - name: Ensure embedded WebView imports compile
-        run: |
-          grep -q 'import android.webkit.WebResourceResponse;' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java || \
-            sed -i '/import android.webkit.WebResourceRequest;/a import android.webkit.WebResourceResponse;' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
-          grep -q 'import android.webkit.WebResourceResponse;' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
-
-      - name: Verify embedded build is active
-        run: |
-          grep -q 'loadEmbeddedWebApp();' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
-          grep -q 'loadDataWithBaseURL' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
-          grep -q 'serveEmbeddedWebRequest' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
-          test -s android-app/app/src/main/assets/web/index.html
-
       - name: Build debug APK
         working-directory: android-app
         run: |
           chmod +x gradlew
           ./gradlew clean assembleDebug --no-daemon
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
