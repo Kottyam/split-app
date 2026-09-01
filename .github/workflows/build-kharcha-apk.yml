@@ -25,7 +25,9 @@ jobs:
         run: |
           ACTIVITY="android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java"
           if grep -q 'private void pickContacts() { }' "$ACTIVITY"; then
-            git show b7c36823574239b2daeaafb14c0005ef39e00432:$ACTIVITY > "$ACTIVITY"
+            git fetch origin b7c36823574239b2daeaafb14c0005ef39e00432 --depth=1
+            git cat-file blob f743a06c4308dbed7c1b49dcffa4b27455976a93 > "$ACTIVITY"
+            test -s "$ACTIVITY"
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add "$ACTIVITY"
