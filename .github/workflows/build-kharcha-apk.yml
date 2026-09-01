@@ -4,6 +4,7 @@ name: Build Split App APK
 # The embedded document uses the deployed HTTPS origin as its base origin so
 # API/auth/cookie flows keep working against the existing backend, while the
 # HTML/JS/CSS bundle itself comes from this checkout rather than the live UI.
+# APK compile fix: ensure WebResourceResponse is imported before Gradle build.
 on:
   workflow_dispatch:
   push:
