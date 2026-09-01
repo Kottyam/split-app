@@ -12,9 +12,6 @@ if old_load not in source:
     raise SystemExit("MainActivity launch call was not found; refusing to patch an unexpected file")
 source = source.replace(old_load, new_load, 1)
 
-# Make the embedded document the actual startup document. Do not navigate the WebView
-# to the deployed site after loading the checked-in bundle; the deployed HTTPS origin
-# is retained only as the document base/origin for API and cookie compatibility.
 old_method = '''    private View createLogoSplash() {\n'''
 load_methods = r'''    private boolean embeddedStartupRetryUsed = false;
 
@@ -95,7 +92,6 @@ if old_method not in source:
     raise SystemExit("MainActivity createLogoSplash marker was not found")
 source = source.replace(old_method, load_methods + old_method, 1)
 
-# Give WebView enough compatibility for the local compiled bundle and its HTTPS backend.
 settings_marker = "        settings.setMediaPlaybackRequiresUserGesture(false);\n"
 settings_add = settings_marker + "        settings.setCacheMode(WebSettings.LOAD_DEFAULT);\n        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {\n            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);\n        }\n"
 if settings_marker not in source:
@@ -103,7 +99,7 @@ if settings_marker not in source:
 source = source.replace(settings_marker, settings_add, 1)
 
 client_marker = '''        @Override\n        public void onPageFinished(WebView view, String url) {\n            revealLandingPage();\n        }\n'''
-client_replacement = '''        @Override\n        public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {\n            WebResourceResponse response = serveEmbeddedWebRequest(request);\n            return response != null ? response : super.shouldInterceptRequest(view, request);\n        }\n\n        @Override\n        public void onPageFinished(WebView view, String url) {\n            view.postDelayed(MainActivity.this::verifyEmbeddedDomAndReveal, 350L);\n        }\n\n        @Override\n        public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {\n            if (request != null && request.isForMainFrame()) {\n                if (!embeddedStartupRetryUsed) {\n                    embeddedStartupRetryUsed = true;\n                    handler.postDelayed(MainActivity.this::loadEmbeddedWebApp, 250L);\n                } else {\n                    showNetworkError();\n                }\n            }\n        }\n\n        @Override\n        public void onReceivedHttpError(WebView view, WebResourceRequest request, android.webkit.WebResourceResponse errorResponse) {\n            if (request != null && request.isForMainFrame() && !embeddedStartupRetryUsed) {\n                embeddedStartupRetryUsed = true;\n                handler.postDelayed(MainActivity.this::loadEmbeddedWebApp, 250L);\n            }\n        }\n'''
+client_replacement = '''        @Override\n        public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {\n            WebResourceResponse response = serveEmbeddedWebRequest(request);\n            return response != null ? response : super.shouldInterceptRequest(view, request);\n        }\n\n        @Override\n        public void onPageFinished(WebView view, String url) {\n            view.postDelayed(MainActivity.this::verifyEmbeddedDomAndReveal, 350L);\n        }\n'''
 if client_marker not in source:
     raise SystemExit("MainActivity WebViewClient marker was not found")
 source = source.replace(client_marker, client_replacement, 1)
