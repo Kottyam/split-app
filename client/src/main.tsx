@@ -8,27 +8,21 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
+const API_ORIGIN = "https://kharchasplit-rlsqgpta.manus.space";
+
 // Scope mobile-only visual density and system-bar spacing to the Android app.
-// The query marker is the primary signal; standalone mode covers TWA launches
-// where navigation or the browser strips the query string after boot.
 const androidShell =
   new URLSearchParams(window.location.search).get("android") === "1" ||
   window.matchMedia?.("(display-mode: standalone)").matches === true ||
   navigator.userAgent.includes("KharchaAndroid");
-if (androidShell) {
-  document.documentElement.classList.add("android-shell");
-}
+if (androidShell) document.documentElement.classList.add("android-shell");
 
 const queryClient = new QueryClient();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
-
-  const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
-
-  if (!isUnauthorized) return;
-
+  if (error.message !== UNAUTHED_ERR_MSG) return;
   window.location.href = getLoginUrl();
 };
 
@@ -51,7 +45,9 @@ queryClient.getMutationCache().subscribe(event => {
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      // The UI is bundled locally in the APK, but the backend/auth session
+      // remains on the live Kharcha server.
+      url: `${API_ORIGIN}/api/trpc`,
       transformer: superjson,
       fetch(input, init) {
         return globalThis.fetch(input, {
