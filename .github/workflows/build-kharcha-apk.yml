@@ -20,6 +20,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Restore full native Android activity if needed
         shell: bash
         run: |
@@ -34,30 +35,78 @@ jobs:
             git commit -m 'Restore full native Android activity'
             git push
           fi
+
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
           cache: gradle
+
       - name: Set up Node 24
         uses: actions/setup-node@v5
         with:
           node-version: '24'
           package-manager-cache: false
+
       - name: Enable Corepack and prepare pnpm
         run: |
           corepack enable
           corepack prepare pnpm@10.4.1 --activate
+
       - name: Install Node dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Build exact web app from this checkout
-        run: pnpm exec vite build
+
+      - name: Build current web app for Android
+        run: |
+          rm -rf android-app/app/src/main/assets/web
+          mkdir -p android-app/app/src/main/assets/web
+          pnpm exec vite build --base=./
+          cp -R dist/public/. android-app/app/src/main/assets/web/
+          test -s android-app/app/src/main/assets/web/index.html
+
+      - name: Wire WebView to bundled web app
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java')
+          s = p.read_text()
+          if 'androidx.webkit.WebViewAssetLoader' not in s:
+              s = s.replace('import androidx.fragment.app.FragmentActivity;\n', 'import androidx.fragment.app.FragmentActivity;\nimport androidx.webkit.WebViewAssetLoader;\nimport androidx.webkit.WebResourceRequest;\nimport androidx.webkit.WebResourceResponse;\n')
+          s = s.replace('private static final String APP_URL = "https://" + APP_HOST + "/?android=1";', 'private static final String APP_URL = "https://appassets.androidplatform.net/assets/web/index.html?android=1";')
+          s = s.replace('private WebView webView;\n', 'private WebView webView;\n    private WebViewAssetLoader assetLoader;\n')
+          s = s.replace('webView.setWebViewClient(new AppWebViewClient());', 'assetLoader = new WebViewAssetLoader.Builder()\n                .addPathHandler("/assets/web/", new WebViewAssetLoader.AssetsPathHandler(this))\n                .build();\n        webView.setWebViewClient(new AppWebViewClient());')
+          s = s.replace('return uri != null && APP_HOST.equalsIgnoreCase(uri.getHost());', 'return uri != null && (APP_HOST.equalsIgnoreCase(uri.getHost()) || "appassets.androidplatform.net".equalsIgnoreCase(uri.getHost()));')
+          s = s.replace('if (isInternalUrl(uri)) return false;\n            openExternal(uri);', 'if (isInternalUrl(uri)) return false;\n            openExternal(uri);')
+          s = s.replace('public void onPageFinished(WebView view, String url) {', 'public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {\n            WebResourceResponse response = assetLoader == null ? null : assetLoader.shouldInterceptRequest(request.getUrl());\n            return response != null ? response : super.shouldInterceptRequest(view, request);\n        }\n\n        @Override\n        public void onPageFinished(WebView view, String url) {')
+          s = s.replace('&& APP_HOST.equalsIgnoreCase(origin.getHost());', '&& (APP_HOST.equalsIgnoreCase(origin.getHost()) || "appassets.androidplatform.net".equalsIgnoreCase(origin.getHost()));')
+          p.write_text(s)
+
+      - name: Add AndroidX WebKit support
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('android-app/app/build.gradle')
+          s = p.read_text()
+          dep = "        implementation 'androidx.webkit:webkit:1.12.1'\n"
+          if 'androidx.webkit:webkit:' not in s:
+              marker = "        implementation 'androidx.biometric:biometric:1.1.0'\n"
+              s = s.replace(marker, marker + dep)
+          p.write_text(s)
+
+      - name: Verify bundled app is not hosted Manus UI
+        shell: bash
+        run: |
+          grep -q 'appassets.androidplatform.net/assets/web/index.html' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
+          test -s android-app/app/src/main/assets/web/index.html
+          ! grep -q 'kharchasplit-rlsqgpta.manus.space' android-app/app/src/main/assets/web/index.html
+
       - name: Build debug APK
         working-directory: android-app
         run: |
           chmod +x gradlew
           ./gradlew clean assembleDebug --no-daemon
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
