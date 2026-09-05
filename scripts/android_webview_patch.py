@@ -22,6 +22,19 @@ if 'private WebViewAssetLoader assetLoader;' not in text:
         '    private WebView webView;\n    private WebViewAssetLoader assetLoader;\n',
     )
 
+# The packaged web build lives under APK assets/web/. Map the appassets URL
+# prefix /assets/ directly to that APK asset tree, so a request for
+# /assets/web/assets/index-*.js resolves to assets/web/assets/index-*.js.
+asset_loader_init = '''        assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+'''
+if 'assetLoader = new WebViewAssetLoader.Builder()' not in text:
+    text = text.replace(
+        '        webView = new WebView(this);\n',
+        '        webView = new WebView(this);\n' + asset_loader_init,
+    )
+
 text = text.replace(
     '        webView.loadUrl(APP_URL);',
     '        loadBundledApp();',
@@ -54,14 +67,6 @@ if 'private void loadBundledApp()' not in text:
 text = text.replace(
     'return uri != null && APP_HOST.equalsIgnoreCase(uri.getHost());',
     'return uri != null && (APP_HOST.equalsIgnoreCase(uri.getHost()) || "appassets.androidplatform.net".equalsIgnoreCase(uri.getHost()));',
-)
-
-# IMPORTANT: WebViewAssetLoader path is the URL prefix. AssetsPathHandler strips
-# this prefix before looking inside APK assets, so /assets/ must map to the
-# APK asset tree containing the top-level `web/` directory.
-text = text.replace(
-    '.addPathHandler("/assets/web/", new WebViewAssetLoader.AssetsPathHandler(this))',
-    '.addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))',
 )
 
 if 'WebResourceResponse response = assetLoader' not in text:
