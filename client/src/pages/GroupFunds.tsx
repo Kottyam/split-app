@@ -4,11 +4,12 @@ import { getGroupFunds, deleteGroupFund } from '@/groupFund/storage';
 import type { GroupFund } from '@/groupFund/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Users, Wallet, Trash2, FileText } from 'lucide-react';
+import { Plus, Users, Wallet, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useDeleteConfirmation } from '@/contexts/DeleteConfirmationContext';
 import AppSectionHeader from '@/components/AppSectionHeader';
+import BottomNavigation from '@/components/BottomNavigation';
 
 export default function GroupFunds() {
   const [, navigate] = useLocation();
@@ -30,7 +31,7 @@ export default function GroupFunds() {
   };
 
   return (
-    <div className="min-h-screen bg-kharcha-cream px-3 py-5 sm:px-6 sm:py-6">
+    <div className="min-h-screen bg-kharcha-cream px-3 pb-24 pt-5 sm:px-6 sm:py-6">
       <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6">
         <AppSectionHeader
           title={t('auditGroupFundsTitle' as any)}
@@ -59,7 +60,7 @@ export default function GroupFunds() {
                 <Card
                   key={f.id}
                   onClick={() => navigate(`/group-funds/${f.id}`)}
-                  className="cursor-pointer rounded-3xl border border-[#b9ddc9] bg-white p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg sm:p-5 flex flex-col justify-between"
+                  className="flex cursor-pointer flex-col justify-between rounded-3xl border border-[#b9ddc9] bg-white p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg sm:p-5"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
@@ -74,7 +75,7 @@ export default function GroupFunds() {
                       </Button>
                     </div>
                     <h3 className="mt-3 text-lg font-black text-kharcha-navy sm:text-xl">{f.name}</h3>
-                    {f.description && <p className="mt-1 text-xs text-black font-medium line-clamp-2">{f.description}</p>}
+                    {f.description && <p className="mt-1 line-clamp-2 text-xs font-medium text-black">{f.description}</p>}
                     <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#f2fbf3] px-2.5 py-1 text-xs font-black text-[#16834b]">
                       <span>{f.purpose}{f.isRecurring && f.recurringFrequency ? ` · ${f.recurringFrequency}` : ''}</span>
                     </div>
@@ -83,15 +84,15 @@ export default function GroupFunds() {
                   <div className="mt-4 flex items-center justify-between border-t border-[#e8eee9] pt-4">
                     <div>
                       <p className="text-[11px] font-bold text-gray-500">{t('auditCollected' as any)}</p>
-                      <p className="font-black text-[#16834b] text-base">₹{totalCollected.toLocaleString('en-IN')}</p>
+                      <p className="text-base font-black text-[#16834b]">₹{totalCollected.toLocaleString('en-IN')}</p>
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-gray-500">{t('auditBalance' as any)}</p>
-                      <p className={`font-black text-base ${balance >= 0 ? 'text-kharcha-navy' : 'text-red-600'}`}>₹{balance.toLocaleString('en-IN')}</p>
+                      <p className={`text-base font-black ${balance >= 0 ? 'text-kharcha-navy' : 'text-red-600'}`}>₹{balance.toLocaleString('en-IN')}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-[11px] font-bold text-gray-500">{t('auditMembers' as any)}</p>
-                      <p className="font-black text-kharcha-navy text-base">{f.members.length}</p>
+                      <p className="text-base font-black text-kharcha-navy">{f.members.length}</p>
                     </div>
                   </div>
                 </Card>
@@ -100,6 +101,7 @@ export default function GroupFunds() {
           </div>
         )}
       </div>
+      <BottomNavigation />
     </div>
   );
 }
