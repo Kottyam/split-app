@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 
 import AppSettingsDialog from '@/components/AppSettingsDialogExtended';
 import BrandLogo from '@/components/BrandLogo';
+import BottomNavigation from '@/components/BottomNavigation';
 import HelpGuideModal from '@/components/HelpGuideModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { appCategories } from '@/lib/appNavigation';
@@ -39,7 +40,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-kharcha-cream px-3 pb-4 pt-3 sm:px-6 sm:pt-5">
+    <div className="relative min-h-screen overflow-x-hidden bg-kharcha-cream px-3 pb-24 pt-3 sm:px-6 sm:pt-5">
       <HelpGuideModal open={showHelpGuide} onOpenChange={handleDismissHelpGuide} showLanguageSelector />
 
       <header className="relative z-10 mx-auto flex max-w-4xl items-center justify-between gap-2 rounded-2xl border border-[#d7e4dc] bg-white/95 px-3 py-2.5 shadow-[0_8px_24px_rgba(24,50,75,0.08)] backdrop-blur supports-[backdrop-filter]:backdrop-blur sm:gap-3 sm:rounded-3xl sm:px-4">
@@ -65,6 +66,7 @@ export default function Home() {
       </main>
 
       <AppSettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+      <BottomNavigation />
     </div>
   );
 }
