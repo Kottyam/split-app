@@ -9,6 +9,9 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
+const ANDROID_APP_ORIGIN = "https://appassets.androidplatform.net";
+const LIVE_APP_ORIGIN = "https://kharchasplit-rlsqgpta.manus.space";
+
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
@@ -31,6 +34,29 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // The Android APK serves the UI from WebViewAssetLoader's local HTTPS
+  // origin, while its API/session remain on the live Kharcha server.
+  // Explicit CORS + credentials support is therefore required.
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin === ANDROID_APP_ORIGIN || origin === LIVE_APP_ORIGIN) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        req.headers["access-control-request-headers"] || "Content-Type"
+      );
+      res.setHeader("Vary", "Origin");
+    }
+    if (req.method === "OPTIONS") {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
