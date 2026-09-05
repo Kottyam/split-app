@@ -56,14 +56,13 @@ text = text.replace(
     'return uri != null && (APP_HOST.equalsIgnoreCase(uri.getHost()) || "appassets.androidplatform.net".equalsIgnoreCase(uri.getHost()));',
 )
 
-if 'assetLoader = new WebViewAssetLoader.Builder()' not in text:
-    text = text.replace(
-        '        webView.setWebViewClient(new AppWebViewClient());',
-        '''        assetLoader = new WebViewAssetLoader.Builder()
-                .addPathHandler("/assets/web/", new WebViewAssetLoader.AssetsPathHandler(this))
-                .build();
-        webView.setWebViewClient(new AppWebViewClient());''',
-    )
+# IMPORTANT: WebViewAssetLoader path is the URL prefix. AssetsPathHandler strips
+# this prefix before looking inside APK assets, so /assets/ must map to the
+# APK asset tree containing the top-level `web/` directory.
+text = text.replace(
+    '.addPathHandler("/assets/web/", new WebViewAssetLoader.AssetsPathHandler(this))',
+    '.addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))',
+)
 
 if 'WebResourceResponse response = assetLoader' not in text:
     text = text.replace(
@@ -88,7 +87,6 @@ new = '''            if (APP_HOST.equalsIgnoreCase(uri.getHost())
             if (isInternalUrl(uri)) return false;'''
 text = text.replace(old, new)
 
-# Keep camera permission trust compatible with the bundled asset origin too.
 text = text.replace(
     '                && APP_HOST.equalsIgnoreCase(origin.getHost());',
     '                && (APP_HOST.equalsIgnoreCase(origin.getHost()) || "appassets.androidplatform.net".equalsIgnoreCase(origin.getHost()));',
