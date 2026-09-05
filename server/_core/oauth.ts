@@ -4,9 +4,15 @@ import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
+const ANDROID_APP_URL = "https://appassets.androidplatform.net/assets/web/index.html?android=1";
+
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
+}
+
+function isAndroidWebView(req: Request) {
+  return /KharchaAndroid/i.test(req.get("user-agent") ?? "") || getQueryParam(req, "android") === "1";
 }
 
 export function registerOAuthRoutes(app: Express) {
@@ -44,7 +50,9 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      res.redirect(302, "/");
+      // Normal browser OAuth returns to the hosted web app. Android WebView
+      // must return to its local bundled origin instead of opening the hosted UI.
+      res.redirect(302, isAndroidWebView(req) ? ANDROID_APP_URL : "/");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });
