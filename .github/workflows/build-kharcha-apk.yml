@@ -66,74 +66,11 @@ jobs:
           test -s android-app/app/src/main/assets/web/index.html
 
       - name: Wire WebView to bundled web app
-        shell: python
-        run: |
-          from pathlib import Path
-          p = Path('android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java')
-          s = p.read_text()
-          s = s.replace('import androidx.webkit.WebResourceRequest;\n', '')
-          s = s.replace('import androidx.webkit.WebResourceResponse;\n', '')
-          if 'import androidx.webkit.WebViewAssetLoader;' not in s:
-              s = s.replace('import androidx.fragment.app.FragmentActivity;\n', 'import androidx.fragment.app.FragmentActivity;\nimport androidx.webkit.WebViewAssetLoader;\n')
-          if 'import android.webkit.WebResourceResponse;' not in s:
-              s = s.replace('import android.webkit.WebResourceRequest;\n', 'import android.webkit.WebResourceRequest;\nimport android.webkit.WebResourceResponse;\n')
-          if 'import java.io.ByteArrayOutputStream;' not in s:
-              s = s.replace('import java.io.InputStream;\n', 'import java.io.InputStream;\nimport java.io.ByteArrayOutputStream;\n')
-
-          # Keep all web UI files bundled in the APK, but give the top-level
-          # document the live server origin. This makes the browser session and
-          # API requests same-origin, avoiding CORS/cookie failures in WebView.
-          if 'private void loadBundledApp()' not in s:
-              s = s.replace('    private View createLogoSplash() {', '''    private void loadBundledApp() {
-        try (InputStream input = getAssets().open("web/index.html");
-             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            byte[] buffer = new byte[8192];
-            int count;
-            while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
-            String html = output.toString("UTF-8");
-            html = html.replace("./assets/", "https://appassets.androidplatform.net/assets/web/assets/");
-            html = html.replace("./manifest.json", "https://appassets.androidplatform.net/assets/web/manifest.json");
-            webView.loadDataWithBaseURL(
-                    "https://" + APP_HOST + "/",
-                    html,
-                    "text/html",
-                    "UTF-8",
-                    "https://" + APP_HOST + "/");
-        } catch (Exception error) {
-            webView.loadUrl(APP_URL);
-        }
-    }
-
-    private View createLogoSplash() {''')
-          s = s.replace('        webView.loadUrl(APP_URL);', '        loadBundledApp();')
-
-          if 'assetLoader = new WebViewAssetLoader.Builder()' not in s:
-              s = s.replace('webView.setWebViewClient(new AppWebViewClient());', 'assetLoader = new WebViewAssetLoader.Builder()\n                .addPathHandler("/assets/web/", new WebViewAssetLoader.AssetsPathHandler(this))\n                .build();\n        webView.setWebViewClient(new AppWebViewClient());')
-          if 'private WebViewAssetLoader assetLoader;' not in s:
-              s = s.replace('private WebView webView;\n', 'private WebView webView;\n    private WebViewAssetLoader assetLoader;\n')
-
-          s = s.replace('return uri != null && APP_HOST.equalsIgnoreCase(uri.getHost());', 'return uri != null && (APP_HOST.equalsIgnoreCase(uri.getHost()) || "appassets.androidplatform.net".equalsIgnoreCase(uri.getHost()));')
-          if 'WebResourceResponse response = assetLoader' not in s:
-              s = s.replace('public void onPageFinished(WebView view, String url) {', 'public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {\n            WebResourceResponse response = assetLoader == null ? null : assetLoader.shouldInterceptRequest(request.getUrl());\n            return response != null ? response : super.shouldInterceptRequest(view, request);\n        }\n\n        @Override\n        public void onPageFinished(WebView view, String url) {')
-
-          # OAuth completes on the live server and redirects to its root. Catch
-          # only that root navigation and return to the bundled UI; leave API,
-          # OAuth and other live-server requests untouched.
-          marker = '            if (isInternalUrl(uri)) return false;'
-          replacement = '''            if (APP_HOST.equalsIgnoreCase(uri.getHost())
-                    && (uri.getPath() == null || "/".equals(uri.getPath()))) {
-                loadBundledApp();
-                return true;
-            }
-            if (isInternalUrl(uri)) return false;'''
-          s = s.replace(marker, replacement)
-          if '&& (APP_HOST.equalsIgnoreCase(origin.getHost()) || "appassets.androidplatform.net".equalsIgnoreCase(origin.getHost()))' not in s:
-              s = s.replace('&& APP_HOST.equalsIgnoreCase(origin.getHost());', '&& (APP_HOST.equalsIgnoreCase(origin.getHost()) || "appassets.androidplatform.net".equalsIgnoreCase(origin.getHost()));')
-          p.write_text(s)
+        run: python3 scripts/android_webview_patch.py
 
       - name: Add AndroidX WebKit support
-        shell: python
         run: |
+          python3 - <<'PY'
           from pathlib import Path
           p = Path('android-app/app/build.gradle')
           s = p.read_text()
@@ -142,12 +79,11 @@ jobs:
               marker = "        implementation 'androidx.biometric:biometric:1.1.0'\n"
               s = s.replace(marker, marker + dep)
           p.write_text(s)
+          PY
 
-      - name: Verify bundled app is local and API points to live server
-        shell: bash
+      - name: Verify bundled app
         run: |
           grep -q 'loadDataWithBaseURL' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
-          grep -q 'appassets.androidplatform.net/assets/web/index.html' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java || true
           test -s android-app/app/src/main/assets/web/index.html
           ! grep -q 'kharchasplit-rlsqgpta.manus.space' android-app/app/src/main/assets/web/index.html
 
