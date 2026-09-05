@@ -69,17 +69,7 @@ jobs:
         run: python3 scripts/android_webview_patch.py
 
       - name: Add AndroidX WebKit support
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('android-app/app/build.gradle')
-          s = p.read_text()
-          dep = "        implementation 'androidx.webkit:webkit:1.12.1'\n"
-          if 'androidx.webkit:webkit:' not in s:
-              marker = "        implementation 'androidx.biometric:biometric:1.1.0'\n"
-              s = s.replace(marker, marker + dep)
-          p.write_text(s)
-          PY
+        run: python3 scripts/android_gradle_patch.py
 
       - name: Verify bundled app
         run: |
