@@ -60,12 +60,16 @@ if 'private void loadBundledApp()' not in text:
     }
 
     private void verifyBundledAppOrFallback() {
-        if (bundledAppFallbackUsed || webView == null || pageReady) return;
+        if (bundledAppFallbackUsed || webView == null) return;
         webView.evaluateJavascript(
                 "(function(){var r=document.getElementById('root');return r && r.children.length > 0 ? 'ready' : 'empty';})()",
                 value -> {
-                    if (bundledAppFallbackUsed || pageReady || webView == null) return;
-                    if (value == null || !value.contains("ready")) fallbackToHostedApp();
+                    if (bundledAppFallbackUsed || webView == null) return;
+                    if (value != null && value.contains("ready")) {
+                        revealLandingPage();
+                    } else {
+                        fallbackToHostedApp();
+                    }
                 });
     }
 
@@ -96,6 +100,19 @@ if 'WebResourceResponse response = assetLoader' not in text:
         @Override
         public void onPageFinished(WebView view, String url) {''',
     )
+
+text = text.replace(
+    '            revealLandingPage();\n        }\n\n        @Override\n        public void onReceivedError',
+    '''            if (bundledAppFallbackUsed || !url.startsWith("https://" + APP_HOST)) {
+                revealLandingPage();
+            } else {
+                handler.postDelayed(this::verifyBundledAppOrFallback, 250L);
+            }
+        }
+
+        @Override
+        public void onReceivedError''',
+)
 
 old = '            if (isInternalUrl(uri)) return false;'
 new = '''            if (APP_HOST.equalsIgnoreCase(uri.getHost())
