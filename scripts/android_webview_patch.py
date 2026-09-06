@@ -106,7 +106,7 @@ text = text.replace(
     '''            if (bundledAppFallbackUsed || !url.startsWith("https://" + APP_HOST)) {
                 revealLandingPage();
             } else {
-                handler.postDelayed(this::verifyBundledAppOrFallback, 250L);
+                handler.postDelayed(MainActivity.this::verifyBundledAppOrFallback, 250L);
             }
         }
 
