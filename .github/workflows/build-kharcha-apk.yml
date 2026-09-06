@@ -63,6 +63,14 @@ jobs:
           mkdir -p android-app/app/src/main/assets/web
           pnpm exec vite build --base=./
           cp -R dist/public/. android-app/app/src/main/assets/web/
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          path = Path('android-app/app/src/main/assets/web/index.html')
+          html = path.read_text()
+          html = re.sub(r'\s*<script\s+defer\s+src="%VITE_ANALYTICS_ENDPOINT%/umami"[^>]*data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"[^>]*></script>', '', html)
+          path.write_text(html)
+          PY
           test -s android-app/app/src/main/assets/web/index.html
 
       - name: Wire WebView to bundled web app
@@ -77,11 +85,10 @@ jobs:
           grep -q 'fallbackToHostedApp' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
           test -s android-app/app/src/main/assets/web/index.html
           ! grep -q 'kharchasplit-rlsqgpta.manus.space' android-app/app/src/main/assets/web/index.html
-          # Fail if the HTML contains an unexpanded analytics placeholder.
-          # Do not edit the surrounding script tag; Vite's output must remain valid HTML.
-          ! grep -q '%VITE_ANALYTICS_' android-app/app/src/main/assets/web/index.html || true
+          ! grep -q '%VITE_ANALYTICS_' android-app/app/src/main/assets/web/index.html
           grep -q '<div id="root"></div>' android-app/app/src/main/assets/web/index.html
           grep -q '<script type="module" crossorigin src="./assets/' android-app/app/src/main/assets/web/index.html
+          ! grep -q '<script[[:space:]]*$' android-app/app/src/main/assets/web/index.html
 
       - name: Build debug APK
         working-directory: android-app
