@@ -19,12 +19,9 @@ text = text.replace(
 if 'private WebViewAssetLoader assetLoader;' not in text:
     text = text.replace(
         '    private WebView webView;\n',
-        '    private WebView webView;\n    private WebViewAssetLoader assetLoader;\n',
+        '    private WebView webView;\n    private WebViewAssetLoader assetLoader;\n    private boolean bundledAppFallbackUsed;\n',
     )
 
-# The packaged web build lives under APK assets/web/. Map the appassets URL
-# prefix /assets/ directly to that APK asset tree, so a request for
-# /assets/web/assets/index-*.js resolves to assets/web/assets/index-*.js.
 asset_loader_init = '''        assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
@@ -56,9 +53,26 @@ if 'private void loadBundledApp()' not in text:
                     "text/html",
                     "UTF-8",
                     "https://" + APP_HOST + "/");
+            handler.postDelayed(this::verifyBundledAppOrFallback, 2200L);
         } catch (Exception error) {
-            showNetworkError();
+            fallbackToHostedApp();
         }
+    }
+
+    private void verifyBundledAppOrFallback() {
+        if (bundledAppFallbackUsed || webView == null || pageReady) return;
+        webView.evaluateJavascript(
+                "(function(){var r=document.getElementById('root');return r && r.children.length > 0 ? 'ready' : 'empty';})()",
+                value -> {
+                    if (bundledAppFallbackUsed || pageReady || webView == null) return;
+                    if (value == null || !value.contains("ready")) fallbackToHostedApp();
+                });
+    }
+
+    private void fallbackToHostedApp() {
+        if (bundledAppFallbackUsed || webView == null) return;
+        bundledAppFallbackUsed = true;
+        webView.loadUrl(APP_URL);
     }
 
 '''
