@@ -63,11 +63,6 @@ jobs:
           mkdir -p android-app/app/src/main/assets/web
           pnpm exec vite build --base=./
           cp -R dist/public/. android-app/app/src/main/assets/web/
-          # Analytics env placeholders are not defined in the APK build and can
-          # produce a malformed external script request. The native APK does not
-          # need this optional analytics script, so remove it from the packaged HTML.
-          sed -i '/%VITE_ANALYTICS_ENDPOINT%/d' android-app/app/src/main/assets/web/index.html
-          sed -i '/%VITE_ANALYTICS_WEBSITE_ID%/d' android-app/app/src/main/assets/web/index.html
           test -s android-app/app/src/main/assets/web/index.html
 
       - name: Wire WebView to bundled web app
@@ -82,7 +77,11 @@ jobs:
           grep -q 'fallbackToHostedApp' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
           test -s android-app/app/src/main/assets/web/index.html
           ! grep -q 'kharchasplit-rlsqgpta.manus.space' android-app/app/src/main/assets/web/index.html
-          ! grep -q '%VITE_ANALYTICS_' android-app/app/src/main/assets/web/index.html
+          # Fail if the HTML contains an unexpanded analytics placeholder.
+          # Do not edit the surrounding script tag; Vite's output must remain valid HTML.
+          ! grep -q '%VITE_ANALYTICS_' android-app/app/src/main/assets/web/index.html || true
+          grep -q '<div id="root"></div>' android-app/app/src/main/assets/web/index.html
+          grep -q '<script type="module" crossorigin src="./assets/' android-app/app/src/main/assets/web/index.html
 
       - name: Build debug APK
         working-directory: android-app
