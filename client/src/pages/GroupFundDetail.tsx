@@ -18,8 +18,8 @@ import { nanoid } from 'nanoid';
 import { toast } from 'sonner';
 import { pickMultipleContacts, formatPhoneNumber } from '@/lib/contacts';
 import { appendUniqueMembers } from '@/lib/memberImport';
-import { generateGroupFundWhatsAppPaymentUrl, generateGroupFundWhatsAppReminderUrl, generateGroupFundWhatsAppThankYouUrl, shareGroupFundThankYou } from '@/groupFund/payment';
-import { getBulkMessageKind, getBulkMessageRecipients, getNextBulkMessageRecipientId, isBulkMessageQueueComplete, toggleBulkMessageMember } from '@/groupFund/bulkMessaging';
+import { generateGroupFundWhatsAppPaymentUrl, generateGroupFundWhatsAppReminderUrl, generateGroupFundWhatsAppThankYouUrl, generateGroupFundThankYouMessage, generateWhatsAppMessageUrl, normalizeWhatsAppNumber } from '@/groupFund/payment';
+import { getBulkMessageCandidates, getBulkMessageDuplicateNumberIds, getBulkMessageKind, getBulkMessageMissingNumberIds, getBulkMessageRecipients, getNextBulkMessageRecipientId, isBulkMessageQueueComplete, toggleBulkMessageMember } from '@/groupFund/bulkMessaging';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useDeleteConfirmation } from '@/contexts/DeleteConfirmationContext';
 import EditSyncShareDialog from '@/components/EditSyncShareDialog';
@@ -64,6 +64,9 @@ export default function GroupFundDetail() {
   const [bulkMessageQueue, setBulkMessageQueue] = useState<string[]>([]);
   const [bulkMessageQueueIndex, setBulkMessageQueueIndex] = useState(0);
   const [bulkMessageOpenedCount, setBulkMessageOpenedCount] = useState(0);
+  const [bulkMessageText, setBulkMessageText] = useState('');
+  const [bulkMessageStatuses, setBulkMessageStatuses] = useState<Record<string, 'Ready' | 'Opened ✓' | 'Failed' | 'Missing Number' | 'Duplicate Number'>>({});
+  const [thankYouOpenedByMember, setThankYouOpenedByMember] = useState<Record<string, boolean>>({});
   const bulkMessageAutoAdvanceAt = useRef(0);
 
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -300,17 +303,24 @@ export default function GroupFundDetail() {
     setShowBulkQrModal(true);
   };
 
-  const getBulkMessageMembers = () => getBulkMessageRecipients(fund.members, 'all');
+  const getBulkMessageMembers = () => getBulkMessageCandidates(fund.members, 'all');
 
   const handleOpenBulkMessageDialog = () => {
-    setBulkMessageSelectedIds(getBulkMessageMembers().map(member => member.id));
+    const candidates = getBulkMessageMembers();
+    const missing = new Set(getBulkMessageMissingNumberIds(candidates, 'all'));
+    const duplicates = new Set(getBulkMessageDuplicateNumberIds(candidates, 'all'));
+    setBulkMessageSelectedIds(getBulkMessageRecipients(candidates, 'all').map(member => member.id));
     setBulkMessageQueue([]);
     setBulkMessageQueueIndex(0);
     setBulkMessageOpenedCount(0);
+    setBulkMessageText('');
+    setBulkMessageStatuses(Object.fromEntries(candidates.map(member => [member.id, missing.has(member.id) ? 'Missing Number' : duplicates.has(member.id) ? 'Duplicate Number' : 'Ready'])));
     setShowBulkMessageModal(true);
   };
 
   const buildBulkMessageUrl = (member: GroupFundMember) => {
+    const customMessage = bulkMessageText.trim();
+    if (customMessage) return generateWhatsAppMessageUrl(member.mobileNumber, customMessage) ?? '';
     const upiIdConfig = fund.paymentConfig?.upiId?.trim();
     const savedAmount = getSavedCollectionAmount(member);
     const mobileNumber = member.mobileNumber!.trim();
@@ -361,15 +371,16 @@ export default function GroupFundDetail() {
   };
 
   const openQueuedBulkMessage = (member: GroupFundMember) => {
-    const opened = window.open(buildBulkMessageUrl(member), '_blank', 'noopener,noreferrer');
-    if (!opened) {
-      toast.error(t('auditPopupBlocked' as any));
-      return false;
-    }
+    const url = buildBulkMessageUrl(member);
+    if (!url) { setBulkMessageStatuses(current => ({ ...current, [member.id]: 'Missing Number' })); return false; }
+    const opened = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!opened) { setBulkMessageStatuses(current => ({ ...current, [member.id]: 'Failed' })); toast.error(t('auditPopupBlocked' as any)); return false; }
+    setBulkMessageStatuses(current => ({ ...current, [member.id]: 'Opened ✓' }));
     return true;
   };
 
   const beginBulkMessageQueue = (memberIds: string[]) => {
+    if (!bulkMessageText.trim()) { toast.error(t('fillRequired')); return; }
     const upiIdConfig = fund.paymentConfig?.upiId?.trim();
     const recipients = getBulkMessageRecipients(fund.members, 'selection', memberIds);
     if (recipients.length === 0) {
@@ -474,7 +485,7 @@ export default function GroupFundDetail() {
       ...fund,
       contributions: [newContribution, ...fund.contributions],
       members: fund.members.map(item => item.id === selectedMemberForCollection.id
-        ? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt) }
+        ? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt), savedCollectionAmount: undefined }
         : item),
     }, t('auditCashCollectionActivity' as any, { amount: amt, name: selectedMemberForCollection.name, period: selectedPeriod }));
 
@@ -525,7 +536,7 @@ export default function GroupFundDetail() {
       ...fund,
       contributions: [newContribution, ...fund.contributions],
       members: fund.members.map(item => item.id === selectedMemberForCollection.id
-        ? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt) }
+        ? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt), savedCollectionAmount: undefined }
         : item),
     }, t('auditUpiCollectionActivity' as any, { amount: amt, name: selectedMemberForCollection.name, period: selectedPeriod }));
 
@@ -571,7 +582,7 @@ export default function GroupFundDetail() {
       ...fund,
       contributions: [newContribution, ...fund.contributions],
       members: fund.members.map(item => item.id === m.id
-        ? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt) }
+        ? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt), savedCollectionAmount: undefined }
         : item),
     }, t('auditBulkCollectionActivity' as any, { amount: amt, name: m.name, period: selectedPeriod }));
 
@@ -691,20 +702,14 @@ export default function GroupFundDetail() {
     handleSendWhatsAppReminder(m);
   };
 
-  const handleSendThankYou = async (m: GroupFundMember, amount: number) => {
-    const result = await shareGroupFundThankYou({
-      fundName: fund.name,
-      memberName: m.name,
-      amount,
-      period: selectedPeriod,
-      title: t('auditSendThankYou' as any),
-      message: t('auditThankYouMessage' as any, { name: m.name, amount: amount.toLocaleString('en-IN'), fund: fund.name, period: selectedPeriod }),
-    });
-    if (result === 'failed') {
-      toast.error(t('auditCopyFailed' as any));
-      return;
-    }
-    toast.success(t('auditThankYouOpened' as any, { name: m.name }));
+  const handleSendThankYou = (m: GroupFundMember, amount: number) => {
+    const message = generateGroupFundThankYouMessage({ fundName: fund.name, memberName: m.name, amount, period: selectedPeriod });
+    const url = generateWhatsAppMessageUrl(m.mobileNumber, message);
+    if (!normalizeWhatsAppNumber(m.mobileNumber) || !url) { toast.error(t('auditNoPhoneEmail' as any)); return; }
+    const opened = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!opened) { toast.error(t('auditPopupBlocked' as any)); return; }
+    setThankYouOpenedByMember(current => ({ ...current, [m.id]: true }));
+    toast.success('WhatsApp opened');
   };
 
   const handleCloseSelectedCollection = () => {
@@ -1166,8 +1171,8 @@ export default function GroupFundDetail() {
                           </span>
                         </div>
                         <p className="text-xs text-kharcha-navy font-medium mt-0.5">
-                          {t('auditPaid' as any)}: <span className="font-black text-[#16834b]">₹{paid.toLocaleString('en-IN')}</span> {!isCollected && expected > 0 ? `/ ${t('auditExpected' as any)}: ₹${expected}` : ''}
-                          {lastPayment && <span className="text-gray-600 ml-1">({t('auditPaymentMethodOnDate' as any, { method: groupFundOptionLabel(t, lastPayment.method), date: new Date(lastPayment.date).toLocaleDateString() })})</span>}
+                          {isCollected ? <><span>{t('auditPaid' as any)}:</span> <span className="font-black text-[#16834b]">₹{paid.toLocaleString('en-IN')}</span></> : <><span>Expected Amount:</span> <span className="font-black text-[#e87817]">₹{expected.toLocaleString('en-IN')}</span></>}
+                          {lastPayment && isCollected && <span className="text-gray-600 ml-1">({t('auditPaymentMethodOnDate' as any, { method: groupFundOptionLabel(t, lastPayment.method), date: new Date(lastPayment.date).toLocaleDateString() })})</span>}
                         </p>
                       </div>
 
@@ -1177,9 +1182,9 @@ export default function GroupFundDetail() {
                           variant="outline"
                           onClick={() => handleSendIndividualCollectionMessage(m, isCollected, paid)}
                           className="border border-[#d7e4dc] bg-white text-kharcha-navy font-black h-10 px-3 text-xs rounded-xl shadow-sm hover:bg-green-50"
-                          title={t((isCollected ? 'auditSendThankYou' : (getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder')) as any)}
+                          title={isCollected ? 'Open WhatsApp thank-you again' : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}
                         >
-                          <MessageSquare size={14} className="mr-1 text-[#16834b]" /> {t((isCollected ? 'auditSendThankYou' : (getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder')) as any)}
+                          <MessageSquare size={14} className="mr-1 text-[#16834b]" /> {isCollected ? (thankYouOpenedByMember[m.id] ? 'Opened ✓' : 'Thank You') : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}
                         </Button>
 
                         {isCollected ? (
@@ -1619,7 +1624,7 @@ export default function GroupFundDetail() {
 
               <div className="space-y-4 my-2">
                 <div className="rounded-xl border border-[#d7e4dc] bg-green-50 p-3 shadow-sm">
-                  <Label className="font-black text-kharcha-navy">Save Amount & Share Link</Label>
+                  <Label className="font-black text-kharcha-navy">Save Amount</Label>
                   <div className="mt-2 flex gap-2">
                     <Input
                       type="number"
@@ -1815,6 +1820,11 @@ export default function GroupFundDetail() {
 
           {bulkMessageQueue.length === 0 ? (
             <>
+              <div className="border border-[#d7e4dc] rounded-xl p-3 bg-gray-50 space-y-2">
+                <p className="text-sm font-black text-kharcha-navy">Write Message</p>
+                <textarea value={bulkMessageText} onChange={event => setBulkMessageText(event.target.value)} placeholder="Write the WhatsApp message…" rows={3} className="w-full resize-none rounded-xl border border-[#d7e4dc] bg-white p-3 text-sm font-medium text-kharcha-navy outline-none focus:ring-2 focus:ring-[#16834b]" />
+              </div>
+
               <div className="flex min-w-0 flex-col gap-3 border border-[#d7e4dc] rounded-xl p-3 bg-gray-50 sm:flex-row sm:items-center sm:justify-between">
                 <p className="min-w-0 text-sm font-black text-kharcha-navy sm:flex-1">{t('auditSelectMembersForBulkMessage' as any)}</p>
                 <div className="flex w-full min-w-0 flex-wrap gap-2 sm:w-auto sm:shrink-0">
@@ -1863,6 +1873,7 @@ export default function GroupFundDetail() {
                           <span className="block truncate text-sm font-black text-kharcha-navy">{member.name}</span>
                           <span className="block truncate text-xs font-bold text-gray-600">{member.mobileNumber?.trim() || t('auditNoPhoneEmail' as any)}</span>
                         </span>
+                        <span className="shrink-0 text-[10px] font-black uppercase tracking-wide text-gray-600">{bulkMessageStatuses[member.id] ?? 'Ready'}</span>
                       </label>
                     );
                   })
