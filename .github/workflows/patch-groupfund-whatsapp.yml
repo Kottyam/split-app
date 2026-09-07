@@ -19,93 +19,38 @@ jobs:
         run: |
           from pathlib import Path
           import re
-
           path = Path('client/src/pages/GroupFundDetail.tsx')
           text = path.read_text()
-
           def replace_once(old, new, label):
               global text
               if old not in text:
                   raise SystemExit(f'Missing patch target: {label}')
               text = text.replace(old, new, 1)
-
-          replace_once(
-              "import { generateGroupFundWhatsAppPaymentUrl, generateGroupFundWhatsAppReminderUrl, generateGroupFundWhatsAppThankYouUrl, shareGroupFundThankYou } from '@/groupFund/payment';",
-              "import { generateGroupFundWhatsAppPaymentUrl, generateGroupFundWhatsAppReminderUrl, generateGroupFundWhatsAppThankYouUrl, generateWhatsAppMessageUrl, normalizeWhatsAppNumber } from '@/groupFund/payment';",
-              'payment imports',
-          )
-          replace_once(
-              "import { getBulkMessageKind, getBulkMessageRecipients, getNextBulkMessageRecipientId, isBulkMessageQueueComplete, toggleBulkMessageMember } from '@/groupFund/bulkMessaging';",
-              "import { getBulkMessageCandidates, getBulkMessageDuplicateNumberIds, getBulkMessageKind, getBulkMessageMissingNumberIds, getBulkMessageRecipients, getNextBulkMessageRecipientId, isBulkMessageQueueComplete, toggleBulkMessageMember } from '@/groupFund/bulkMessaging';",
-              'bulk imports',
-          )
-          replace_once(
-              "  const [bulkMessageOpenedCount, setBulkMessageOpenedCount] = useState(0);\n  const bulkMessageAutoAdvanceAt = useRef(0);",
-              "  const [bulkMessageOpenedCount, setBulkMessageOpenedCount] = useState(0);\n  const [bulkMessageText, setBulkMessageText] = useState('');\n  const [bulkMessageStatuses, setBulkMessageStatuses] = useState<Record<string, 'Ready' | 'Opened ✓' | 'Failed' | 'Missing Number' | 'Duplicate Number'>>({});\n  const [thankYouOpenedByMember, setThankYouOpenedByMember] = useState<Record<string, boolean>>({});\n  const bulkMessageAutoAdvanceAt = useRef(0);",
-              'message state',
-          )
-          replace_once(
-              "  const getBulkMessageMembers = () => getBulkMessageRecipients(fund.members, 'all');",
-              "  const getBulkMessageMembers = () => getBulkMessageCandidates(fund.members, 'all');",
-              'bulk candidates',
-          )
-          replace_once(
-              "    setBulkMessageSelectedIds(getBulkMessageMembers().map(member => member.id));\n    setBulkMessageQueue([]);\n    setBulkMessageQueueIndex(0);\n    setBulkMessageOpenedCount(0);\n    setShowBulkMessageModal(true);",
-              "    const candidates = getBulkMessageMembers();\n    const missing = new Set(getBulkMessageMissingNumberIds(candidates, 'all'));\n    const duplicates = new Set(getBulkMessageDuplicateNumberIds(candidates, 'all'));\n    setBulkMessageSelectedIds(getBulkMessageRecipients(candidates, 'all').map(member => member.id));\n    setBulkMessageQueue([]);\n    setBulkMessageQueueIndex(0);\n    setBulkMessageOpenedCount(0);\n    setBulkMessageText('');\n    setBulkMessageStatuses(Object.fromEntries(candidates.map(member => [member.id, missing.has(member.id) ? 'Missing Number' : duplicates.has(member.id) ? 'Duplicate Number' : 'Ready'])));\n    setShowBulkMessageModal(true);",
-              'bulk dialog open',
-          )
-          replace_once(
-              "  const buildBulkMessageUrl = (member: GroupFundMember) => {\n    const upiIdConfig = fund.paymentConfig?.upiId?.trim();",
-              "  const buildBulkMessageUrl = (member: GroupFundMember) => {\n    const customMessage = bulkMessageText.trim();\n    if (customMessage) return generateWhatsAppMessageUrl(member.mobileNumber, customMessage) ?? '';\n    const upiIdConfig = fund.paymentConfig?.upiId?.trim();",
-              'bulk custom message',
-          )
-          replace_once(
-              "  const openQueuedBulkMessage = (member: GroupFundMember) => {\n    const opened = window.open(buildBulkMessageUrl(member), '_blank', 'noopener,noreferrer');\n    if (!opened) {\n      toast.error(t('auditPopupBlocked' as any));\n      return false;\n    }\n    return true;\n  };",
-              "  const openQueuedBulkMessage = (member: GroupFundMember) => {\n    const url = buildBulkMessageUrl(member);\n    if (!url) {\n      setBulkMessageStatuses(current => ({ ...current, [member.id]: 'Missing Number' }));\n      return false;\n    }\n    const opened = window.open(url, '_blank', 'noopener,noreferrer');\n    if (!opened) {\n      setBulkMessageStatuses(current => ({ ...current, [member.id]: 'Failed' }));\n      toast.error(t('auditPopupBlocked' as any));\n      return false;\n    }\n    setBulkMessageStatuses(current => ({ ...current, [member.id]: 'Opened ✓' }));\n    return true;\n  };",
-              'bulk open status',
-          )
+          replace_once("import { generateGroupFundWhatsAppPaymentUrl, generateGroupFundWhatsAppReminderUrl, generateGroupFundWhatsAppThankYouUrl, shareGroupFundThankYou } from '@/groupFund/payment';", "import { generateGroupFundWhatsAppPaymentUrl, generateGroupFundWhatsAppReminderUrl, generateGroupFundWhatsAppThankYouUrl, generateGroupFundThankYouMessage, generateWhatsAppMessageUrl, normalizeWhatsAppNumber } from '@/groupFund/payment';", 'payment imports')
+          replace_once("import { getBulkMessageKind, getBulkMessageRecipients, getNextBulkMessageRecipientId, isBulkMessageQueueComplete, toggleBulkMessageMember } from '@/groupFund/bulkMessaging';", "import { getBulkMessageCandidates, getBulkMessageDuplicateNumberIds, getBulkMessageKind, getBulkMessageMissingNumberIds, getBulkMessageRecipients, getNextBulkMessageRecipientId, isBulkMessageQueueComplete, toggleBulkMessageMember } from '@/groupFund/bulkMessaging';", 'bulk imports')
+          replace_once("  const [bulkMessageOpenedCount, setBulkMessageOpenedCount] = useState(0);\n  const bulkMessageAutoAdvanceAt = useRef(0);", "  const [bulkMessageOpenedCount, setBulkMessageOpenedCount] = useState(0);\n  const [bulkMessageText, setBulkMessageText] = useState('');\n  const [bulkMessageStatuses, setBulkMessageStatuses] = useState<Record<string, 'Ready' | 'Opened ✓' | 'Failed' | 'Missing Number' | 'Duplicate Number'>>({});\n  const [thankYouOpenedByMember, setThankYouOpenedByMember] = useState<Record<string, boolean>>({});\n  const bulkMessageAutoAdvanceAt = useRef(0);", 'message state')
+          replace_once("  const getBulkMessageMembers = () => getBulkMessageRecipients(fund.members, 'all');", "  const getBulkMessageMembers = () => getBulkMessageCandidates(fund.members, 'all');", 'bulk candidates')
+          replace_once("    setBulkMessageSelectedIds(getBulkMessageMembers().map(member => member.id));\n    setBulkMessageQueue([]);\n    setBulkMessageQueueIndex(0);\n    setBulkMessageOpenedCount(0);\n    setShowBulkMessageModal(true);", "    const candidates = getBulkMessageMembers();\n    const missing = new Set(getBulkMessageMissingNumberIds(candidates, 'all'));\n    const duplicates = new Set(getBulkMessageDuplicateNumberIds(candidates, 'all'));\n    setBulkMessageSelectedIds(getBulkMessageRecipients(candidates, 'all').map(member => member.id));\n    setBulkMessageQueue([]);\n    setBulkMessageQueueIndex(0);\n    setBulkMessageOpenedCount(0);\n    setBulkMessageText('');\n    setBulkMessageStatuses(Object.fromEntries(candidates.map(member => [member.id, missing.has(member.id) ? 'Missing Number' : duplicates.has(member.id) ? 'Duplicate Number' : 'Ready'])));\n    setShowBulkMessageModal(true);", 'bulk dialog open')
+          replace_once("  const buildBulkMessageUrl = (member: GroupFundMember) => {\n    const upiIdConfig = fund.paymentConfig?.upiId?.trim();", "  const buildBulkMessageUrl = (member: GroupFundMember) => {\n    const customMessage = bulkMessageText.trim();\n    if (customMessage) return generateWhatsAppMessageUrl(member.mobileNumber, customMessage) ?? '';\n    const upiIdConfig = fund.paymentConfig?.upiId?.trim();", 'bulk custom message')
+          replace_once("  const openQueuedBulkMessage = (member: GroupFundMember) => {\n    const opened = window.open(buildBulkMessageUrl(member), '_blank', 'noopener,noreferrer');\n    if (!opened) {\n      toast.error(t('auditPopupBlocked' as any));\n      return false;\n    }\n    return true;\n  };", "  const openQueuedBulkMessage = (member: GroupFundMember) => {\n    const url = buildBulkMessageUrl(member);\n    if (!url) {\n      setBulkMessageStatuses(current => ({ ...current, [member.id]: 'Missing Number' }));\n      return false;\n    }\n    const opened = window.open(url, '_blank', 'noopener,noreferrer');\n    if (!opened) {\n      setBulkMessageStatuses(current => ({ ...current, [member.id]: 'Failed' }));\n      toast.error(t('auditPopupBlocked' as any));\n      return false;\n    }\n    setBulkMessageStatuses(current => ({ ...current, [member.id]: 'Opened ✓' }));\n    return true;\n  };", 'bulk open status')
           old_thank = re.search(r"  const handleSendThankYou = async \(m: GroupFundMember, amount: number\) => \{.*?\n  \};\n\n  const handleCloseSelectedCollection", text, re.S)
-          if not old_thank:
-              raise SystemExit('Missing patch target: Thank You handler')
-          new_thank = """  const handleSendThankYou = (m: GroupFundMember, amount: number) => {\n    const url = generateGroupFundWhatsAppThankYouUrl({\n      fundName: fund.name,\n      memberName: m.name,\n      amount,\n      period: selectedPeriod,\n      mobileNumber: m.mobileNumber,\n      message: t('auditThankYouMessage' as any, { name: m.name, amount: amount.toLocaleString('en-IN'), fund: fund.name, period: selectedPeriod }),\n    });\n    if (!normalizeWhatsAppNumber(m.mobileNumber)) {\n      toast.error(t('auditNoPhoneEmail' as any));\n      return;\n    }\n    const opened = window.open(url, '_blank', 'noopener,noreferrer');\n    if (!opened) {\n      toast.error(t('auditPopupBlocked' as any));\n      return;\n    }\n    setThankYouOpenedByMember(current => ({ ...current, [m.id]: true }));\n    toast.success(t('auditThankYouOpened' as any, { name: m.name }));\n  };\n\n  const handleCloseSelectedCollection"""
+          if not old_thank: raise SystemExit('Missing patch target: Thank You handler')
+          new_thank = """  const handleSendThankYou = (m: GroupFundMember, amount: number) => {\n    const message = generateGroupFundThankYouMessage({ fundName: fund.name, memberName: m.name, amount, period: selectedPeriod });\n    const url = generateWhatsAppMessageUrl(m.mobileNumber, message);\n    if (!normalizeWhatsAppNumber(m.mobileNumber) || !url) {\n      toast.error(t('auditNoPhoneEmail' as any));\n      return;\n    }\n    const opened = window.open(url, '_blank', 'noopener,noreferrer');\n    if (!opened) {\n      toast.error(t('auditPopupBlocked' as any));\n      return;\n    }\n    setThankYouOpenedByMember(current => ({ ...current, [m.id]: true }));\n    toast.success('WhatsApp opened');\n  };\n\n  const handleCloseSelectedCollection"""
           text = text[:old_thank.start()] + new_thank + text[old_thank.end():]
           old_paid = """                        <p className=\"text-xs text-kharcha-navy font-medium mt-0.5\">\n                          {t('auditPaid' as any)}: <span className=\"font-black text-[#16834b]\">₹{paid.toLocaleString('en-IN')}</span> {!isCollected && expected > 0 ? `/ ${t('auditExpected' as any)}: ₹${expected}` : ''}\n                          {lastPayment && <span className=\"text-gray-600 ml-1\">({t('auditPaymentMethodOnDate' as any, { method: groupFundOptionLabel(t, lastPayment.method), date: new Date(lastPayment.date).toLocaleDateString() })})</span>}\n                        </p>"""
-          new_paid = """                        <p className=\"text-xs text-kharcha-navy font-medium mt-0.5\">\n                          {isCollected\n                            ? <><span>{t('auditPaid' as any)}:</span> <span className=\"font-black text-[#16834b]\">₹{paid.toLocaleString('en-IN')}</span></>\n                            : <><span>{'Expected Amount'}:</span> <span className=\"font-black text-[#e87817]\">₹{expected.toLocaleString('en-IN')}</span></>}\n                          {lastPayment && isCollected && <span className=\"text-gray-600 ml-1\">({t('auditPaymentMethodOnDate' as any, { method: groupFundOptionLabel(t, lastPayment.method), date: new Date(lastPayment.date).toLocaleDateString() })})</span>}\n                        </p>"""
+          new_paid = """                        <p className=\"text-xs text-kharcha-navy font-medium mt-0.5\">\n                          {isCollected ? <><span>{t('auditPaid' as any)}:</span> <span className=\"font-black text-[#16834b]\">₹{paid.toLocaleString('en-IN')}</span></> : <><span>Expected Amount:</span> <span className=\"font-black text-[#e87817]\">₹{expected.toLocaleString('en-IN')}</span></>}\n                          {lastPayment && isCollected && <span className=\"text-gray-600 ml-1\">({t('auditPaymentMethodOnDate' as any, { method: groupFundOptionLabel(t, lastPayment.method), date: new Date(lastPayment.date).toLocaleDateString() })})</span>}\n                        </p>"""
           replace_once(old_paid, new_paid, 'collection amount transition')
-          old_button = """                          <MessageSquare size={14} className=\"mr-1 text-[#16834b]\" /> {t((isCollected ? 'auditSendThankYou' : (getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder')) as any)}"""
-          new_button = """                          <MessageSquare size={14} className=\"mr-1 text-[#16834b]\" /> {isCollected ? (thankYouOpenedByMember[m.id] ? 'Opened ✓' : 'Thank You') : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}"""
-          replace_once(old_button, new_button, 'single thank-you button label')
-          old_title = """                          title={t((isCollected ? 'auditSendThankYou' : (getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder')) as any)}"""
-          new_title = """                          title={isCollected ? 'Open WhatsApp thank-you again' : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}"""
-          replace_once(old_title, new_title, 'thank-you title')
-          replace_once(
-              "                  <Label className=\"font-black text-kharcha-navy\">Save Amount & Share Link</Label>",
-              "                  <Label className=\"font-black text-kharcha-navy\">Save Amount</Label>",
-              'save amount label',
-          )
-          text = text.replace(
-              "? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt) }",
-              "? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt), savedCollectionAmount: undefined }",
-          )
-          replace_once(
-              """              <div className=\"flex min-w-0 flex-col gap-3 border border-[#d7e4dc] rounded-xl p-3 bg-gray-50 sm:flex-row sm:items-center sm:justify-between\">\n                <p className=\"min-w-0 text-sm font-black text-kharcha-navy sm:flex-1\">{t('auditSelectMembersForBulkMessage' as any)}</p>""",
-              """              <div className=\"border border-[#d7e4dc] rounded-xl p-3 bg-gray-50 space-y-2\">\n                <p className=\"text-sm font-black text-kharcha-navy\">Write Message</p>\n                <textarea\n                  value={bulkMessageText}\n                  onChange={event => setBulkMessageText(event.target.value)}\n                  placeholder=\"Write the WhatsApp message…\"\n                  rows={3}\n                  className=\"w-full resize-none rounded-xl border border-[#d7e4dc] bg-white p-3 text-sm font-medium text-kharcha-navy outline-none focus:ring-2 focus:ring-[#16834b]\"\n                />\n              </div>\n\n              <div className=\"flex min-w-0 flex-col gap-3 border border-[#d7e4dc] rounded-xl p-3 bg-gray-50 sm:flex-row sm:items-center sm:justify-between\">\n                <p className=\"min-w-0 text-sm font-black text-kharcha-navy sm:flex-1\">{t('auditSelectMembersForBulkMessage' as any)}</p>""",
-              'bulk message composer',
-          )
+          replace_once("                          <MessageSquare size={14} className=\"mr-1 text-[#16834b]\" /> {t((isCollected ? 'auditSendThankYou' : (getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder')) as any)}", "                          <MessageSquare size={14} className=\"mr-1 text-[#16834b]\" /> {isCollected ? (thankYouOpenedByMember[m.id] ? 'Opened ✓' : 'Thank You') : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}", 'single thank-you button label')
+          replace_once("                          title={t((isCollected ? 'auditSendThankYou' : (getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder')) as any)}", "                          title={isCollected ? 'Open WhatsApp thank-you again' : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}", 'thank-you title')
+          replace_once("                  <Label className=\"font-black text-kharcha-navy\">Save Amount & Share Link</Label>", "                  <Label className=\"font-black text-kharcha-navy\">Save Amount</Label>", 'save amount label')
+          text = text.replace("? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt) }", "? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt), savedCollectionAmount: undefined }")
+          replace_once("""              <div className=\"flex min-w-0 flex-col gap-3 border border-[#d7e4dc] rounded-xl p-3 bg-gray-50 sm:flex-row sm:items-center sm:justify-between\">\n                <p className=\"min-w-0 text-sm font-black text-kharcha-navy sm:flex-1\">{t('auditSelectMembersForBulkMessage' as any)}</p>""", """              <div className=\"border border-[#d7e4dc] rounded-xl p-3 bg-gray-50 space-y-2\">\n                <p className=\"text-sm font-black text-kharcha-navy\">Write Message</p>\n                <textarea value={bulkMessageText} onChange={event => setBulkMessageText(event.target.value)} placeholder=\"Write the WhatsApp message…\" rows={3} className=\"w-full resize-none rounded-xl border border-[#d7e4dc] bg-white p-3 text-sm font-medium text-kharcha-navy outline-none focus:ring-2 focus:ring-[#16834b]\" />\n              </div>\n\n              <div className=\"flex min-w-0 flex-col gap-3 border border-[#d7e4dc] rounded-xl p-3 bg-gray-50 sm:flex-row sm:items-center sm:justify-between\">\n                <p className=\"min-w-0 text-sm font-black text-kharcha-navy sm:flex-1\">{t('auditSelectMembersForBulkMessage' as any)}</p>""", 'bulk message composer')
           old_status = """                        <span className=\"min-w-0 flex-1\">\n                          <span className=\"block truncate text-sm font-black text-kharcha-navy\">{member.name}</span>\n                          <span className=\"block truncate text-xs font-bold text-gray-600\">{member.mobileNumber?.trim() || t('auditNoPhoneEmail' as any)}</span>\n                        </span>"""
-          new_status = """                        <span className=\"min-w-0 flex-1\">\n                          <span className=\"block truncate text-sm font-black text-kharcha-navy\">{member.name}</span>\n                          <span className=\"block truncate text-xs font-bold text-gray-600\">{member.mobileNumber?.trim() || t('auditNoPhoneEmail' as any)}</span>\n                        </span>\n                        <span className=\"shrink-0 text-[10px] font-black uppercase tracking-wide text-gray-600\">{bulkMessageStatuses[member.id] ?? 'Ready'}</span>"""
-          if old_status not in text:
-              old_status = """                          <span className=\"min-w-0 flex-1\">\n                          <span className=\"block truncate text-sm font-black text-kharcha-navy\">{member.name}</span>\n                          <span className=\"block truncate text-xs font-bold text-gray-600\">{member.mobileNumber?.trim() || t('auditNoPhoneEmail' as any)}</span>\n                        </span>"""
-          if old_status not in text:
-              raise SystemExit('Missing patch target: bulk member status')
-          text = text.replace(old_status, new_status, 1)
-          replace_once(
-              "  const beginBulkMessageQueue = (memberIds: string[]) => {\n    const upiIdConfig = fund.paymentConfig?.upiId?.trim();",
-              "  const beginBulkMessageQueue = (memberIds: string[]) => {\n    if (!bulkMessageText.trim()) {\n      toast.error(t('fillRequired'));\n      return;\n    }\n    const upiIdConfig = fund.paymentConfig?.upiId?.trim();",
-              'bulk message validation',
-          )
+          if old_status not in text: old_status = """                          <span className=\"min-w-0 flex-1\">\n                          <span className=\"block truncate text-sm font-black text-kharcha-navy\">{member.name}</span>\n                          <span className=\"block truncate text-xs font-bold text-gray-600\">{member.mobileNumber?.trim() || t('auditNoPhoneEmail' as any)}</span>\n                        </span>"""
+          if old_status not in text: raise SystemExit('Missing patch target: bulk member status')
+          text = text.replace(old_status, old_status + "\n                        <span className=\"shrink-0 text-[10px] font-black uppercase tracking-wide text-gray-600\">{bulkMessageStatuses[member.id] ?? 'Ready'}</span>", 1)
+          replace_once("  const beginBulkMessageQueue = (memberIds: string[]) => {\n    const upiIdConfig = fund.paymentConfig?.upiId?.trim();", "  const beginBulkMessageQueue = (memberIds: string[]) => {\n    if (!bulkMessageText.trim()) { toast.error(t('fillRequired')); return; }\n    const upiIdConfig = fund.paymentConfig?.upiId?.trim();", 'bulk message validation')
           path.write_text(text)
-          print('Patched GroupFundDetail.tsx')
       - name: Verify and test source
         run: |
           grep -q "Expected Amount" client/src/pages/GroupFundDetail.tsx
@@ -114,7 +59,7 @@ jobs:
           corepack enable
           corepack prepare pnpm@10.4.1 --activate
           pnpm install --frozen-lockfile --ignore-scripts
-          pnpm test -- --run client/src/groupFund/payment.test.ts client/src/groupFund/bulkMessaging.test.ts
+          pnpm exec vitest run client/src/groupFund/payment.test.ts client/src/groupFund/bulkMessaging.test.ts
           pnpm check
       - name: Commit source changes and remove one-time patch workflow
         shell: bash
