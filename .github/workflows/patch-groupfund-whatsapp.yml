@@ -95,7 +95,6 @@ jobs:
           old_status = """                        <span className=\"min-w-0 flex-1\">\n                          <span className=\"block truncate text-sm font-black text-kharcha-navy\">{member.name}</span>\n                          <span className=\"block truncate text-xs font-bold text-gray-600\">{member.mobileNumber?.trim() || t('auditNoPhoneEmail' as any)}</span>\n                        </span>"""
           new_status = """                        <span className=\"min-w-0 flex-1\">\n                          <span className=\"block truncate text-sm font-black text-kharcha-navy\">{member.name}</span>\n                          <span className=\"block truncate text-xs font-bold text-gray-600\">{member.mobileNumber?.trim() || t('auditNoPhoneEmail' as any)}</span>\n                        </span>\n                        <span className=\"shrink-0 text-[10px] font-black uppercase tracking-wide text-gray-600\">{bulkMessageStatuses[member.id] ?? 'Ready'}</span>"""
           if old_status not in text:
-              # The selector indentation is intentionally normalized here because the JSX was recently reformatted.
               old_status = """                          <span className=\"min-w-0 flex-1\">\n                          <span className=\"block truncate text-sm font-black text-kharcha-navy\">{member.name}</span>\n                          <span className=\"block truncate text-xs font-bold text-gray-600\">{member.mobileNumber?.trim() || t('auditNoPhoneEmail' as any)}</span>\n                        </span>"""
           if old_status not in text:
               raise SystemExit('Missing patch target: bulk member status')
@@ -112,6 +111,8 @@ jobs:
           grep -q "Expected Amount" client/src/pages/GroupFundDetail.tsx
           grep -q "Opened ✓" client/src/pages/GroupFundDetail.tsx
           grep -q "generateWhatsAppMessageUrl" client/src/pages/GroupFundDetail.tsx
+          corepack enable
+          corepack prepare pnpm@10.4.1 --activate
           pnpm install --frozen-lockfile --ignore-scripts
           pnpm test -- --run client/src/groupFund/payment.test.ts client/src/groupFund/bulkMessaging.test.ts
           pnpm check
