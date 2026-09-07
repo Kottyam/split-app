@@ -4,7 +4,24 @@ import {
   generateGroupFundWhatsAppPaymentUrl,
   generateGroupFundWhatsAppThankYouUrl,
   generateGroupFundWhatsAppReminderUrl,
+  generateWhatsAppMessageUrl,
+  normalizeWhatsAppNumber,
 } from './payment';
+
+describe('WhatsApp number normalization', () => {
+  it('normalizes common Indian formats to +91 digits', () => {
+    expect(normalizeWhatsAppNumber('9876543210')).toBe('919876543210');
+    expect(normalizeWhatsAppNumber('09876543210')).toBe('919876543210');
+    expect(normalizeWhatsAppNumber('+91 98765 43210')).toBe('919876543210');
+    expect(normalizeWhatsAppNumber('919876543210')).toBe('919876543210');
+  });
+
+  it('rejects missing or malformed numbers', () => {
+    expect(normalizeWhatsAppNumber('')).toBeUndefined();
+    expect(normalizeWhatsAppNumber('12345')).toBeUndefined();
+    expect(generateWhatsAppMessageUrl(undefined, 'Hello')).toBeUndefined();
+  });
+});
 
 describe('Group Fund personalized payment requests', () => {
   it('includes the saved member amount, UPI link, and confirmation instruction', () => {
