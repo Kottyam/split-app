@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getBulkMessageCandidates,
+  getBulkMessageDuplicateNumberIds,
   getBulkMessageKind,
+  getBulkMessageMissingNumberIds,
   getBulkMessageRecipientIds,
   getBulkMessageRecipients,
   getNextBulkMessageRecipientId,
@@ -25,13 +28,27 @@ describe('Group Fund bulk WhatsApp recipients', () => {
     expect(getBulkMessageKind({ hasRecordedCollection: false, savedAmount: undefined, hasUpiId: true })).toBe('information');
   });
 
-  it('queues every member with a mobile number for Send to All in member order', () => {
+  it('keeps missing-number members visible as candidates but excludes them from the launch queue', () => {
+    expect(getBulkMessageCandidates(members, 'all').map(member => member.id)).toEqual(['one', 'two', 'three', 'four']);
+    expect(getBulkMessageMissingNumberIds(members, 'all')).toEqual(['two']);
     expect(getBulkMessageRecipientIds(members, 'all')).toEqual(['one', 'three', 'four']);
+  });
+
+  it('queues every valid member in original order for Send to All', () => {
     expect(getBulkMessageRecipients(members, 'all').map(member => member.name)).toEqual(['Asha', 'Chitra', 'Dev']);
   });
 
   it('queues only selected phone-capable members and preserves fund order', () => {
     expect(getBulkMessageRecipientIds(members, 'selection', ['four', 'two', 'one'])).toEqual(['one', 'four']);
+  });
+
+  it('flags duplicate normalized numbers without merging member records', () => {
+    const duplicateMembers = [
+      ...members,
+      { id: 'five', name: 'Esha', mobileNumber: '+91 90000 00001', isActive: true, createdAt: 5 },
+    ];
+    expect(getBulkMessageDuplicateNumberIds(duplicateMembers, 'all')).toEqual(['five']);
+    expect(getBulkMessageRecipientIds(duplicateMembers, 'all')).toEqual(['one', 'three', 'four', 'five']);
   });
 
   it('keeps each queue position available until the final member is opened', () => {
