@@ -33,6 +33,27 @@ export interface GroupFundWhatsAppReminderRequest {
   message: string;
 }
 
+/** Normalize a stored member number for the official wa.me deep-link format. */
+export function normalizeWhatsAppNumber(input?: string): string | undefined {
+  const raw = (input ?? '').trim();
+  if (!raw) return undefined;
+  let digits = raw.replace(/\D/g, '');
+
+  // Common Indian local formats: 9876543210 / 09876543210 / +91 9876543210.
+  if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
+  if (digits.length === 10) return `91${digits}`;
+  if (digits.length === 12 && digits.startsWith('91')) return digits;
+
+  // Keep already-valid international numbers intact.
+  return digits.length >= 11 && digits.length <= 15 ? digits : undefined;
+}
+
+export function generateWhatsAppMessageUrl(mobileNumber: string | undefined, message: string): string | undefined {
+  const recipient = normalizeWhatsAppNumber(mobileNumber);
+  if (!recipient) return undefined;
+  return `https://wa.me/${recipient}?text=${encodeURIComponent(message)}`;
+}
+
 export function generateGroupFundUpiDeepLink(req: GroupFundPaymentRequest): string {
   const upiId = req.upiId?.trim() || 'merchant@upi';
   const name = encodeURIComponent(req.fundName);
@@ -56,15 +77,13 @@ export function generateGroupFundWhatsAppPaymentMessage(req: GroupFundWhatsAppPa
 }
 
 export function generateGroupFundWhatsAppPaymentUrl(req: GroupFundWhatsAppPaymentRequest): string {
-  const digits = (req.mobileNumber || '').replace(/\D/g, '');
-  const recipient = digits.length === 10 ? `91${digits}` : digits;
+  const recipient = normalizeWhatsAppNumber(req.mobileNumber) ?? '';
   const text = encodeURIComponent(generateGroupFundWhatsAppPaymentMessage(req));
   return `https://wa.me/${recipient}?text=${text}`;
 }
 
 export function generateGroupFundWhatsAppReminderUrl(req: GroupFundWhatsAppReminderRequest): string {
-  const digits = (req.mobileNumber || '').replace(/\D/g, '');
-  const recipient = digits.length === 10 ? `91${digits}` : digits;
+  const recipient = normalizeWhatsAppNumber(req.mobileNumber) ?? '';
   return `https://wa.me/${recipient}?text=${encodeURIComponent(req.message)}`;
 }
 
@@ -79,8 +98,7 @@ export async function shareGroupFundThankYou(req: GroupFundThankYouRequest): Pro
 }
 
 export function generateGroupFundWhatsAppThankYouUrl(req: GroupFundThankYouRequest & { mobileNumber?: string }): string {
-  const digits = (req.mobileNumber || '').replace(/\D/g, '');
-  const recipient = digits.length === 10 ? `91${digits}` : digits;
+  const recipient = normalizeWhatsAppNumber(req.mobileNumber) ?? '';
   const text = encodeURIComponent(generateGroupFundThankYouMessage(req));
   return `https://wa.me/${recipient}?text=${text}`;
 }
