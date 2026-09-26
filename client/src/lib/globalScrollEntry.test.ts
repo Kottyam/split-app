@@ -7,7 +7,7 @@ describe('global route entry behavior', () => {
 
   it('resets the viewport to the top whenever the route changes', () => {
     expect(source).toContain('const [location] = useLocation();');
-    expect(source).toContain("window.scrollTo({ top: 0, left: 0, behavior: "auto" });");
+    expect(source).toContain('window.scrollTo({ top: 0, left: 0, behavior: "auto" });');
     expect(source).toContain('}, [location]);');
   });
 
