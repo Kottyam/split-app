@@ -5,6 +5,10 @@ on:
   push:
     paths:
       - 'client/**'
+      - 'server/**'
+      - 'shared/**'
+      - 'vite.config.ts'
+      - 'twa-manifest.json'
       - 'android-app/**'
       - 'scripts/**'
       - 'package.json'
@@ -41,6 +45,9 @@ jobs:
 
       - name: Install Node dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Local-first runtime audit
+        run: pnpm verify:local
 
       - name: Typecheck
         run: pnpm check
