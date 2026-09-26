@@ -21,21 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Restore full native Android activity if needed
-        shell: bash
-        run: |
-          ACTIVITY="android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java"
-          if grep -q 'private void pickContacts() { }' "$ACTIVITY"; then
-            git fetch origin b7c36823574239b2daeaafb14c0005ef39e00432 --depth=1
-            git cat-file blob f743a06c4308dbed7c1b49dcffa4b27455976a93 > "$ACTIVITY"
-            test -s "$ACTIVITY"
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add "$ACTIVITY"
-            git commit -m 'Restore full native Android activity'
-            git push
-          fi
-
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
@@ -63,32 +48,18 @@ jobs:
           mkdir -p android-app/app/src/main/assets/web
           pnpm exec vite build --base=./
           cp -R dist/public/. android-app/app/src/main/assets/web/
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          path = Path('android-app/app/src/main/assets/web/index.html')
-          html = path.read_text()
-          html = re.sub(r'\s*<script\s+defer\s+src="%VITE_ANALYTICS_ENDPOINT%/umami"[^>]*data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"[^>]*></script>', '', html)
-          path.write_text(html)
-          PY
           test -s android-app/app/src/main/assets/web/index.html
 
-      - name: Wire WebView to bundled web app
-        run: python3 scripts/android_webview_patch.py
-
-      - name: Add AndroidX WebKit support
-        run: python3 scripts/android_gradle_patch.py
-
-      - name: Verify bundled app
+      - name: Verify local-first bundle
         run: |
-          grep -q 'loadDataWithBaseURL' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
-          grep -q 'fallbackToHostedApp' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
           test -s android-app/app/src/main/assets/web/index.html
-          ! grep -q 'kharchasplit-rlsqgpta.manus.space' android-app/app/src/main/assets/web/index.html
-          ! grep -q '%VITE_ANALYTICS_' android-app/app/src/main/assets/web/index.html
+          ! grep -RniE 'kharchasplit-rlsqgpta\.manus\.space|manus\.space|manus-storage|__manus__|VITE_ANALYTICS_ENDPOINT|VITE_ANALYTICS_WEBSITE_ID|VITE_OAUTH_PORTAL_URL|BUILT_IN_FORGE_API_URL|BUILT_IN_FORGE_API_KEY|OAUTH_SERVER_URL' android-app/app/src/main/assets/web
           grep -q '<div id="root"></div>' android-app/app/src/main/assets/web/index.html
           grep -q '<script type="module" crossorigin src="./assets/' android-app/app/src/main/assets/web/index.html
-          ! grep -q '<script[[:space:]]*$' android-app/app/src/main/assets/web/index.html
+          grep -q 'WebViewAssetLoader' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
+          grep -q 'appassets.androidplatform.net/assets/web/index.html' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
+          ! grep -q 'fallbackToHostedApp' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
+          pnpm exec python3 scripts/verify_android_package.py
 
       - name: Build debug APK
         working-directory: android-app
