@@ -42,6 +42,15 @@ jobs:
       - name: Install Node dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Typecheck
+        run: pnpm check
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build production web/server
+        run: pnpm build
+
       - name: Build current web app for Android
         run: |
           rm -rf android-app/app/src/main/assets/web
