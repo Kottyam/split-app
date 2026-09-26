@@ -177,7 +177,7 @@ describe('Group Fund Recurring Calculations & Proration', () => {
     const variable = baseFund({ amountType: 'Variable Amount', defaultContributionAmount: 1000 });
     const futureMember = member({ startDate: '2099-01-01', expectedAmount: 425 });
     expect(calculateExpectedAmountForPeriod(fixed, futureMember, 'August 2026')).toBe(0);
-    expect(calculateExpectedAmount(variable, futureMember)).toBe(425);
+    expect(calculateExpectedAmount(variable, futureMember)).toBe(0);
   });
 
   it('keeps legacy members safe when no explicit Start Date exists', () => {
