@@ -2,14 +2,14 @@ import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
-import { defineConfig, type Plugin, type ViteDevServer } from "vite";
+import { defineConfig } from "vite";
+
 
 // =============================================================================
 // Debug Collector - Vite Plugin
 // Development-only browser debug logging.
 // =============================================================================
 
-const PROJECT_ROOT = import.meta.dirname;
 const plugins = [react(), tailwindcss(), jsxLocPlugin()];
 
 export default defineConfig({
