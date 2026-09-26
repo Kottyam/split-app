@@ -44,8 +44,8 @@ queryClient.getMutationCache().subscribe(event => {
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      // The UI is bundled locally in the APK, but the backend/auth session
-      // remains on the live Kharcha server.
+      // The UI and optional API are local-first. The API origin is the
+      // current local origin unless explicitly overridden for a local deployment.
       url: `${API_ORIGIN}/api/trpc`,
       transformer: superjson,
       fetch(input, init) {

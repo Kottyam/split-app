@@ -19,5 +19,7 @@ describe('Kharcha app branding', () => {
     expect(manifest).toContain('"name": "Kharcha - Expense Splitter"');
     expect(manifest).toContain('./icons/kharcha-logo-mark.png');
     expect(manifest.replace(/\/manus-storage\/[^\s"']+/g, '').toLowerCase()).not.toContain('manus');
+    expect(manifest).not.toContain('manus.space');
+    expect(manifest).not.toContain('manus-storage');
   });
 });
