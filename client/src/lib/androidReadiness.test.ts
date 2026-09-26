@@ -62,7 +62,9 @@ describe('Android packaging readiness', () => {
     expect(manifest).toContain('android.permission.READ_CONTACTS');
     expect(manifest).toContain('android.permission.CAMERA');
     expect(mainActivity).toContain('WebViewAssetLoader');
-    expect(mainActivity).toContain('appassets.androidplatform.net/assets/web/index.html');
+    expect(mainActivity).toContain('BUNDLED_APP_URL');
+    expect(mainActivity).toContain('APP_HOST');
+    expect(mainActivity).toContain('/assets/web/index.html?android=1');
     expect(mainActivity).not.toContain('fallbackToHostedApp');
     expect(mainActivity).toContain('onPermissionRequest');
     expect(mainActivity).toContain('RESOURCE_VIDEO_CAPTURE');
