@@ -36,6 +36,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.PermissionRequest;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.JavascriptInterface;
@@ -58,6 +59,7 @@ import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.FragmentActivity;
+import androidx.webkit.WebViewAssetLoader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -70,10 +72,11 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 
 public class MainActivity extends FragmentActivity {
-    private static final String APP_HOST = "kharchasplit-rlsqgpta.manus.space";
-    private static final String APP_URL = "https://" + APP_HOST + "/?android=1";
+    private static final String APP_HOST = "appassets.androidplatform.net";
+    private static final String BUNDLED_APP_URL = "https://" + APP_HOST + "/assets/web/index.html?android=1";
     private static final int FILE_CHOOSER_REQUEST = 4101;
     private static final int CONTACT_PERMISSION_REQUEST = 4102;
     private static final int DEVICE_AUTH_REQUEST = 4103;
@@ -87,6 +90,7 @@ public class MainActivity extends FragmentActivity {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private WebView webView;
+    private WebViewAssetLoader assetLoader;
     private View splashOverlay;
     private AlertDialog contactLoadingDialog;
     private boolean contactRequestInFlight;
@@ -125,7 +129,42 @@ public class MainActivity extends FragmentActivity {
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(root);
-        webView.loadUrl(APP_URL);
+        loadBundledApp();
+    }
+
+    private void loadBundledApp() {
+        try {
+            webView.loadUrl(BUNDLED_APP_URL);
+        } catch (RuntimeException error) {
+            showLocalLoadError();
+        }
+    }
+
+    private void showLocalLoadError() {
+        pageReady = true;
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+        layout.setPadding(dp(48), dp(48), dp(48), dp(48));
+        layout.setBackgroundColor(CREAM);
+
+        TextView message = new TextView(this);
+        message.setText("Kharcha could not load its local application.");
+        message.setTextColor(Color.rgb(24, 52, 92));
+        message.setTextSize(16);
+        message.setGravity(Gravity.CENTER);
+        layout.addView(message);
+
+        Button retry = new Button(this);
+        retry.setText("Retry");
+        retry.setOnClickListener(v -> {
+            setContentView(webView);
+            loadBundledApp();
+        });
+        layout.addView(retry);
+        setContentView(layout);
+        handler.postDelayed(this::removeLogoSplash, Math.max(0L,
+                MIN_SPLASH_DURATION_MS - (SystemClock.uptimeMillis() - launchStartedAt)));
     }
 
     private View createLogoSplash() {
@@ -147,6 +186,9 @@ public class MainActivity extends FragmentActivity {
 
     private void buildWebView() {
         webView = new WebView(this);
+        assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
         webView.setBackgroundColor(CREAM);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         webView.setVerticalScrollBarEnabled(false);
@@ -1190,7 +1232,7 @@ public class MainActivity extends FragmentActivity {
         }
 
         @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {\n            WebResourceResponse response = assetLoader == null ? null : assetLoader.shouldInterceptRequest(request.getUrl());\n            return response != null ? response : super.shouldInterceptRequest(view, request);\n        }\n\n        @Override\n        public boolean shouldOverrideUrlLoading(WebView view, String url) {
             Uri uri = Uri.parse(url);
             if (isInternalUrl(uri)) return false;
             openExternal(uri);
@@ -1204,7 +1246,7 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-            if (request.isForMainFrame()) showNetworkError();
+            if (request.isForMainFrame()) showLocalLoadError();
         }
     }
 
