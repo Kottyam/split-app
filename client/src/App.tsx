@@ -1,5 +1,5 @@
-import React from "react";
-import { Switch, Route } from "wouter";
+import React, { useEffect } from "react";
+import { Switch, Route, useLocation } from "wouter";
 import Home from "./pages/Home";
 import Trips from "./pages/Trips";
 import SharedHomes from "./pages/SharedHomes";
@@ -14,12 +14,15 @@ import TripDetail from "./pages/TripDetail";
 import SharedView from "./pages/SharedView";
 import SharedHomeRedesign from "./pages/SharedHomeRedesign";
 import SharedHomeDetail from "./pages/SharedHomeDetail";
-import SharedHomeSharedView from './pages/SharedHomeSharedView';
-import SharedHomePaymentRequest from './pages/SharedHomePaymentRequest';
-import EditSyncRecipient from './pages/EditSyncRecipient';
-import SyncReview from './pages/SyncReview';
-import SyncUpdates from './pages/SyncUpdates';
-import NotFound from './pages/NotFound';
+import SharedHomeSharedView from "./pages/SharedHomeSharedView";
+import SharedHomePaymentRequest from "./pages/SharedHomePaymentRequest";
+import EditSyncRecipient from "./pages/EditSyncRecipient";
+import SyncReview from "./pages/SyncReview";
+import SyncUpdates from "./pages/SyncUpdates";
+import NotFound from "./pages/NotFound";
+import BottomNav from "./components/BottomNav";
+import { DeleteConfirmationProvider } from "./contexts/DeleteConfirmationContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 
 function Router() {
   return (
@@ -50,6 +53,27 @@ function Router() {
   );
 }
 
+function AppShell() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location]);
+
+  return (
+    <div className="kharcha-app-shell min-h-screen pb-20">
+      <Router />
+      <BottomNav />
+    </div>
+  );
+}
+
 export default function App() {
-  return <Router />;
+  return (
+    <LanguageProvider>
+      <DeleteConfirmationProvider>
+        <AppShell />
+      </DeleteConfirmationProvider>
+    </LanguageProvider>
+  );
 }
