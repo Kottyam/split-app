@@ -30,10 +30,10 @@ require('compileSdkVersion 36' in app_gradle, 'Android compile SDK must remain A
 require('signingConfigs' in app_gradle and 'validateReleaseSigning' in app_gradle, 'Release signing validation must be configured')
 require('androidx.biometric:biometric:1.1.0' in app_gradle, 'BiometricPrompt dependency is required')
 require(twa.get('packageId') == 'app.kharcha.splitter', 'TWA packageId must match the Android applicationId')
-require(twa.get('host') == 'kharchasplit-rlsqgpta.manus.space', 'TWA host must match the published Kharcha domain')
+require(twa.get('host') == 'appassets.androidplatform.net', 'TWA host must use the bundled WebViewAssetLoader origin')
 require(twa.get('appVersionName') == '1.0.0', 'TWA appVersionName must match the web release version')
-require(twa.get('appVersionCode') == 29, 'TWA appVersionCode must be the current release version code 29')
-require(twa.get('startUrl') == '/?android=1', 'TWA startUrl must include the Android-only shell marker')
+require(twa.get('appVersionCode') == 63, 'TWA appVersionCode must match the current Android release version code 63')
+require(twa.get('startUrl') == '/assets/web/index.html?android=1', 'TWA startUrl must point to the bundled web application')
 require(twa.get('themeColor') == '#FFFAF2', 'TWA status-bar theme must remain neutral cream')
 require(twa.get('backgroundColor') == '#FFFAF2', 'TWA splash background must match the app cream surface')
 require(web.get('display') == 'standalone', 'PWA display must remain standalone')
@@ -59,6 +59,9 @@ require((ANDROID / 'app' / 'src' / 'main' / 'res' / 'layout' / 'activity_splash.
 require((ANDROID / 'app' / 'src' / 'main' / 'res' / 'drawable-nodpi' / 'kharcha_logo_mobile.webp').exists(), 'Updated Kharcha mobile logo resource is required')
 require((ANDROID / 'app' / 'src' / 'main' / 'res' / 'mipmap-mdpi' / 'ic_launcher.png').exists(), 'Launcher icon is required')
 require((ANDROID / 'app' / 'src' / 'main' / 'java' / 'app' / 'kharcha' / 'splitter' / 'LauncherActivity.java').exists(), 'LauncherActivity source is required')
+require('kharchasplit-rlsqgpta.manus.space' not in main_activity, 'MainActivity must not contain the hosted Manus URL')
+require('fallbackToHostedApp' not in main_activity, 'MainActivity must not contain a hosted fallback')
+require('WebViewAssetLoader' in main_activity and 'appassets.androidplatform.net/assets/web/index.html' in main_activity, 'Bundled WebViewAssetLoader loading is required')
 
 if errors:
     print('Android packaging verification failed:')
