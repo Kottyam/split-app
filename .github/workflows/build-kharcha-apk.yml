@@ -69,13 +69,7 @@ jobs:
 
       - name: Verify local-first bundle
         run: |
-          test -s android-app/app/src/main/assets/web/index.html
-          ! grep -RniE 'kharchasplit-rlsqgpta\.manus\.space|manus\.space|manus-storage|__manus__|VITE_ANALYTICS_ENDPOINT|VITE_ANALYTICS_WEBSITE_ID|VITE_OAUTH_PORTAL_URL|BUILT_IN_FORGE_API_URL|BUILT_IN_FORGE_API_KEY|OAUTH_SERVER_URL' android-app/app/src/main/assets/web
-          grep -q '<div id="root"></div>' android-app/app/src/main/assets/web/index.html
-          grep -q '<script type="module" crossorigin src="./assets/' android-app/app/src/main/assets/web/index.html
-          grep -q 'WebViewAssetLoader' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
-          grep -q 'appassets.androidplatform.net/assets/web/index.html' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
-          ! grep -q 'fallbackToHostedApp' android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java
+          python3 scripts/verify_android_bundle.py
           python3 scripts/verify_android_package.py
 
       - name: Build debug APK
