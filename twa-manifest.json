@@ -1,8 +1,8 @@
 {
-  "host": "kharchasplit-rlsqgpta.manus.space",
+  "host": "appassets.androidplatform.net",
   "name": "Kharcha",
   "shortName": "Kharcha",
-  "startUrl": "/",
+  "startUrl": "/assets/web/index.html?android=1",
   "display": "standalone",
   "themeColor": "#e87817",
   "navigationColor": "#e87817",
@@ -17,7 +17,7 @@
     "alias": "android"
   },
   "generatorApp": "manus-pwabuilder",
-  "webManifestUrl": "https://kharchasplit-rlsqgpta.manus.space/manifest.json",
+  "webManifestUrl": "https://appassets.androidplatform.net/assets/web/manifest.json",
   "angular": false,
   "features": {
     "locationDelegation": {
