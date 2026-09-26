@@ -1,7 +1,8 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const KHARCHA_ASSET_PREFIX = typeof window !== 'undefined' && window.location.hostname === 'appassets.androidplatform.net' ? '/assets/web' : '';\nexport const KHARCHA_LOGO_MOBILE_LOCKUP = `${KHARCHA_ASSET_PREFIX}/icons/kharcha-logo-mobile.webp`;
+const KHARCHA_ASSET_PREFIX = typeof window !== 'undefined' && window.location.hostname === 'appassets.androidplatform.net' ? '/assets/web' : '';
+export const KHARCHA_LOGO_MOBILE_LOCKUP = `${KHARCHA_ASSET_PREFIX}/icons/kharcha-logo-mobile.webp`;
 export const KHARCHA_TRANSPARENT_LOGO = KHARCHA_LOGO_MOBILE_LOCKUP;
 export const KHARCHA_LOGO_LOCKUP = KHARCHA_LOGO_MOBILE_LOCKUP;
 export const KHARCHA_LOGO_MARK = `${KHARCHA_ASSET_PREFIX}/icons/kharcha-logo-mark.png`;
