@@ -45,22 +45,25 @@ describe('Android packaging readiness', () => {
     const pdfLayout = read('client/src/lib/pdfLayout.ts');
 
     expect(twa.packageId).toBe('app.kharcha.splitter');
-    expect(twa.host).toBe('kharchasplit-rlsqgpta.manus.space');
+    expect(twa.host).toBe('appassets.androidplatform.net');
     expect(twa.appVersionName).toBe('1.0.0');
     expect(twa.appVersionCode).toBe(63);
-    expect(twa.startUrl).toBe('/?android=1');
+    expect(twa.startUrl).toBe('/assets/web/index.html?android=1');
     expect(twa.themeColor).toBe('#FFFAF2');
     expect(twa.backgroundColor).toBe('#FFFAF2');
     expect(existsSync(resolve(root, 'android-app/app/src/main/res/drawable-nodpi/kharcha_logo_mobile.webp'))).toBe(true);
     expect(pwa.display).toBe('standalone');
     expect(pwa.start_url).toBe('/');
     expect(gradle).toContain('targetSdkVersion 36');
-    expect(gradle).toContain("launchUrl: '/?android=1'");
+    expect(gradle).toContain("launchUrl: '/assets/web/index.html?android=1'");
     expect(gradle).toContain("?: '63'");
     expect(gradle).toContain('validateReleaseSigning');
     expect(gradle).toContain("androidx.biometric:biometric:1.1.0");
     expect(manifest).toContain('android.permission.READ_CONTACTS');
     expect(manifest).toContain('android.permission.CAMERA');
+    expect(mainActivity).toContain('WebViewAssetLoader');
+    expect(mainActivity).toContain('appassets.androidplatform.net/assets/web/index.html');
+    expect(mainActivity).not.toContain('fallbackToHostedApp');
     expect(mainActivity).toContain('onPermissionRequest');
     expect(mainActivity).toContain('RESOURCE_VIDEO_CAPTURE');
     expect(mainActivity).toContain('KharchaContacts');
