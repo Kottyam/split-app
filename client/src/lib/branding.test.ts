@@ -17,7 +17,7 @@ describe('Kharcha app branding', () => {
   it('uses Kharcha-owned installed-app metadata and logo icon', () => {
     expect(manifest).toContain('"short_name": "Kharcha"');
     expect(manifest).toContain('"name": "Kharcha - Expense Splitter"');
-    expect(manifest).toContain('/manus-storage/kharcha-logo-transparent_b8cc8f74.png');
+    expect(manifest).toContain('./icons/kharcha-logo-mark.png');
     expect(manifest.replace(/\/manus-storage\/[^\s"']+/g, '').toLowerCase()).not.toContain('manus');
   });
 });
