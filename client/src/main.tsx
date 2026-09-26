@@ -5,10 +5,9 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
-import { getLoginUrl } from "./const";
 import "./index.css";
 
-const API_ORIGIN = "https://kharchasplit-rlsqgpta.manus.space";
+const API_ORIGIN = import.meta.env.VITE_LOCAL_API_ORIGIN || window.location.origin;
 
 // Scope mobile-only visual density and system-bar spacing to the Android app.
 const androidShell =
@@ -23,7 +22,7 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
   if (error.message !== UNAUTHED_ERR_MSG) return;
-  window.location.href = getLoginUrl();
+  return;
 };
 
 queryClient.getQueryCache().subscribe(event => {
