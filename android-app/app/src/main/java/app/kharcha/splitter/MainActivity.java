@@ -1232,7 +1232,13 @@ public class MainActivity extends FragmentActivity {
         }
 
         @Override
-        public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {\n            WebResourceResponse response = assetLoader == null ? null : assetLoader.shouldInterceptRequest(request.getUrl());\n            return response != null ? response : super.shouldInterceptRequest(view, request);\n        }\n\n        @Override\n        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+            WebResourceResponse response = assetLoader == null ? null : assetLoader.shouldInterceptRequest(request.getUrl());
+            return response != null ? response : super.shouldInterceptRequest(view, request);
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
             Uri uri = Uri.parse(url);
             if (isInternalUrl(uri)) return false;
             openExternal(uri);
