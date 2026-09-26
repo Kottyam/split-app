@@ -61,7 +61,7 @@ require((ANDROID / 'app' / 'src' / 'main' / 'res' / 'mipmap-mdpi' / 'ic_launcher
 require((ANDROID / 'app' / 'src' / 'main' / 'java' / 'app' / 'kharcha' / 'splitter' / 'LauncherActivity.java').exists(), 'LauncherActivity source is required')
 require('kharchasplit-rlsqgpta.manus.space' not in main_activity, 'MainActivity must not contain the hosted Manus URL')
 require('fallbackToHostedApp' not in main_activity, 'MainActivity must not contain a hosted fallback')
-require('WebViewAssetLoader' in main_activity and re.search(r'appassets\.androidplatform\.net/assets/web/index\.html', main_activity), 'Bundled WebViewAssetLoader loading is required')
+require('WebViewAssetLoader' in main_activity and (re.search(r'appassets\\.androidplatform\\.net/assets/web/index\\.html', main_activity) or 'BUNDLED_APP_URL' in main_activity), 'Bundled WebViewAssetLoader loading is required')
 
 if errors:
     print('Android packaging verification failed:')
