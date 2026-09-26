@@ -8,12 +8,16 @@
   "theme_color": "#e87817",
   "icons": [
     {
-      "src": "/manus-storage/kharcha-logo-transparent_b8cc8f74.png",
+      "src": "/icons/kharcha-logo-mark.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
   "lang": "en-IN",
-  "categories": ["finance", "travel", "productivity"]
+  "categories": [
+    "finance",
+    "travel",
+    "productivity"
+  ]
 }
