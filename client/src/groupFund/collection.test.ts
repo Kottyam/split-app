@@ -55,8 +55,8 @@ function makeFund(members: GroupFundMember[], contributions: Contribution[]): Gr
     members,
     contributions,
     expenses: [],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: Date.UTC(2026, 7, 1),
+    updatedAt: Date.UTC(2026, 7, 1),
   };
 }
 
