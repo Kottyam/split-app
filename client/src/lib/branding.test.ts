@@ -10,7 +10,7 @@ describe('Kharcha app branding', () => {
   it('uses Kharcha-owned browser metadata and the supplied logo asset', () => {
     expect(indexHtml).toContain('<title>Kharcha - Expense Splitter</title>');
     expect(indexHtml).toContain('name="application-name" content="Kharcha"');
-    expect(indexHtml).toContain('/manus-storage/kharcha-logo-transparent_b8cc8f74.png');
+    expect(indexHtml).toContain('./icons/kharcha-logo-mark.png');
     expect(indexHtml.replace(/\/manus-storage\/[^\s"']+/g, '').toLowerCase()).not.toContain('manus');
   });
 
