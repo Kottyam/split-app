@@ -45,12 +45,10 @@ if BUNDLE.exists():
                 errors.append(f"bundled runtime contains forbidden reference {pattern} in {path.relative_to(BUNDLE)}")
 
 main = MAIN.read_text(encoding="utf-8")
-for needle, message in [
-    ("WebViewAssetLoader", "WebViewAssetLoader is missing"),
-    ("appassets.androidplatform.net" in main and "/assets/web/index.html" in main, "bundled app URL is missing"),
-]:
-    if needle not in main:
-        errors.append(message)
+if "WebViewAssetLoader" not in main:
+    errors.append("WebViewAssetLoader is missing")
+if "appassets.androidplatform.net" not in main or "/assets/web/index.html" not in main:
+    errors.append("bundled app URL is missing")
 if "kharchasplit-rlsqgpta.manus.space" in main or "fallbackToHostedApp" in main:
     errors.append("MainActivity still contains a hosted fallback")
 
