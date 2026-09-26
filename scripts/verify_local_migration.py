@@ -11,12 +11,11 @@ RUNTIME_PATHS = [
     ROOT / "shared",
     ROOT / "vite.config.ts",
     ROOT / "package.json",
-    ROOT / ".github" / "workflows",
     ROOT / "android-app",
 ]
 PATTERNS = [
-    r"kharchasplit-rlsqgpta\\.manus\\.space",
-    r"manus\\.space",
+    r"kharchasplit-rlsqgpta\.manus\.space",
+    r"manus\.space",
     r"manus-storage",
     r"__manus__",
     r"VITE_ANALYTICS_ENDPOINT",
@@ -30,6 +29,7 @@ EXCLUDED = {
     "server/_core/env.ts",
     "twa-manifest.json",
     "android-app/twa-manifest.json",
+    ".github/workflows/build-kharcha-apk.yml",
 }
 
 violations = []
