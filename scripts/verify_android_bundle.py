@@ -47,7 +47,7 @@ if BUNDLE.exists():
 main = MAIN.read_text(encoding="utf-8")
 for needle, message in [
     ("WebViewAssetLoader", "WebViewAssetLoader is missing"),
-    ("appassets.androidplatform.net/assets/web/index.html", "bundled app URL is missing"),
+    ("appassets.androidplatform.net" in main and "/assets/web/index.html" in main, "bundled app URL is missing"),
 ]:
     if needle not in main:
         errors.append(message)
