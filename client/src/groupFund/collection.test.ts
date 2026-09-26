@@ -20,7 +20,7 @@ import type { Contribution, GroupFund, GroupFundMember } from './types';
 const period = 'August 2026';
 
 function makeMember(id: string, expectedAmount: number, recurringActive = true): GroupFundMember {
-  return { id, name: id, expectedAmount, isActive: true, recurringActive, createdAt: Date.UTC(2026, 7, 1) };
+  return { id, name: id, expectedAmount, isActive: true, recurringActive, createdAt: Date.UTC(2026, 7, 1), startDate: '2026-08-01' };
 }
 
 function makeContribution(memberId: string, amount: number): Contribution {
@@ -47,6 +47,7 @@ function makeFund(members: GroupFundMember[], contributions: Contribution[]): Gr
     purpose: 'Common Collection',
     contributionType: 'monthly',
     defaultContributionAmount: 100,
+    collectionStartDate: '2026-08-01',
     isRecurring: true,
     recurringFrequency: 'Monthly',
     amountType: 'Default Amount',
@@ -82,7 +83,7 @@ describe('Group Fund collection periods', () => {
     const member = { ...makeMember('Asha', 100), savedCollectionAmount: 275 };
     const fund = makeFund([member], []);
     expect(getSavedCollectionAmount(member)).toBe(275);
-    expect(getMemberPaymentRequestAmount(fund, member)).toBe(100);
+    expect(getMemberPaymentRequestAmount(fund, member, period)).toBe(100);
     expect(getPeriodCollectionStatus(fund.contributions, member.id, period)).toBe('Pending');
   });
 
@@ -91,8 +92,8 @@ describe('Group Fund collection periods', () => {
     const legacy = makeMember('Binu', 125);
     const fund = makeFund([savedZero, legacy], []);
     expect(getSavedCollectionAmount(savedZero)).toBe(0);
-    expect(getMemberPaymentRequestAmount(fund, savedZero)).toBe(100);
-    expect(getMemberPaymentRequestAmount(fund, legacy)).toBe(125);
+    expect(getMemberPaymentRequestAmount(fund, savedZero, period)).toBe(100);
+    expect(getMemberPaymentRequestAmount(fund, legacy, period)).toBe(125);
   });
 
   it('applies member credit to the next due amount without treating credit as pending or expense', () => {
