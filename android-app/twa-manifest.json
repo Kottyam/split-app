@@ -1,6 +1,6 @@
 {
   "packageId": "app.kharcha.splitter",
-  "host": "kharchasplit-rlsqgpta.manus.space",
+  "host": "appassets.androidplatform.net",
   "name": "Kharcha - Expense Splitter",
   "launcherName": "Kharcha",
   "display": "standalone",
@@ -12,9 +12,9 @@
   "navigationDividerColorDark": "#000000",
   "backgroundColor": "#FFFAF2",
   "enableNotifications": false,
-  "startUrl": "/?android=1",
-  "iconUrl": "https://kharchasplit-rlsqgpta.manus.space/manus-storage/kharcha-logo-transparent_b8cc8f74.png",
-  "maskableIconUrl": "https://kharchasplit-rlsqgpta.manus.space/manus-storage/kharcha-logo-transparent_b8cc8f74.png",
+  "startUrl": "/assets/web/index.html?android=1",
+  "iconUrl": "/icons/kharcha-logo-mark.png",
+  "maskableIconUrl": "/icons/kharcha-logo-mark.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "/home/ubuntu/kharcha/android-app/android.keystore",
@@ -24,7 +24,7 @@
   "appVersionCode": 63,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://kharchasplit-rlsqgpta.manus.space/manifest.json",
+  "webManifestUrl": "https://appassets.androidplatform.net/assets/web/manifest.json",
   "fallbackType": "customtabs",
   "features": {},
   "alphaDependencies": {
@@ -33,7 +33,7 @@
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
-  "fullScopeUrl": "https://kharchasplit-rlsqgpta.manus.space/",
+  "fullScopeUrl": "https://appassets.androidplatform.net/assets/web/",
   "minSdkVersion": 21,
   "orientation": "default",
   "fingerprints": [],
