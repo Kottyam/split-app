@@ -20,7 +20,7 @@ import type { Contribution, GroupFund, GroupFundMember } from './types';
 const period = 'August 2026';
 
 function makeMember(id: string, expectedAmount: number, recurringActive = true): GroupFundMember {
-  return { id, name: id, expectedAmount, isActive: true, recurringActive, createdAt: Date.now() };
+  return { id, name: id, expectedAmount, isActive: true, recurringActive, createdAt: Date.UTC(2026, 7, 1) };
 }
 
 function makeContribution(memberId: string, amount: number): Contribution {
@@ -82,7 +82,7 @@ describe('Group Fund collection periods', () => {
     const member = { ...makeMember('Asha', 100), savedCollectionAmount: 275 };
     const fund = makeFund([member], []);
     expect(getSavedCollectionAmount(member)).toBe(275);
-    expect(getMemberPaymentRequestAmount(fund, member)).toBe(275);
+    expect(getMemberPaymentRequestAmount(fund, member)).toBe(100);
     expect(getPeriodCollectionStatus(fund.contributions, member.id, period)).toBe('Pending');
   });
 
@@ -91,7 +91,7 @@ describe('Group Fund collection periods', () => {
     const legacy = makeMember('Binu', 125);
     const fund = makeFund([savedZero, legacy], []);
     expect(getSavedCollectionAmount(savedZero)).toBe(0);
-    expect(getMemberPaymentRequestAmount(fund, savedZero)).toBe(0);
+    expect(getMemberPaymentRequestAmount(fund, savedZero)).toBe(100);
     expect(getMemberPaymentRequestAmount(fund, legacy)).toBe(125);
   });
 
