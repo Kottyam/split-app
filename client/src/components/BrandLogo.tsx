@@ -1,11 +1,11 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export const KHARCHA_LOGO_MOBILE_LOCKUP = '/manus-storage/kharcha-logo-mobile_25195552.png';
+export const KHARCHA_LOGO_MOBILE_LOCKUP = '/icons/kharcha-logo-mobile.webp';
 export const KHARCHA_TRANSPARENT_LOGO = KHARCHA_LOGO_MOBILE_LOCKUP;
 export const KHARCHA_LOGO_LOCKUP = KHARCHA_LOGO_MOBILE_LOCKUP;
-export const KHARCHA_LOGO_MARK = '/manus-storage/kharcha-logo-transparent_b8cc8f74.png';
-export const KHARCHA_LANDING_LOGO = '/manus-storage/kharcha-landing-logo-reference_aaebb992.png';
+export const KHARCHA_LOGO_MARK = '/icons/kharcha-logo-mark.png';
+export const KHARCHA_LANDING_LOGO = '/icons/kharcha-logo-landing.png';
 
 interface Props {
   variant?: 'lockup' | 'mark' | 'landing';
