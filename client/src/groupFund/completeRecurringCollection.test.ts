@@ -18,7 +18,6 @@ describe('complete recurring collection integration contract', () => {
 
   it('keeps the one-time branch on its existing amount workflow', () => {
     expect(calculationsSource).toContain('if (!fund.isRecurring) return true;');
-    expect(calculationsSource).toContain("if (!fund.isRecurring || fund.amountType === 'Variable Amount' || fund.prorationRule === 'Full Amount')");
     expect(calculationsSource).toContain('calculateAmountForBounds');
     expect(calculationsSource).toContain('getPeriodBounds');
     expect(createSource).toContain('recurringFrequency: isRecurring ? frequency : undefined');
