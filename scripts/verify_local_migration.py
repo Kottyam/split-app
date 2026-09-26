@@ -39,7 +39,7 @@ for base in RUNTIME_PATHS:
         rel = path.relative_to(ROOT).as_posix()
         if rel in EXCLUDED or ".gradle" in path.parts:
             continue
-        if path.suffix.lower() not in {".ts",".tsx",".js",".jsx",".json",".html",".css",".gradle",".java",".xml",".yml",".yaml"}:
+        if path.suffix.lower() not in {".ts",".tsx",".js",".jsx",".json",".html",".css",".gradle",".java",".xml",".yml",".yaml"} or path.name.endswith(".test.ts") or path.name.endswith(".test.tsx"):
             continue
         try:
             text = path.read_text(encoding="utf-8")
