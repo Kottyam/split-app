@@ -6,7 +6,7 @@ describe('Landing page logo loading', () => {
   it('preloads the exact existing Landing logo asset', () => {
     const html = readFileSync(resolve(process.cwd(), 'client/index.html'), 'utf8');
     expect(html).toContain('rel="preload" as="image"');
-    expect(html).toContain('/manus-storage/kharcha-landing-logo-reference_aaebb992.png');
+    expect(html).toContain('./icons/kharcha-logo-landing.png');
     expect(html).toContain('fetchpriority="high"');
   });
 
