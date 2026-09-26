@@ -8,7 +8,7 @@
   "theme_color": "#e87817",
   "icons": [
     {
-      "src": "/icons/kharcha-logo-mark.png",
+      "src": "./icons/kharcha-logo-mark.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any maskable"
