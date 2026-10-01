@@ -42,7 +42,13 @@ jobs:
         run: pnpm android:verify
 
       - name: Prepare web bundle
-        run: pnpm build
+        run: |
+          pnpm build
+          rm -rf android-app/app/src/main/assets/web
+          mkdir -p android-app/app/src/main/assets/web
+          cp -R dist/public/. android-app/app/src/main/assets/web/
+          test -f android-app/app/src/main/assets/web/index.html
+          test -f android-app/app/src/main/assets/web/manifest.json
 
       - name: Build signed release APK
         working-directory: android-app
@@ -52,7 +58,12 @@ jobs:
           RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          test -n "${RELEASE_STORE_PASSWORD}" || (echo "Missing ANDROID_KEYSTORE_PASSWORD secret" && exit 1)
+          test -n "${RELEASE_KEY_ALIAS}" || (echo "Missing ANDROID_KEY_ALIAS secret" && exit 1)
+          test -n "${RELEASE_KEY_PASSWORD}" || (echo "Missing ANDROID_KEY_PASSWORD secret" && exit 1)
+          test -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" || (echo "Missing ANDROID_KEYSTORE_BASE64 secret" && exit 1)
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+          test -s release.keystore
           chmod +x ./gradlew
           ./gradlew --no-daemon clean assembleRelease
 
