@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Bell, BarChart3, Home as HomeIcon, Plane, Search, Settings, WalletCards } from 'lucide-react';
+import { ArrowRight, Bell, Home as HomeIcon, Plane, Search, Settings } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -61,7 +61,6 @@ export default function Home() {
           <CategoryCard icon={<Plane size={30} />} title={t('myTrips')} description={t('tripsDescription')} action={t('openTrips')} accent="orange" onClick={() => navigate(appCategories.trips.path)} />
           <CategoryCard icon={<HomeIcon size={30} />} title={t('mySharedHomes')} description={t('sharedHomesDescription')} action={t('openSharedHomes')} accent="green" onClick={() => navigate(appCategories.sharedHomes.path)} />
           <CategoryCard icon={<WalletCards size={30} />} title={t('groupFunds')} description={t('groupFundsDescription')} action={t('openFunds')} accent="orange" onClick={() => navigate(appCategories.groupFunds.path)} />
-          <CategoryCard icon={<BarChart3 size={30} />} title={t('personalBudget')} description={t('personalBudgetDescription')} action={t('personalBudgetOverview')} accent="green" onClick={() => navigate(appCategories.personalBudget.path)} />
         </div>
       </main>
 
