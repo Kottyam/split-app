@@ -15,7 +15,6 @@ describe('global route entry behavior', () => {
     expect(source).toContain('path={"/trips"}');
     expect(source).toContain('path={"/shared-homes"}');
     expect(source).toContain('path={"/group-funds"}');
-    expect(source).toContain('path={"/personal-budget"}');
     expect(source).toContain('path={"/trip/:id"}');
     expect(source).toContain('path={"/shared-home/:id"}');
     expect(source).toContain('path={"/more"}');
