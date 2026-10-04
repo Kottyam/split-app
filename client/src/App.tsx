@@ -6,7 +6,6 @@ import SharedHomes from "./pages/SharedHomes";
 import GroupFunds from "./pages/GroupFunds";
 import CreateGroupFund from "./pages/CreateGroupFund";
 import GroupFundDetail from "./pages/GroupFundDetail";
-import PersonalBudget from "./pages/PersonalBudget";
 import Search from "./pages/Search";
 import Notifications from "./pages/Notifications";
 import More from "./pages/More";
@@ -36,7 +35,6 @@ function Router() {
       <Route path={"/group-funds/new"} component={CreateGroupFund} />
       <Route path={"/group-fund/:id"} component={GroupFundDetail} />
       <Route path={"/group-funds/:id"} component={GroupFundDetail} />
-      <Route path={"/personal-budget"} component={PersonalBudget} />
       <Route path={"/search"} component={Search} />
       <Route path={"/notifications"} component={Notifications} />
       <Route path={"/more"} component={More} />
