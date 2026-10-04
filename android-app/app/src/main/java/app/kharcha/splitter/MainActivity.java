@@ -159,7 +159,7 @@ public class MainActivity extends FragmentActivity {
         retry.setText("Retry");
         retry.setOnClickListener(v -> {
             setContentView(webView);
-            loadRemoteApp();
+            loadLocalApp();
         });
         layout.addView(retry);
         setContentView(layout);
@@ -1143,33 +1143,6 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    private void showNetworkError() {
-        pageReady = true;
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
-        layout.setPadding(dp(48), dp(48), dp(48), dp(48));
-        layout.setBackgroundColor(CREAM);
-
-        TextView message = new TextView(this);
-        message.setText("Kharcha could not connect. Please check your internet connection and try again.");
-        message.setTextColor(Color.rgb(24, 52, 92));
-        message.setTextSize(16);
-        message.setGravity(Gravity.CENTER);
-        layout.addView(message);
-
-        Button retry = new Button(this);
-        retry.setText("Try again");
-        retry.setOnClickListener(v -> {
-            setContentView(webView);
-            webView.reload();
-        });
-        layout.addView(retry);
-        setContentView(layout);
-        handler.postDelayed(this::removeLogoSplash, Math.max(0L,
-                MIN_SPLASH_DURATION_MS - (SystemClock.uptimeMillis() - launchStartedAt)));
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -1252,7 +1225,7 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-            if (request.isForMainFrame()) showLocalLoadError();
+            if (request.isForMainFrame()) showNetworkError();
         }
     }
 
