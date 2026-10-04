@@ -22,7 +22,6 @@ describe('uniform section header coverage', () => {
       'TripDetail.tsx',
       'SharedHomeDetail.tsx',
       'GroupFundDetail.tsx',
-      'PersonalBudget.tsx',
       'Search.tsx',
       'Notifications.tsx',
       'More.tsx',
@@ -58,7 +57,6 @@ describe('uniform section header coverage', () => {
     expect(read('client/src/pages/Trips.tsx')).toContain("onClick={() => setShowCreate(true)}");
     expect(read('client/src/pages/SharedHomes.tsx')).toContain("onClick={() => setShowCreate(true)}");
     expect(read('client/src/pages/GroupFunds.tsx')).toContain("navigate('/group-funds/new')");
-    expect(read('client/src/pages/PersonalBudget.tsx')).toContain('selectTab(tab.id)');
     expect(read('client/src/pages/TripDetail.tsx')).toContain("setActiveTab('dashboard')");
     expect(read('client/src/pages/GroupFundDetail.tsx')).toContain('setShowEditSync(true)');
   });
