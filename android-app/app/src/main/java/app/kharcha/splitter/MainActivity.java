@@ -76,7 +76,8 @@ import java.io.ByteArrayOutputStream;
 
 public class MainActivity extends FragmentActivity {
     private static final String APP_HOST = "www.kharchasplit.in";
-    private static final String LOCAL_APP_URL = "https://appassets.androidplatform.net/assets/web/index.html?android=1";
+    private static final String BUNDLED_APP_URL = "https://appassets.androidplatform.net/assets/web/index.html?android=1";
+    private static final String LOCAL_APP_URL = BUNDLED_APP_URL;
     private static final int FILE_CHOOSER_REQUEST = 4101;
     private static final int CONTACT_PERMISSION_REQUEST = 4102;
     private static final int DEVICE_AUTH_REQUEST = 4103;
