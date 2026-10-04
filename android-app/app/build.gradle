@@ -39,7 +39,7 @@ def twaManifest = [
     generatorApp: 'bubblewrap-cli',
     fallbackType: 'customtabs',
     enableSiteSettingsShortcut: 'true',
-    orientation: 'default',
+    orientation: 'portrait',
 ]
 
 def releaseStoreFile = project.findProperty('RELEASE_STORE_FILE') ?: System.getenv('RELEASE_STORE_FILE')
