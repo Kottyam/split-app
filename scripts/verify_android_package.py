@@ -30,10 +30,10 @@ require('compileSdkVersion 36' in app_gradle, 'Android compile SDK must remain A
 require('signingConfigs' in app_gradle and 'validateReleaseSigning' in app_gradle, 'Release signing validation must be configured')
 require('androidx.biometric:biometric:1.1.0' in app_gradle, 'BiometricPrompt dependency is required')
 require(twa.get('packageId') == 'app.kharcha.splitter', 'TWA packageId must match the Android applicationId')
-require(twa.get('host') == 'appassets.androidplatform.net', 'TWA host must use the bundled WebViewAssetLoader origin')
+require(twa.get('host') == 'www.kharchasplit.in', 'TWA host must use the production Kharcha website')
 require(twa.get('appVersionName') == '1.0.0', 'TWA appVersionName must match the web release version')
 require(twa.get('appVersionCode') == 63, 'TWA appVersionCode must match the current Android release version code 63')
-require(twa.get('startUrl') == '/assets/web/index.html?android=1', 'TWA startUrl must point to the bundled web application')
+require(twa.get('startUrl') == '/?android=1', 'TWA startUrl must point to the production Kharcha website')
 require(twa.get('themeColor') == '#FFFAF2', 'TWA status-bar theme must remain neutral cream')
 require(twa.get('backgroundColor') == '#FFFAF2', 'TWA splash background must match the app cream surface')
 require(web.get('display') == 'standalone', 'PWA display must remain standalone')
@@ -61,7 +61,7 @@ require((ANDROID / 'app' / 'src' / 'main' / 'res' / 'mipmap-mdpi' / 'ic_launcher
 require((ANDROID / 'app' / 'src' / 'main' / 'java' / 'app' / 'kharcha' / 'splitter' / 'LauncherActivity.java').exists(), 'LauncherActivity source is required')
 require('kharchasplit-rlsqgpta.manus.space' not in main_activity, 'MainActivity must not contain the hosted Manus URL')
 require('fallbackToHostedApp' not in main_activity, 'MainActivity must not contain a hosted fallback')
-require('WebViewAssetLoader' in main_activity and (re.search(r'appassets\\.androidplatform\\.net/assets/web/index\\.html', main_activity) or 'BUNDLED_APP_URL' in main_activity), 'Bundled WebViewAssetLoader loading is required')
+require('https://www.kharchasplit.in/?android=1' in main_activity and 'REMOTE_APP_URL' in main_activity, 'MainActivity must load the production Kharcha website')
 
 if errors:
     print('Android packaging verification failed:')
