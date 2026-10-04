@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Bell, Home as HomeIcon, Plane, Search, Settings } from 'lucide-react';
+import { ArrowRight, Bell, Home as HomeIcon, Plane, Search, Settings, WalletCards } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
