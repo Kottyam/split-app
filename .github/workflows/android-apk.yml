@@ -31,6 +31,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build local web bundle
+        run: |
+          pnpm build
+          rm -rf android-app/app/src/main/assets/web
+          mkdir -p android-app/app/src/main/assets/web
+          cp -R dist/public/. android-app/app/src/main/assets/web/
+          test -f android-app/app/src/main/assets/web/index.html
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
