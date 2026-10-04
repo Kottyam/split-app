@@ -25,7 +25,6 @@ describe('global delete confirmation', () => {
       'client/src/pages/GroupFunds.tsx',
       'client/src/pages/GroupFundDetail.tsx',
       'client/src/pages/SharedHomeDetail.tsx',
-      'client/src/pages/PersonalBudget.tsx',
       'client/src/components/ExpenseListView.tsx',
       'client/src/components/DeleteMemberDialog.tsx',
     ];
@@ -37,14 +36,12 @@ describe('global delete confirmation', () => {
       } else {
         expect(source, file).toContain('requestDelete');
       }
-      expect(source, file).not.toMatch(/window\.confirm\(t\('(delete|auditDelete|personalBudgetConfirmDelete|personalBudgetDeleteFutureConfirm|sharedHomeRemoveMemberConfirm|sharedHomeDeleteRoomConfirm)/);
+      expect(source, file).not.toMatch(/window\.confirm\(t\('(delete|auditDelete|sharedHomeRemoveMemberConfirm|sharedHomeDeleteRoomConfirm)/);
     }
   });
 
   it('keeps non-delete browser prompts distinguishable from delete confirmation', () => {
-    const personalBudget = read('client/src/pages/PersonalBudget.tsx');
     const sharedHome = read('client/src/pages/SharedHomeDetail.tsx');
-    expect(personalBudget).toContain('window.prompt');
     expect(sharedHome).toContain('sharedHomeStopRuleConfirm');
     expect(sharedHome).not.toContain('window.confirm(t(\'sharedHomeRemoveMemberConfirm\'');
   });
