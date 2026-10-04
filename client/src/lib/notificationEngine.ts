@@ -1,7 +1,6 @@
 import { getAllTrips } from './storage';
 import { getAllSharedHomes } from '../sharedHome/storage';
 import { getGroupFunds } from '../groupFund/storage';
-import { getPersonalBudgetProfile } from '../personalBudget/storage';
 import { simplifySettlements } from './calculations';
 import { calculateExpectedAmountForPeriod, getPeriodBounds, isMemberApplicableToPeriod, resolveCollectionPeriod } from '../groupFund/calculations';
 import type { KharchaNotification } from './notifications';
@@ -94,21 +93,6 @@ function buildGroupFundNotifications(): KharchaNotification[] {
   return result;
 }
 
-function buildPersonalBudgetNotifications(): KharchaNotification[] {
-  const result: KharchaNotification[] = [];
-  const profile: any = getPersonalBudgetProfile();
-  const month = profile.selectedMonth || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-  const monthExpenses = (profile.expenseTransactions ?? [])
-    .filter((expense: any) => String(expense.date ?? '').slice(0, 7) === month && expense.status !== 'Cancelled' && expense.status !== 'Skipped')
-    .reduce((sum: number, expense: any) => sum + Number(expense.amountOverride ?? expense.amount ?? 0), 0);
-  const budgets = (profile.budgets ?? []).filter((budget: any) => budget.month === month || budget.period === month || budget.type === 'Monthly');
-  const budgetAmount = budgets.length ? Number(budgets[budgets.length - 1].amount ?? 0) : 0;
-  if (budgetAmount > 0 && monthExpenses >= budgetAmount) add(result, `budget-over-${month}-${Math.round(monthExpenses)}`, 'Personal budget exceeded', `Your ${month} spending is ₹${Math.round(monthExpenses).toLocaleString('en-IN')} against a ₹${Math.round(budgetAmount).toLocaleString('en-IN')} budget.`, '/personal-budget', 'Review budget');
-  const overduePlanned = (profile.expenseTransactions ?? []).filter((expense: any) => expense.status === 'Planned' && expense.date && new Date(expense.date).getTime() < Date.now() - DAY_MS);
-  if (overduePlanned.length) add(result, `budget-planned-${overduePlanned.length}`, 'Planned expense needs attention', `${overduePlanned.length} planned expense${overduePlanned.length === 1 ? '' : 's'} are past their planned date.`, '/personal-budget', 'Review expenses');
-  return result;
-}
-
 function buildBackupNotification(): KharchaNotification[] {
   const last = localStorage.getItem('kharcha_last_backup_at');
   const stale = !last || Date.now() - new Date(last).getTime() > BACKUP_REMINDER_DAYS * DAY_MS;
@@ -124,7 +108,7 @@ export function refreshAutomaticNotifications(): void {
   try {
     const existing = JSON.parse(localStorage.getItem('kharcha_notifications') || '[]') as KharchaNotification[];
     const readState = new Map(existing.filter(item => item.id.startsWith(AUTO_PREFIX)).map(item => [item.id, item.read]));
-    const generated = [...buildTripNotifications(), ...buildSharedHomeNotifications(), ...buildGroupFundNotifications(), ...buildPersonalBudgetNotifications(), ...buildBackupNotification()]
+    const generated = [...buildTripNotifications(), ...buildSharedHomeNotifications(), ...buildGroupFundNotifications(), ...buildBackupNotification()]
       .map(item => ({ ...item, read: readState.get(item.id) ?? false }));
     const manual = existing.filter(item => !item.id.startsWith(AUTO_PREFIX));
     localStorage.setItem('kharcha_notifications', JSON.stringify([...generated, ...manual].slice(0, 100)));
