@@ -6,10 +6,10 @@ MAIN = ROOT / "android-app" / "app" / "src" / "main" / "java" / "app" / "kharcha
 
 errors = []
 main = MAIN.read_text(encoding="utf-8")
-if "https://www.kharchasplit.in/?android=1" not in main:
-    errors.append("MainActivity must load the production Kharcha website URL")
-if "REMOTE_APP_URL" not in main:
-    errors.append("Remote APK URL constant is missing")
+if "https://appassets.androidplatform.net/assets/web/index.html?android=1" not in main:
+    errors.append("MainActivity must load the bundled local Kharcha web app")
+if "BUNDLED_APP_URL" not in main:
+    errors.append("Bundled APK URL constant is missing")
 if "kharchasplit-rlsqgpta.manus.space" in main or "fallbackToHostedApp" in main:
     errors.append("MainActivity still contains a legacy hosted fallback")
 
@@ -19,5 +19,5 @@ if errors:
         print(f"- {error}")
     sys.exit(1)
 
-print("Android URL-runtime verification passed.")
-print("APK launch URL: https://www.kharchasplit.in/?android=1")
+print("Android local-runtime verification passed.")
+print("APK launch URL: https://appassets.androidplatform.net/assets/web/index.html?android=1")
