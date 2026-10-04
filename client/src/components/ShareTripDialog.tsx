@@ -5,9 +5,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Trip } from '@/types';
-import { copyToClipboard, shareLink } from '@/lib/shareLink';
-import { getOrCreateOwnerKey, serializeSnapshot } from '@/lib/editSync';
-import { trpc } from '@/lib/trpc';
+import { copyToClipboard, shareLink, generateShareLink } from '@/lib/shareLink';
+
 import { toast } from 'sonner';
 
 interface ShareTripDialogProps {
@@ -29,20 +28,12 @@ function ShareTripDialogOpen({ open, onOpenChange, trip }: ShareTripDialogProps)
   const [sharing, setSharing] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const { t } = useLanguage();
-  const createShare = trpc.sync.createShare.useMutation();
 
   const getEditableLink = async () => {
     if (shareUrl) return shareUrl;
-    const result = await createShare.mutateAsync({
-      contextType: 'trip',
-      contextId: trip.id,
-      contextName: trip.name,
-      snapshotJson: serializeSnapshot(trip),
-      ownerKey: getOrCreateOwnerKey('trip', trip.id),
-      origin: window.location.origin,
-    });
-    setShareUrl(result.url);
-    return result.url;
+    const url = generateShareLink(trip);
+    setShareUrl(url);
+    return url;
   };
 
   const handleCopyLink = async () => {
@@ -81,8 +72,8 @@ function ShareTripDialogOpen({ open, onOpenChange, trip }: ShareTripDialogProps)
         </Card>
         <DialogFooter className="grid gap-2 sm:grid-cols-3">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-2 border-black font-bold rounded-lg">{t('close')}</Button>
-          <Button type="button" onClick={handleCopyLink} disabled={createShare.isPending} className="bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 min-w-0 whitespace-normal text-center"><>{copied ? <Check size={16} /> : <Copy size={16} />}</>{copied ? t('copied') : t('copyLink')}</Button>
-          <Button type="button" onClick={handleShare} disabled={sharing || createShare.isPending} className="bg-kharcha-green text-white font-bold rounded-lg hover:brightness-95 flex items-center justify-center gap-2 min-w-0 whitespace-normal text-center"><Share2 size={16} />{sharing ? t('sharing') : t('shareTrip')}</Button>
+          <Button type="button" onClick={handleCopyLink} disabled={false} className="bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 min-w-0 whitespace-normal text-center"><>{copied ? <Check size={16} /> : <Copy size={16} />}</>{copied ? t('copied') : t('copyLink')}</Button>
+          <Button type="button" onClick={handleShare} disabled={sharing} className="bg-kharcha-green text-white font-bold rounded-lg hover:brightness-95 flex items-center justify-center gap-2 min-w-0 whitespace-normal text-center"><Share2 size={16} />{sharing ? t('sharing') : t('shareTrip')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
