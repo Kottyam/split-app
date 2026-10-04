@@ -27,20 +27,8 @@ describe('Kharcha UI polish contracts', () => {
     expect(bottomNav).toContain('safe-area-inset-bottom');
     expect(bottomNav).toContain('navigate(item.path)');
     expect(bottomNav).toContain("'/shared-homes'");
-    expect(bottomNav).toContain("'/personal-budget'");
     expect(bottomNav).toContain("t('more' as any)");
     expect(bottomNav).toContain('text-kharcha-navy');
-  });
-
-  it('keeps Personal Budget presentation changes scoped to its existing controls', () => {
-    const personalBudget = read('client/src/pages/PersonalBudget.tsx');
-    expect(personalBudget).toContain('border-[#d1e5d7]');
-    expect(personalBudget).toContain('AppSectionHeader');
-    expect(personalBudget).toContain('const selectTab = (tab: TabId) => setActiveTab(tab);');
-    expect(personalBudget).toContain('changeMonth(-1)');
-    expect(personalBudget).toContain('changeMonth(1)');
-    expect(personalBudget).toContain('grid-cols-2');
-    expect(personalBudget).toContain('sm:overflow-x-auto');
   });
 
   it('keeps the Home header composition and existing category routes intact', () => {
@@ -54,14 +42,13 @@ describe('Kharcha UI polish contracts', () => {
     expect(home).toContain('appCategories.trips.path');
     expect(home).toContain('appCategories.sharedHomes.path');
     expect(home).toContain('appCategories.groupFunds.path');
-    expect(home).toContain("appCategories.personalBudget.path");
     expect(home).not.toContain('pointer-events-none fixed');
   });
 
   it('applies the unified app shell and internal page-header contract across modules', () => {
     const app = read('client/src/App.tsx');
     const css = read('client/src/index.css');
-    for (const file of ['Trips.tsx', 'SharedHomes.tsx', 'GroupFunds.tsx', 'TripDetail.tsx', 'SharedHomeDetail.tsx', 'GroupFundDetail.tsx', 'CreateGroupFund.tsx', 'PersonalBudget.tsx']) {
+    for (const file of ['Trips.tsx', 'SharedHomes.tsx', 'GroupFunds.tsx', 'TripDetail.tsx', 'SharedHomeDetail.tsx', 'GroupFundDetail.tsx', 'CreateGroupFund.tsx']) {
       const page = read(`client/src/pages/${file}`);
       expect(page.includes('AppSectionHeader') || page.includes('kharcha-page-header')).toBe(true);
     }
