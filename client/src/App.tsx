@@ -28,6 +28,8 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      {/* The bundled Android WebView opens the HTML entrypoint under /assets/web/. Treat that entrypoint as the app home so the first launch does not fall into the SPA 404 route. */}
+      <Route path={"/assets/web/index.html"} component={Home} />
       <Route path={"/trips"} component={Trips} />
       <Route path={"/shared-homes"} component={SharedHomes} />
       <Route path={"/group-funds"} component={GroupFunds} />
