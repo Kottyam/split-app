@@ -75,8 +75,8 @@ import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
 
 public class MainActivity extends FragmentActivity {
-    private static final String APP_HOST = "appassets.androidplatform.net";
-    private static final String BUNDLED_APP_URL = "https://" + APP_HOST + "/assets/web/index.html?android=1";
+    private static final String APP_HOST = "www.kharchasplit.in";
+    private static final String REMOTE_APP_URL = "https://" + APP_HOST + "/?android=1";
     private static final int FILE_CHOOSER_REQUEST = 4101;
     private static final int CONTACT_PERMISSION_REQUEST = 4102;
     private static final int DEVICE_AUTH_REQUEST = 4103;
@@ -129,18 +129,18 @@ public class MainActivity extends FragmentActivity {
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(root);
-        loadBundledApp();
+        loadRemoteApp();
     }
 
-    private void loadBundledApp() {
+    private void loadRemoteApp() {
         try {
-            webView.loadUrl(BUNDLED_APP_URL);
+            webView.loadUrl(REMOTE_APP_URL);
         } catch (RuntimeException error) {
-            showLocalLoadError();
+            showNetworkError();
         }
     }
 
-    private void showLocalLoadError() {
+    private void showNetworkError() {
         pageReady = true;
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -149,7 +149,7 @@ public class MainActivity extends FragmentActivity {
         layout.setBackgroundColor(CREAM);
 
         TextView message = new TextView(this);
-        message.setText("Kharcha could not load its local application.");
+        message.setText("Kharcha could not connect to the Kharcha website. Please check your internet connection and try again.");
         message.setTextColor(Color.rgb(24, 52, 92));
         message.setTextSize(16);
         message.setGravity(Gravity.CENTER);
@@ -159,7 +159,7 @@ public class MainActivity extends FragmentActivity {
         retry.setText("Retry");
         retry.setOnClickListener(v -> {
             setContentView(webView);
-            loadBundledApp();
+            loadRemoteApp();
         });
         layout.addView(retry);
         setContentView(layout);
