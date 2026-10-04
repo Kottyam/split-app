@@ -1,6 +1,6 @@
 {
   "packageId": "app.kharcha.splitter",
-  "host": "www.kharchasplit.in",
+  "host": "appassets.androidplatform.net",
   "name": "Kharcha - Expense Splitter",
   "launcherName": "Kharcha",
   "display": "standalone",
@@ -12,7 +12,7 @@
   "navigationDividerColorDark": "#000000",
   "backgroundColor": "#FFFAF2",
   "enableNotifications": false,
-  "startUrl": "/?android=1",
+  "startUrl": "/assets/web/index.html?android=1",
   "iconUrl": "/icons/kharcha-logo-mark.png",
   "maskableIconUrl": "/icons/kharcha-logo-mark.png",
   "splashScreenFadeOutDuration": 300,
