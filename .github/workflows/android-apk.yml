@@ -50,32 +50,21 @@ jobs:
           test -f android-app/app/src/main/assets/web/index.html
           test -f android-app/app/src/main/assets/web/manifest.json
 
-      - name: Build signed release APK
+      - name: Build debug APK
         working-directory: android-app
-        env:
-          RELEASE_STORE_FILE: ${{ github.workspace }}/android-app/release.keystore
-          RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          test -n "${RELEASE_STORE_PASSWORD}" || (echo "Missing ANDROID_KEYSTORE_PASSWORD secret" && exit 1)
-          test -n "${RELEASE_KEY_ALIAS}" || (echo "Missing ANDROID_KEY_ALIAS secret" && exit 1)
-          test -n "${RELEASE_KEY_PASSWORD}" || (echo "Missing ANDROID_KEY_PASSWORD secret" && exit 1)
-          test -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" || (echo "Missing ANDROID_KEYSTORE_BASE64 secret" && exit 1)
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
-          test -s release.keystore
           chmod +x ./gradlew
-          ./gradlew --no-daemon clean assembleRelease
+          ./gradlew --no-daemon clean assembleDebug
 
       - name: Verify APK exists
         run: |
-          test -f android-app/app/build/outputs/apk/release/app-release.apk
-          ls -lh android-app/app/build/outputs/apk/release/app-release.apk
+          test -f android-app/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh android-app/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: kharcha-release-apk
-          path: android-app/app/build/outputs/apk/release/app-release.apk
+          name: kharcha-debug-apk
+          path: android-app/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
