@@ -76,7 +76,7 @@ import java.io.ByteArrayOutputStream;
 
 public class MainActivity extends FragmentActivity {
     private static final String APP_HOST = "www.kharchasplit.in";
-    private static final String REMOTE_APP_URL = "https://" + APP_HOST + "/?android=1";
+    private static final String LOCAL_APP_URL = "https://appassets.androidplatform.net/assets/web/index.html?android=1";
     private static final int FILE_CHOOSER_REQUEST = 4101;
     private static final int CONTACT_PERMISSION_REQUEST = 4102;
     private static final int DEVICE_AUTH_REQUEST = 4103;
@@ -129,12 +129,12 @@ public class MainActivity extends FragmentActivity {
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(root);
-        loadRemoteApp();
+        loadLocalApp();
     }
 
-    private void loadRemoteApp() {
+    private void loadLocalApp() {
         try {
-            webView.loadUrl(REMOTE_APP_URL);
+            webView.loadUrl(LOCAL_APP_URL);
         } catch (RuntimeException error) {
             showNetworkError();
         }
@@ -149,7 +149,7 @@ public class MainActivity extends FragmentActivity {
         layout.setBackgroundColor(CREAM);
 
         TextView message = new TextView(this);
-        message.setText("Kharcha could not connect to the Kharcha website. Please check your internet connection and try again.");
+        message.setText("Kharcha could not load its local app. Please try again.");
         message.setTextColor(Color.rgb(24, 52, 92));
         message.setTextSize(16);
         message.setGravity(Gravity.CENTER);
@@ -219,7 +219,7 @@ public class MainActivity extends FragmentActivity {
     }
 
     private boolean isInternalUrl(Uri uri) {
-        return uri != null && APP_HOST.equalsIgnoreCase(uri.getHost());
+        return uri != null && (APP_HOST.equalsIgnoreCase(uri.getHost()) || "appassets.androidplatform.net".equalsIgnoreCase(uri.getHost()));
     }
 
     private void openExternal(Uri uri) {
