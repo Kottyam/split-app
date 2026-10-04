@@ -41,15 +41,6 @@ jobs:
       - name: Verify Android package
         run: pnpm android:verify
 
-      - name: Prepare web bundle
-        run: |
-          pnpm build
-          rm -rf android-app/app/src/main/assets/web
-          mkdir -p android-app/app/src/main/assets/web
-          cp -R dist/public/. android-app/app/src/main/assets/web/
-          test -f android-app/app/src/main/assets/web/index.html
-          test -f android-app/app/src/main/assets/web/manifest.json
-
       - name: Build debug APK
         working-directory: android-app
         run: |
