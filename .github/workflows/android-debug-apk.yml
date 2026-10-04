@@ -1,0 +1,70 @@
+name: Build Kharcha Debug APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack and prepare pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.4.1 --activate
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Verify Android package
+        run: pnpm android:verify
+
+      - name: Prepare web bundle
+        run: |
+          pnpm build
+          rm -rf android-app/app/src/main/assets/web
+          mkdir -p android-app/app/src/main/assets/web
+          cp -R dist/public/. android-app/app/src/main/assets/web/
+          test -f android-app/app/src/main/assets/web/index.html
+          test -f android-app/app/src/main/assets/web/manifest.json
+
+      - name: Build debug APK
+        working-directory: android-app
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon clean assembleDebug
+
+      - name: Verify APK exists
+        run: |
+          test -f android-app/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh android-app/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kharcha-debug-apk
+          path: android-app/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
