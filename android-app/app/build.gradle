@@ -22,8 +22,8 @@ plugins {
 
 def twaManifest = [
     applicationId: 'app.kharcha.splitter',
-    hostName: 'www.kharchasplit.in', // The production Kharcha website opened by the Android shell.
-    launchUrl: '/?android=1', // Android-only shell marker enables safe-area and compact mobile styling.
+    hostName: 'appassets.androidplatform.net', // The bundled local Kharcha web app opened by the Android shell.
+    launchUrl: '/assets/web/index.html?android=1', // Bundled local web app entrypoint.
     name: 'Kharcha - Expense Splitter', // The application name.
     launcherName: 'Kharcha', // The name shown on the Android Launcher.
     themeColor: '#FFFAF2', // The color used for the status bar.
