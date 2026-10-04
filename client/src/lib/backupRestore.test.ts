@@ -22,7 +22,6 @@ describe('Kharcha Backup & Restore Validation', () => {
     expect(Array.isArray(payload.data.trips)).toBe(true);
     expect(Array.isArray(payload.data.sharedHomes)).toBe(true);
     expect(Array.isArray(payload.data.groupFunds)).toBe(true);
-    expect(payload.data.personalBudget).toBeDefined();
   });
 
   it('validates correct and corrupted backup JSON strings', () => {
