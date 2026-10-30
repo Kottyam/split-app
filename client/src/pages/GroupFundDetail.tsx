@@ -796,7 +796,9 @@ export default function GroupFundDetail() {
                 const paid = mc.reduce((s: number, c: Contribution) => s + c.amount, 0);
                 const dateStr = mc.length > 0 ? new Date(mc[mc.length - 1].date).toLocaleDateString() : '-';
                 const methodStr = mc.length > 0 ? groupFundOptionLabel(t, mc[mc.length - 1].method) : '-';
-                const statusStr = getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) === 'Collected' ? t('auditCollectedStatus' as any) : t('auditPending' as any);\n                const remarkStr = mc.length > 0 ? (mc[mc.length - 1].note || '-') : '-';
+                const statusStr = getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) === 'Collected' ? t('auditCollectedStatus' as any) : t('auditPending' as any);
+                const rawRemark = mc.length > 0 ? (mc[mc.length - 1].note || '') : '';
+                const remarkStr = rawRemark.includes(' — ') ? rawRemark.split(' — ').slice(1).join(' — ') : rawRemark || '-';
                 return `
                   <tr>
                     <td class="member-name">${escapePdfHtml(m.name)}</td>
