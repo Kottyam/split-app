@@ -38,6 +38,7 @@ describe('Group Fund personalized payment requests', () => {
     expect(message).toContain('₹275.00');
     expect(message).toContain('upi://pay?');
     expect(message).toContain('Once payment is done, please give a confirmation.');
+    expect(message).toContain(`Date: ${new Date().toLocaleDateString('en-IN')}`);
   });
 
   it('builds an unsaved-member reminder without a zero amount or payment link', () => {
