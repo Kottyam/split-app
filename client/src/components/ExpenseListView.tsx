@@ -162,6 +162,7 @@ export default function ExpenseListView({ trip, onEditExpense, onExpenseDeleted 
                         {t('auditPaidBy' as any)} <span className="font-semibold">{paidByName}</span>
                       </p>
                       <p className="text-xs text-gray-500 mt-1">{formatExpenseDate(expense.date, language)}</p>
+                      {expense.remark && <p className="text-xs text-gray-600 mt-2"><span className="font-bold">Remark:</span> {expense.remark}</p>}
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="font-black text-black text-lg">{formatCurrency(expense.amount)}</p>
