@@ -18,6 +18,7 @@ import { nanoid } from 'nanoid';
 import { toast } from 'sonner';
 import { pickMultipleContacts, formatPhoneNumber } from '@/lib/contacts';
 import { appendUniqueMembers, parseMemberImportText } from '@/lib/memberImport';
+import { createGroupFundMemberTemplate, parseGroupFundMemberXlsx } from '@/lib/groupFundMemberExcel';
 import { generateGroupFundWhatsAppPaymentUrl, generateGroupFundWhatsAppReminderUrl, generateGroupFundWhatsAppThankYouUrl, generateGroupFundThankYouMessage, generateWhatsAppMessageUrl, normalizeWhatsAppNumber } from '@/groupFund/payment';
 import { getBulkMessageCandidates, getBulkMessageDuplicateNumberIds, getBulkMessageKind, getBulkMessageMissingNumberIds, getBulkMessageRecipients, getNextBulkMessageRecipientId, isBulkMessageQueueComplete, toggleBulkMessageMember } from '@/groupFund/bulkMessaging';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -987,43 +988,47 @@ export default function GroupFundDetail() {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDownloadMemberTemplate = () => {
+    const url = URL.createObjectURL(createGroupFundMemberTemplate());
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'Kharcha-Group-Fund-Members-Template.xlsx';
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const text = String(event.target?.result ?? '');
-        const rows = parseMemberImportText(text);
-        const latestFund = getGroupFundById(params.id) ?? fund;
-        const incomingMembers: GroupFundMember[] = rows.map(row => ({
-          id: nanoid(),
-          name: row.name,
-          mobileNumber: row.mobileNumber ? formatPhoneNumber(row.mobileNumber) : undefined,
-          startDate: latestFund.isRecurring ? new Date().toISOString().slice(0, 10) : undefined,
-          isActive: true,
-          createdAt: Date.now(),
-        }));
-        const { members, added } = appendUniqueMembers(latestFund.members, incomingMembers, { dedupeByPhone: false });
-        if (added.length > 0) {
-          const next = appendActivity({ ...latestFund, members }, t('auditImportedMembersFromFile' as any, { count: added.length }));
-          refresh(next);
-          toast.success(t('auditImportedMembersFromFile' as any, { count: added.length }));
-        } else {
-          toast.info(t('auditNoValidMembersInFile' as any));
-        }
-      } catch (error) {
-        console.error('Failed to import member file:', error);
-        toast.error(t('auditFileParseFailed' as any));
-      } finally {
-        if (fileInputRef.current) fileInputRef.current.value = '';
+    try {
+      const latestFund = getGroupFundById(params.id) ?? fund;
+      const isExcel = /\\.xlsx?$/i.test(file.name) || file.type.includes('spreadsheet');
+      const rows = isExcel
+        ? await parseGroupFundMemberXlsx(file)
+        : parseMemberImportText(await file.text()).map(row => ({ ...row, expectedAmount: undefined }));
+      const incomingMembers: GroupFundMember[] = rows.map(row => ({
+        id: nanoid(),
+        name: row.name.trim(),
+        mobileNumber: row.mobileNumber ? formatPhoneNumber(row.mobileNumber) : undefined,
+        expectedAmount: row.expectedAmount,
+        startDate: latestFund.isRecurring ? new Date().toISOString().slice(0, 10) : undefined,
+        isActive: true,
+        createdAt: Date.now(),
+      }));
+      const { members, added } = appendUniqueMembers(latestFund.members, incomingMembers);
+      if (added.length > 0) {
+        const next = appendActivity({ ...latestFund, members }, t('auditImportedMembersFromFile' as any, { count: added.length }));
+        refresh(next);
+        toast.success(t('auditImportedMembersFromFile' as any, { count: added.length }));
+      } else {
+        toast.info(t('auditNoValidMembersInFile' as any));
       }
-    };
-    reader.onerror = () => {
+    } catch (error) {
+      console.error('Failed to import member file:', error);
       toast.error(t('auditFileParseFailed' as any));
+    } finally {
       if (fileInputRef.current) fileInputRef.current.value = '';
-    };
-    reader.readAsText(file);
+    }
   };
 
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -1442,11 +1447,14 @@ export default function GroupFundDetail() {
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileUpload}
-                  accept=".csv, .txt"
+                  accept=".xlsx, .xls, .csv, .txt"
                   className="hidden"
                 />
                 <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border border-[#d7e4dc] font-black rounded-xl bg-white text-kharcha-navy hover:bg-gray-100 flex-1 sm:flex-none shadow-sm">
                   <Upload size={16} className="mr-1" /> {t('auditImportFromLocal' as any)}
+                </Button>
+                <Button onClick={handleDownloadMemberTemplate} type="button" variant="outline" className="border border-[#d7e4dc] font-black rounded-xl bg-white text-[#16834b] hover:bg-green-50 flex-1 sm:flex-none shadow-sm">
+                  <FileText size={16} className="mr-1" /> Download Excel Template
                 </Button>
                 <Button onClick={handlePickContacts} disabled={isImportingContacts} variant="outline" className="border border-[#d7e4dc] font-black rounded-xl bg-white text-kharcha-navy hover:bg-gray-100 disabled:cursor-wait disabled:opacity-70 flex-1 sm:flex-none shadow-sm">
                   {isImportingContacts ? <Loader2 size={16} className="mr-1 animate-spin" /> : <Phone size={16} className="mr-1" />}
