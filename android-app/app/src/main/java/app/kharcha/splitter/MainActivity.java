@@ -667,12 +667,9 @@ public class MainActivity extends FragmentActivity {
                 LinearLayout selectionActions = new LinearLayout(this);
                 selectionActions.setOrientation(LinearLayout.HORIZONTAL);
                 selectionActions.setGravity(Gravity.CENTER_VERTICAL);
-                Button selectAll = pickerButton("Select All", Color.rgb(22, 131, 75));
-                Button clearAll = pickerButton("Clear All", Color.rgb(232, 120, 23));
-                selectionActions.addView(selectAll, new LinearLayout.LayoutParams(0, dp(42), 1f));
-                LinearLayout.LayoutParams clearParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
-                clearParams.leftMargin = dp(8);
-                selectionActions.addView(clearAll, clearParams);
+                Button addSelected = pickerButton("Add selected", Color.rgb(22, 131, 75));
+                selectionActions.addView(addSelected, new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, dp(46)));
                 content.addView(selectionActions);
 
                 ListView contactList = new ListView(this);
@@ -699,13 +696,6 @@ public class MainActivity extends FragmentActivity {
                         .setTitle("Add contacts")
                         .setView(content)
                         .setNegativeButton("Cancel", (ignored, which) -> dispatchContacts(new ArrayList<>()))
-                        .setPositiveButton("Add selected", (ignored, which) -> {
-                            List<ContactRow> selected = new ArrayList<>();
-                            for (ContactRow contact : contacts) {
-                                if (selectedKeys.contains(contactKey(contact))) selected.add(contact);
-                            }
-                            dispatchContacts(selected);
-                        })
                         .create();
 
                 ContactListAdapter adapter = new ContactListAdapter(contacts, selectedKeys, selectedCount);
@@ -721,8 +711,18 @@ public class MainActivity extends FragmentActivity {
                     @Override public void onTextChanged(CharSequence s, int start, int before, int count) { render.run(); }
                     @Override public void afterTextChanged(Editable s) { }
                 });
-                selectAll.setOnClickListener(v -> adapter.selectAllVisible());
-                clearAll.setOnClickListener(v -> adapter.clearAll());
+                addSelected.setOnClickListener(v -> {
+                    if (selectedKeys.isEmpty()) {
+                        Toast.makeText(this, "Select at least one contact", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    List<ContactRow> selected = new ArrayList<>();
+                    for (ContactRow contact : contacts) {
+                        if (selectedKeys.contains(contactKey(contact))) selected.add(contact);
+                    }
+                    dispatchContacts(selected);
+                    dialog.dismiss();
+                });
                 render.run();
                 dialog.setOnCancelListener(ignored -> dispatchContacts(new ArrayList<>()));
                 dialog.setOnShowListener(ignored -> {
