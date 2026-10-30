@@ -24,7 +24,8 @@ describe('uniform PDF layout and direct save', () => {
       expect(source).toContain('PDF_LAYOUT_CSS');
       expect(source).toContain('class="report"');
     }
-    expect(trip).toContain('KHARCHA_LOGO_LOCKUP');
+    expect(trip).toContain('class=\"brand-name\">Kharcha</div>');
+    expect(trip).not.toContain('KHARCHA_LOGO_LOCKUP');
     expect(sharedHome).toContain('KHARCHA_LOGO_LOCKUP');
     expect(groupFund).toContain('KHARCHA_LOGO_LOCKUP');
   });
