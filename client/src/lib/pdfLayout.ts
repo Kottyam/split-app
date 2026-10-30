@@ -79,10 +79,10 @@ export const PDF_LAYOUT_CSS = `
   table.settlement th:nth-child(1), table.settlement td:nth-child(1), table.settlement th:nth-child(2), table.settlement td:nth-child(2) { width: 28%; }
   table.settlement th:nth-child(3), table.settlement td:nth-child(3) { width: 22%; }
   table.settlement th:nth-child(4), table.settlement td:nth-child(4) { width: 22%; }
-  table.expenses th:nth-child(1), table.expenses td:nth-child(1) { width: 16%; }
-  table.expenses th:nth-child(2), table.expenses td:nth-child(2) { width: 30%; }
-  table.expenses th:nth-child(3), table.expenses td:nth-child(3) { width: 20%; }
-  table.expenses th:nth-child(4), table.expenses td:nth-child(4) { width: 20%; }
+  table.expenses th:nth-child(1), table.expenses td:nth-child(1) { width: 12%; }
+  table.expenses th:nth-child(2), table.expenses td:nth-child(2) { width: 22%; }
+  table.expenses th:nth-child(3), table.expenses td:nth-child(3) { width: 16%; }
+  table.expenses th:nth-child(4), table.expenses td:nth-child(4) { width: 16%; }
   table.expenses th:nth-child(5), table.expenses td:nth-child(5) { width: 12%; }
-  table.expenses th:nth-child(6), table.expenses td:nth-child(6) { width: 20%; }
+  table.expenses th:nth-child(6), table.expenses td:nth-child(6) { width: 22%; }
 `;
