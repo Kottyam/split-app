@@ -22,16 +22,16 @@ describe('Kharcha UI polish contracts', () => {
     }
   });
 
-  it('keeps navigation presentation safe-area aware and route behavior unchanged', () => {
+  it('keeps the primary navigation safe-area aware with only Home, Trips and More', () => {
     const bottomNav = read('client/src/components/BottomNav.tsx');
     expect(bottomNav).toContain('safe-area-inset-bottom');
     expect(bottomNav).toContain('navigate(item.path)');
-    expect(bottomNav).toContain("'/shared-homes'");
+    expect(bottomNav).not.toContain("'/shared-homes'");
     expect(bottomNav).toContain("t('more' as any)");
     expect(bottomNav).toContain('text-kharcha-navy');
   });
 
-  it('keeps the Home header composition and existing category routes intact', () => {
+  it('keeps the Home header and only the enabled Home categories', () => {
     const home = read('client/src/pages/Home.tsx');
     expect(home).toContain("<Search size={18} />");
     expect(home).toContain("<Bell size={18} />");
@@ -40,7 +40,7 @@ describe('Kharcha UI polish contracts', () => {
     expect(home).toContain("t('whatManage')");
     expect(home).toContain("t('chooseCategory' as any)");
     expect(home).toContain('appCategories.trips.path');
-    expect(home).toContain('appCategories.sharedHomes.path');
+    expect(home).not.toContain('appCategories.sharedHomes.path');
     expect(home).toContain('appCategories.groupFunds.path');
     expect(home).not.toContain('pointer-events-none fixed');
   });

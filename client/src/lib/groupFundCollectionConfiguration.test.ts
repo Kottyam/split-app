@@ -20,7 +20,7 @@ describe('Group Fund collection configuration contract', () => {
   });
 
   it('does not render collection-date or Past/Future controls inside Collections', () => {
-    const collectionBlock = detail.split("{activeTab === 'collection' && (")[1]?.split("{activeTab === 'members' && (")[0] ?? '';
+    const collectionBlock = detail.split("{activeTab === 'collection' && (")[1]?.split("{activeTab === 'settings' && (")[0] ?? '';
     expect(collectionBlock).not.toContain('setCollectionDate');
     expect(collectionBlock).not.toContain('setCollectionPeriodMode');
     expect(collectionBlock).toContain('auditTotalCollected');

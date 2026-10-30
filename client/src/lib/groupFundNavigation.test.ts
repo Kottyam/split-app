@@ -13,15 +13,19 @@ const listSource = fs.readFileSync(
 
 describe('Group Fund UI navigation contract', () => {
   it('opens Dashboard first and presents the requested navigation order', () => {
-    expect(detailSource).toContain("useState<'overview' | 'collection' | 'expenses' | 'members' | 'settle' | 'reports'>('overview')");
-    expect(detailSource).not.toContain("activeTab === 'settings'");
+    expect(detailSource).toContain("useState<'overview' | 'collection' | 'expenses' | 'members' | 'settings' | 'reports'>('overview')");
+    expect(detailSource).toContain("{activeTab === 'settings' && (");
+    expect(detailSource).not.toContain("id: 'settle'");
+    expect(detailSource).not.toContain("activeTab === 'settle'");
     expect(detailSource).toContain('handleSaveSettings');
+    expect(detailSource).toContain('id="fund-upi"');
+    expect(detailSource).toContain('value={upiId}');
     const order = [
       "id: 'overview'",
       "id: 'collection'",
       "id: 'members'",
       "id: 'expenses'",
-      "id: 'settle'",
+      "id: 'settings'",
       "id: 'reports'",
     ];
     let previousIndex = -1;

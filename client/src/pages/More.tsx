@@ -1,4 +1,4 @@
-import { Home as HomeIcon, Landmark, Settings, WalletCards, Plane, SlidersHorizontal } from 'lucide-react';
+import { Landmark, Settings, Plane, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,6 @@ export default function More() {
   const items = [
     { path: '/group-funds', label: t('groupFunds' as any), description: t('openFunds' as any), icon: Landmark, tone: 'text-[#e87817] bg-[#fff3e3]' },
     { path: '/trips', label: t('myTrips' as any), description: t('openTrips' as any), icon: Plane, tone: 'text-[#e87817] bg-[#fff3e3]' },
-    { path: '/shared-homes', label: t('mySharedHomes' as any), description: t('openSharedHomes' as any), icon: HomeIcon, tone: 'text-[#16834b] bg-[#dff1e5]' },
-    { path: '/personal-budget', label: t('personalBudget' as any), description: t('personalBudgetOverview' as any), icon: WalletCards, tone: 'text-[#16834b] bg-[#dff1e5]' },
   ];
   return <div className="min-h-screen bg-kharcha-cream px-3 pb-12 pt-4 sm:px-4 sm:pt-6"><div className="mx-auto max-w-3xl space-y-3"><AppSectionHeader
         title={t('moreTitle' as any)}

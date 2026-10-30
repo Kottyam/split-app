@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Users, Wallet, QrCode, CheckCircle2, History, Trash2, Edit, Search, Upload, UserPlus, Phone, Check, MessageSquare, FileText, RotateCcw, Receipt, AlertCircle, Loader2, Share2 } from 'lucide-react';
+import { ArrowLeft, Users, Wallet, QrCode, CheckCircle2, History, Trash2, Edit, Search, Upload, UserPlus, Phone, Check, MessageSquare, FileText, RotateCcw, Receipt, AlertCircle, Loader2, Share2, Settings } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { toast } from 'sonner';
 import { pickMultipleContacts, formatPhoneNumber } from '@/lib/contacts';
@@ -49,7 +49,7 @@ export default function GroupFundDetail() {
   const { t } = useLanguage();
   const { requestDelete } = useDeleteConfirmation();
   const [fund, setFund] = useState<GroupFund | undefined>(() => getGroupFundById(params.id));
-  const [activeTab, setActiveTab] = useState<'overview' | 'collection' | 'expenses' | 'members' | 'settle' | 'reports'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'collection' | 'expenses' | 'members' | 'settings' | 'reports'>('overview');
 
   const [selectedMemberForCollection, setSelectedMemberForCollection] = useState<GroupFundMember | undefined>();
   const [collectionMethod, setCollectionMethod] = useState<'UPI' | 'Cash'>('UPI');
@@ -1100,7 +1100,7 @@ export default function GroupFundDetail() {
             { id: 'collection', label: t('auditCollectionSummary' as any), icon: CheckCircle2 },
             { id: 'members', label: t('auditMembers' as any), icon: Users },
             { id: 'expenses', label: t('auditExpensesTab' as any), icon: Receipt },
-            { id: 'settle', label: t('auditSettlementTab' as any), icon: Wallet },
+            { id: 'settings', label: t('auditSaveSettings' as any), icon: Settings },
             { id: 'reports', label: t('sharedHomeReports' as any), icon: FileText },
           ].map(tab => {
             const Icon = tab.icon;
@@ -1369,62 +1369,7 @@ export default function GroupFundDetail() {
           </div>
         )}
 
-        {activeTab === 'settle' && (
-          <div className="space-y-4">
-            <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-black text-kharcha-navy">{t('auditSettlementTab' as any)}</h2>
-              <p className="mt-1 text-sm font-medium text-gray-600">{t('auditRemainingBalance' as any)}</p>
-              <p className={`mt-2 text-3xl font-black ${remainingBalance >= 0 ? 'text-[#16834b]' : 'text-red-600'}`}>
-                ₹{remainingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-[#d7e4dc] bg-white p-3">
-                  <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)}</p>
-                  <p className="mt-1 text-lg font-black text-[#16834b]">₹{totalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                </div>
-                <div className="rounded-xl border border-[#d7e4dc] bg-white p-3">
-                  <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalExpenses' as any)}</p>
-                  <p className="mt-1 text-lg font-black text-red-600">₹{totalExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === 'reports' && (
-          <div className="space-y-4">
-            <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-5 shadow-sm">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-lg font-black text-kharcha-navy">{t('sharedHomeReports' as any)}</h2>
-                  <p className="text-sm font-medium text-gray-600">{t('auditPeriodLabel' as any)}: {selectedPeriod}</p>
-                </div>
-                <span className="rounded-full bg-[#dff1e5] px-2.5 py-1 text-xs font-black text-[#16834b]">{fund.isRecurring ? t('recurringCollection' as any) : t('pbOneTime' as any)}</span>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <Button type="button" onClick={() => handleGeneratePdfReport('view')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
-                  <FileText size={16} className="mr-1 text-[#16834b]" /> {t('auditPdfReport' as any)}
-                </Button>
-                <Button type="button" onClick={() => handleGeneratePdfReport('print')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
-                  {t('auditPdfPrint' as any)}
-                </Button>
-                <Button type="button" onClick={() => handleGeneratePdfReport('save')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
-                  {t('auditPdfSave' as any)}
-                </Button>
-                <Button type="button" onClick={() => handleGeneratePdfReport('share')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
-                  {t('sharedHomeShare' as any)}
-                </Button>
-              </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl border border-[#d7e4dc] bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)}</p><p className="mt-1 text-lg font-black text-[#16834b]">₹{totalCollected.toLocaleString('en-IN')}</p></div>
-                <div className="rounded-xl border border-[#d7e4dc] bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalExpenses' as any)}</p><p className="mt-1 text-lg font-black text-red-600">₹{totalExpenses.toLocaleString('en-IN')}</p></div>
-                <div className="rounded-xl border border-[#d7e4dc] bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditRemainingBalance' as any)}</p><p className={`mt-1 text-lg font-black ${remainingBalance >= 0 ? 'text-[#16834b]' : 'text-red-600'}`}>₹{remainingBalance.toLocaleString('en-IN')}</p></div>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === 'members' && (
+        {activeTab === 'settings' && (
           <div className="space-y-4">
             <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-6 shadow-sm">
               <h2 className="text-lg font-black text-kharcha-navy mb-4">{t('auditFundUpiSettingsTitle' as any)}</h2>
@@ -1467,6 +1412,44 @@ export default function GroupFundDetail() {
                 <Button type="submit" className="bg-black text-white font-black rounded-xl border border-[#d7e4dc] shadow-sm hover:bg-gray-800">{t('auditSaveSettings' as any)}</Button>
               </form>
             </Card>
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="space-y-4">
+            <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-black text-kharcha-navy">{t('sharedHomeReports' as any)}</h2>
+                  <p className="text-sm font-medium text-gray-600">{t('auditPeriodLabel' as any)}: {selectedPeriod}</p>
+                </div>
+                <span className="rounded-full bg-[#dff1e5] px-2.5 py-1 text-xs font-black text-[#16834b]">{fund.isRecurring ? t('recurringCollection' as any) : t('pbOneTime' as any)}</span>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <Button type="button" onClick={() => handleGeneratePdfReport('view')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
+                  <FileText size={16} className="mr-1 text-[#16834b]" /> {t('auditPdfReport' as any)}
+                </Button>
+                <Button type="button" onClick={() => handleGeneratePdfReport('print')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
+                  {t('auditPdfPrint' as any)}
+                </Button>
+                <Button type="button" onClick={() => handleGeneratePdfReport('save')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
+                  {t('auditPdfSave' as any)}
+                </Button>
+                <Button type="button" onClick={() => handleGeneratePdfReport('share')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
+                  {t('sharedHomeShare' as any)}
+                </Button>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-[#d7e4dc] bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)}</p><p className="mt-1 text-lg font-black text-[#16834b]">₹{totalCollected.toLocaleString('en-IN')}</p></div>
+                <div className="rounded-xl border border-[#d7e4dc] bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalExpenses' as any)}</p><p className="mt-1 text-lg font-black text-red-600">₹{totalExpenses.toLocaleString('en-IN')}</p></div>
+                <div className="rounded-xl border border-[#d7e4dc] bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditRemainingBalance' as any)}</p><p className={`mt-1 text-lg font-black ${remainingBalance >= 0 ? 'text-[#16834b]' : 'text-red-600'}`}>₹{remainingBalance.toLocaleString('en-IN')}</p></div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'members' && (
+          <div className="space-y-4">
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white border border-[#d7e4dc] p-4 rounded-2xl shadow-sm">
               <div>

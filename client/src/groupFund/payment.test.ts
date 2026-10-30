@@ -77,4 +77,21 @@ describe('Group Fund personalized payment requests', () => {
     expect(url).toMatch(/^https:\/\/wa\.me\/919876543210\?text=/);
     expect(url).toContain(encodeURIComponent('₹500.00'));
   });
+
+  it('does not create a payment request with a dummy or invalid UPI ID', () => {
+    const request = { fundName: 'House Fund', memberName: 'Asha', amount: 250 };
+    expect(generateGroupFundWhatsAppPaymentMessage(request)).toBe('');
+    expect(generateGroupFundWhatsAppPaymentUrl({ ...request, period: 'October 2026', mobileNumber: '9876543210' })).toBe('');
+  });
+
+  it('rejects invalid amounts and formats valid UPI payment data as INR', async () => {
+    const { generateGroupFundUpiDeepLink, isValidGroupFundUpiId } = await import('./payment');
+    expect(isValidGroupFundUpiId('owner@okaxis')).toBe(true);
+    expect(isValidGroupFundUpiId('not-a-upi-id')).toBe(false);
+    expect(generateGroupFundUpiDeepLink({ fundName: 'House Fund', memberName: 'Asha', amount: 0, upiId: 'owner@okaxis' })).toBe('');
+    const link = generateGroupFundUpiDeepLink({ fundName: 'House Fund', memberName: 'Asha', amount: 250, upiId: 'owner@okaxis' });
+    expect(link).toContain('pa=owner%40okaxis');
+    expect(link).toContain('am=250.00');
+    expect(link).toContain('cu=INR');
+  });
 });
