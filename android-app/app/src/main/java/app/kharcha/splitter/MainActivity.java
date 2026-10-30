@@ -720,8 +720,15 @@ public class MainActivity extends FragmentActivity {
                     for (ContactRow contact : contacts) {
                         if (selectedKeys.contains(contactKey(contact))) selected.add(contact);
                     }
-                    dispatchContacts(selected);
+                    // Dismiss the native picker before delivering the result to the WebView.
+                    // Posting through the WebView also ensures the JS listener gets the event
+                    // after Android has finished closing the dialog.
                     dialog.dismiss();
+                    if (webView != null) {
+                        webView.postDelayed(() -> dispatchContacts(selected), 150L);
+                    } else {
+                        dispatchContacts(selected);
+                    }
                 });
                 render.run();
                 dialog.setOnCancelListener(ignored -> dispatchContacts(new ArrayList<>()));
