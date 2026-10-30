@@ -46,6 +46,15 @@ describe('appendUniqueMembers', () => {
     expect(result.members.map(member => member.name)).toEqual(['Existing', 'Dev', 'Esha']);
   });
 
+  it('allows different selected contacts to share a phone number when requested', () => {
+    const result = appendUniqueMembers(
+      [fundMember('Existing', '9876543210')],
+      [fundMember('Family Member', '9876543210')],
+      { dedupeByPhone: false },
+    );
+    expect(result.added.map(member => member.name)).toEqual(['Family Member']);
+  });
+
   it('filters duplicates against existing and earlier selected contacts', () => {
     const result = appendUniqueMembers(
       [sharedMember('Anu', '+91 98765 43210')],
