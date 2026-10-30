@@ -94,7 +94,8 @@ export function useTrips() {
     category: ExpenseCategory,
     paidBy: string,
     date: number,
-    splits: Record<string, number>
+    splits: Record<string, number>,
+    remark?: string
   ) => {
     const trip = getTripById(tripId);
     if (!trip) return;
@@ -103,6 +104,7 @@ export function useTrips() {
       id: nanoid(),
       tripId,
       description,
+      remark: remark?.trim() || undefined,
       amount,
       category,
       paidBy,
