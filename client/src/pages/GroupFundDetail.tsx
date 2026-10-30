@@ -332,7 +332,7 @@ export default function GroupFundDetail() {
 
   const buildBulkMessageUrl = (member: GroupFundMember) => {
     const customMessage = bulkMessageText.trim();
-    if (customMessage) return generateWhatsAppMessageUrl(member.mobileNumber, `${customMessage}\\nDate: ${new Date().toLocaleDateString('en-IN')}`) ?? '';
+    if (customMessage) return generateWhatsAppMessageUrl(member.mobileNumber, `${customMessage}\nDate: ${new Date().toLocaleDateString('en-IN')}`) ?? '';
     const upiIdConfig = fund.paymentConfig?.upiId?.trim();
     const savedAmount = getSavedCollectionAmount(member);
     const mobileNumber = member.mobileNumber!.trim();
