@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useLocation } from 'wouter';
-import { getGroupFundById, saveGroupFund } from '@/groupFund/storage';
+import { getGroupFundById, mergeContributionHistory, saveGroupFund } from '@/groupFund/storage';
 import { calculateExpectedAmount, calculateExpectedAmountForPeriod, calculateMemberAddExpectedAmountForConfiguredPeriod, getFundCollectionStartTime, getMemberStartDateValue, resolveCollectionPeriod } from '@/groupFund/calculations';
 import type { CollectionPeriodMode } from '@/groupFund/calculations';
 import { canCloseCollectionPeriod, closePeriod, getActivePeriodContributions, getAmountAfterCredit, getCreditAfterPayment, getMemberCreditBalance, getMemberPaymentRequestAmount, getPeriodCollectedAmount, getPeriodCollectionStatus, getSavedCollectionAmount, reopenPeriod } from '@/groupFund/collection';
@@ -247,8 +247,14 @@ export default function GroupFundDetail() {
   }
 
   const refresh = (updated: GroupFund) => {
-    saveGroupFund(updated);
-    setFund({ ...updated });
+    // A page/component may hold an older fund snapshot. Never let an unrelated
+    // member/amount edit overwrite contributions recorded after that snapshot.
+    const latest = getGroupFundById(updated.id);
+    const safeUpdated = latest
+      ? { ...updated, contributions: mergeContributionHistory(updated.contributions, latest.contributions) }
+      : updated;
+    saveGroupFund(safeUpdated);
+    setFund({ ...safeUpdated });
   };
 
   const appendActivity = (f: GroupFund, message: string): GroupFund => {
