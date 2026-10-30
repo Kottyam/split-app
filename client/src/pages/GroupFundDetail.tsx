@@ -970,11 +970,36 @@ export default function GroupFundDetail() {
             isActive: true,
             createdAt: Date.now(),
           }));
-        const { members, added } = appendUniqueMembers(latestFund.members, incomingMembers, { dedupeByPhone: false });
+        // Contact names are not unique: two different people may share the
+        // same name. Prefer phone-number identity, and use the name only when
+        // a contact has no usable phone number.
+        const seenPhones = new Set(
+          latestFund.members
+            .map(member => (member.mobileNumber ?? '').replace(/\\D/g, '').slice(-10))
+            .filter(Boolean),
+        );
+        const seenNamesWithoutPhone = new Set(
+          latestFund.members
+            .filter(member => !(member.mobileNumber ?? '').replace(/\\D/g, '').slice(-10))
+            .map(member => member.name.trim().toLocaleLowerCase()),
+        );
+        const added: GroupFundMember[] = [];
+        for (const member of incomingMembers) {
+          const phone = (member.mobileNumber ?? '').replace(/\\D/g, '').slice(-10);
+          const nameKey = member.name.trim().toLocaleLowerCase();
+          if (phone) {
+            if (seenPhones.has(phone)) continue;
+            seenPhones.add(phone);
+          } else {
+            if (!nameKey || seenNamesWithoutPhone.has(nameKey)) continue;
+            seenNamesWithoutPhone.add(nameKey);
+          }
+          added.push(member);
+        }
         if (added.length > 0) {
           const next = appendActivity({
             ...latestFund,
-            members,
+            members: [...latestFund.members, ...added],
           }, t('auditMembersAdded' as any, { count: added.length }));
           refresh(next);
           toast.success(t('auditMembersAdded' as any, { count: added.length }));
