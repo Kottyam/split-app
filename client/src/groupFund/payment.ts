@@ -23,6 +23,7 @@ export interface GroupFundWhatsAppPaymentRequest extends GroupFundPaymentRequest
   period: string;
   mobileNumber?: string;
   confirmationMessage?: string;
+  qrCodeUrl?: string;
 }
 
 export interface GroupFundWhatsAppReminderRequest {
@@ -74,7 +75,10 @@ export function generateGroupFundWhatsAppPaymentMessage(req: GroupFundWhatsAppPa
   const link = generateGroupFundUpiDeepLink(req);
   const confirmation = req.confirmationMessage || 'Once payment is done, please give a confirmation.';
   const sentDate = new Date().toLocaleDateString('en-IN');
-  return `Hello ${req.memberName}, please pay ₹${req.amount.toFixed(2)} for ${req.fundName} (${req.period}).\nDate: ${sentDate}\nPay here: ${link}\n\n${confirmation}`;
+  const upiId = req.upiId?.trim() || 'Not configured';
+  const qrPayload = link;
+  const qrCodeUrl = req.qrCodeUrl?.trim() || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrPayload)}`;
+  return `Hello ${req.memberName}, please pay ₹${req.amount.toFixed(2)} for ${req.fundName} (${req.period}).\nDate: ${sentDate}\n\nUPI ID: ${upiId}\nPayment QR Code: ${qrCodeUrl}\nUPI payment link: ${link}\n\nAfter completing the payment, please share the payment screenshot and confirm the payment.\n\n${confirmation}`;
 }
 
 export function generateGroupFundWhatsAppPaymentUrl(req: GroupFundWhatsAppPaymentRequest): string {
