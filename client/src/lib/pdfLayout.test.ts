@@ -26,7 +26,7 @@ describe('uniform PDF layout and direct save', () => {
     }
     expect(trip).toContain('class=\"brand-name\">Kharcha</div>');
     expect(trip).not.toContain('KHARCHA_LOGO_LOCKUP');
-    expect(groupFund).toContain('class=\\\"brand-name\\\">Kharcha</div>');
+    expect(groupFund).toContain('class="brand-name">Kharcha</div>');
     expect(groupFund).not.toContain('KHARCHA_LOGO_LOCKUP');
     expect(groupFund).toContain('remarkStr');
     expect(groupFund).toContain('Remark</th>');
