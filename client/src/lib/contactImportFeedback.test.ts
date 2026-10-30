@@ -34,8 +34,10 @@ describe('contact import responsiveness', () => {
 
   it('keeps Group Fund contact imports batched in one members update', () => {
     const source = read('client/src/pages/GroupFundDetail.tsx');
-    expect(source).toContain('appendUniqueMembers(latestFund.members, incomingMembers, { dedupeByPhone: false })');
-    expect(source).toContain('members,');
+    expect(source).toContain('const seenPhones = new Set(');
+    expect(source).toContain('const seenNamesWithoutPhone = new Set(');
+    expect(source).toContain('members: [...latestFund.members, ...added]');
+    expect(source).toContain('refresh(next);');
   });
 
   it('uses a background executor and virtualized list in the native picker', () => {
