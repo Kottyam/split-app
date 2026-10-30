@@ -119,12 +119,12 @@ export async function pickMultipleContacts(): Promise<ContactInfo[]> {
 
 /** Format phone number to 10 digits (India). */
 export function formatPhoneNumber(phone: string): string {
-  const digits = phone.replace(/\\D/g, '');
+  const digits = phone.replace(/\D/g, '');
   return digits.slice(-10);
 }
 
 /** Validate phone number format. */
 export function isValidPhoneNumber(phone: string): boolean {
-  const digits = phone.replace(/\\D/g, '');
+  const digits = phone.replace(/\D/g, '');
   return digits.length === 10 && /^[6-9]/.test(digits);
 }
