@@ -17,7 +17,7 @@ import { ArrowLeft, Users, Wallet, QrCode, CheckCircle2, History, Trash2, Edit, 
 import { nanoid } from 'nanoid';
 import { toast } from 'sonner';
 import { pickMultipleContacts, formatPhoneNumber } from '@/lib/contacts';
-import { appendUniqueMembers } from '@/lib/memberImport';
+import { appendUniqueMembers, parseMemberImportText } from '@/lib/memberImport';
 import { generateGroupFundWhatsAppPaymentUrl, generateGroupFundWhatsAppReminderUrl, generateGroupFundWhatsAppThankYouUrl, generateGroupFundThankYouMessage, generateWhatsAppMessageUrl, normalizeWhatsAppNumber } from '@/groupFund/payment';
 import { getBulkMessageCandidates, getBulkMessageDuplicateNumberIds, getBulkMessageKind, getBulkMessageMissingNumberIds, getBulkMessageRecipients, getNextBulkMessageRecipientId, isBulkMessageQueueComplete, toggleBulkMessageMember } from '@/groupFund/bulkMessaging';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -982,46 +982,35 @@ export default function GroupFundDetail() {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const text = event.target?.result as string;
-        if (!text) return;
-        const lines = text.split(/\r\n|\n/);
-        const newMembers: GroupFundMember[] = [];
-        const existingNames = new Set(fund.members.map((m: GroupFundMember) => m.name.toLowerCase()));
-
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          const parts = line.split(/,|\t/);
-          const name = parts[0]?.trim()?.replace(/^["']|["']$/g, '');
-          const mobile = parts[1]?.trim()?.replace(/^["']|["']$/g, '');
-          if (name && name.toLowerCase() !== 'name' && !existingNames.has(name.toLowerCase())) {
-            newMembers.push({
-              id: nanoid(),
-              name,
-              mobileNumber: mobile ? formatPhoneNumber(mobile) : undefined,
-              startDate: fund.isRecurring ? new Date().toISOString().slice(0, 10) : undefined,
-              isActive: true,
-              createdAt: Date.now(),
-            });
-            existingNames.add(name.toLowerCase());
-          }
-        }
-
-        if (newMembers.length > 0) {
-          const next = appendActivity({
-            ...fund,
-            members: [...fund.members, ...newMembers],
-          }, t('auditImportedMembersFromFile' as any, { count: newMembers.length }));
+        const text = String(event.target?.result ?? '');
+        const rows = parseMemberImportText(text);
+        const latestFund = getGroupFundById(params.id) ?? fund;
+        const incomingMembers: GroupFundMember[] = rows.map(row => ({
+          id: nanoid(),
+          name: row.name,
+          mobileNumber: row.mobileNumber ? formatPhoneNumber(row.mobileNumber) : undefined,
+          startDate: latestFund.isRecurring ? new Date().toISOString().slice(0, 10) : undefined,
+          isActive: true,
+          createdAt: Date.now(),
+        }));
+        const { members, added } = appendUniqueMembers(latestFund.members, incomingMembers, { dedupeByPhone: false });
+        if (added.length > 0) {
+          const next = appendActivity({ ...latestFund, members }, t('auditImportedMembersFromFile' as any, { count: added.length }));
           refresh(next);
-          toast.success(t('auditImportedMembersFromFile' as any, { count: newMembers.length }));
+          toast.success(t('auditImportedMembersFromFile' as any, { count: added.length }));
         } else {
           toast.info(t('auditNoValidMembersInFile' as any));
         }
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error('Failed to import member file:', error);
         toast.error(t('auditFileParseFailed' as any));
       } finally {
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
+    };
+    reader.onerror = () => {
+      toast.error(t('auditFileParseFailed' as any));
+      if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsText(file);
   };
@@ -1441,7 +1430,7 @@ export default function GroupFundDetail() {
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileUpload}
-                  accept=".csv, .txt, .xls, .xlsx"
+                  accept=".csv, .txt"
                   className="hidden"
                 />
                 <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border border-[#d7e4dc] font-black rounded-xl bg-white text-kharcha-navy hover:bg-gray-100 flex-1 sm:flex-none shadow-sm">
