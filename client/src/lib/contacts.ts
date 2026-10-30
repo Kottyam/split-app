@@ -52,97 +52,27 @@ async function pickFromNativeBridge(): Promise<ContactInfo[]> {
 
   return new Promise<ContactInfo[]>((resolve) => {
     let settled = false;
+    let timeoutId: number | undefined;
+
     const finish = (contacts: unknown) => {
       if (settled) return;
       settled = true;
       window.removeEventListener(CONTACT_EVENT, onSelected as EventListener);
-      window.clearTimeout(timeoutId);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
       const host = window as Window & { __kharchaContactsResolve?: (value: unknown) => void };
       if (host.__kharchaContactsResolve === finish) delete host.__kharchaContactsResolve;
       resolve(normaliseContacts(contacts));
     };
+
     const onSelected = (event: Event) => {
       finish((event as CustomEvent<unknown>).detail);
     };
+
     const host = window as Window & { __kharchaContactsResolve?: (value: unknown) => void };
     // Register a direct callback as well as the event listener. Android WebView
     // can deliver the callback reliably even if a CustomEvent is missed.
     host.__kharchaContactsResolve = finish;
-    const timeoutId = window.setTimeout(() => finish([]), 30_000);
-
-    window.addEventListener(CONTACT_EVENT, onSelected as EventListener, { once: true });
-    try {
-      bridge.pickContacts();
-    } catch (error) {
-      console.error('Failed to open native contact picker:', error);
-      finish([]);
-    }
-  });
-}**
- * Contact Picker integration for browser and Android WebView.
- *
- * Chrome's Contact Picker API is not exposed consistently inside embedded
- * Android WebViews. The Android wrapper therefore exposes a narrow native
- * bridge named KharchaContacts; the web implementation remains the fallback
- * for supported browsers.
- */
-
-export interface ContactInfo {
-  name?: string;
-  tel?: string;
-  email?: string;
-}
-
-type NativeContactBridge = {
-  pickContacts: () => void;
-};
-
-const CONTACT_EVENT = 'kharcha-contacts-selected';
-
-function getNativeContactBridge(): NativeContactBridge | null {
-  if (typeof window === 'undefined') return null;
-  const bridge = (window as Window & { KharchaContacts?: NativeContactBridge }).KharchaContacts;
-  return bridge && typeof bridge.pickContacts === 'function' ? bridge : null;
-}
-
-function isBrowserContactPickerSupported(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    typeof navigator !== 'undefined' &&
-    'contacts' in navigator &&
-    'ContactsManager' in window
-  );
-}
-
-function normaliseContacts(contacts: unknown): ContactInfo[] {
-  if (!Array.isArray(contacts)) return [];
-  return contacts.map((contact) => {
-    const value = contact as { name?: unknown; tel?: unknown; email?: unknown };
-    return {
-      name: Array.isArray(value.name) ? String(value.name[0] ?? '') : String(value.name ?? ''),
-      tel: Array.isArray(value.tel) ? String(value.tel[0] ?? '') : String(value.tel ?? ''),
-      email: Array.isArray(value.email) ? String(value.email[0] ?? '') : String(value.email ?? ''),
-    };
-  });
-}
-
-async function pickFromNativeBridge(): Promise<ContactInfo[]> {
-  const bridge = getNativeContactBridge();
-  if (!bridge || typeof window === 'undefined') return [];
-
-  return new Promise<ContactInfo[]>((resolve) => {
-    let settled = false;
-    const finish = (contacts: unknown) => {
-      if (settled) return;
-      settled = true;
-      window.removeEventListener(CONTACT_EVENT, onSelected as EventListener);
-      window.clearTimeout(timeoutId);
-      resolve(normaliseContacts(contacts));
-    };
-    const onSelected = (event: Event) => {
-      finish((event as CustomEvent<unknown>).detail);
-    };
-    const timeoutId = window.setTimeout(() => finish([]), 30_000);
+    timeoutId = window.setTimeout(() => finish([]), 30_000);
 
     window.addEventListener(CONTACT_EVENT, onSelected as EventListener, { once: true });
     try {
@@ -189,12 +119,12 @@ export async function pickMultipleContacts(): Promise<ContactInfo[]> {
 
 /** Format phone number to 10 digits (India). */
 export function formatPhoneNumber(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
+  const digits = phone.replace(/\\D/g, '');
   return digits.slice(-10);
 }
 
 /** Validate phone number format. */
 export function isValidPhoneNumber(phone: string): boolean {
-  const digits = phone.replace(/\D/g, '');
+  const digits = phone.replace(/\\D/g, '');
   return digits.length === 10 && /^[6-9]/.test(digits);
 }
