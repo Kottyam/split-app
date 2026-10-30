@@ -31,14 +31,9 @@ export const PDF_LAYOUT_CSS = `
     padding-bottom: 10px;
     margin-bottom: 12px;
   }
-  .report-logo, header img {
-    width: 112px;
-    max-width: 30%;
-    height: auto;
-    object-fit: contain;
-    flex: 0 0 auto;
-  }
   .report-heading, header > div { min-width: 0; flex: 1; }
+  .brand-name { color: #16834b; font-size: 25px; line-height: 1; font-weight: 800; letter-spacing: 1.5px; margin-bottom: 8px; }
+  .brand-name::after { content: ''; display: block; width: 54px; height: 4px; margin-top: 5px; border-radius: 4px; background: #e87817; }
   h1 { font-size: 22px; line-height: 1.15; font-weight: 700; margin: 0 0 4px; overflow-wrap: anywhere; }
   h2, h3 { color: #16834b; break-after: avoid; page-break-after: avoid; }
   h2 { font-size: 15px; margin: 20px 0 8px; }
@@ -88,5 +83,6 @@ export const PDF_LAYOUT_CSS = `
   table.expenses th:nth-child(2), table.expenses td:nth-child(2) { width: 30%; }
   table.expenses th:nth-child(3), table.expenses td:nth-child(3) { width: 20%; }
   table.expenses th:nth-child(4), table.expenses td:nth-child(4) { width: 20%; }
-  table.expenses th:nth-child(5), table.expenses td:nth-child(5) { width: 14%; }
+  table.expenses th:nth-child(5), table.expenses td:nth-child(5) { width: 12%; }
+  table.expenses th:nth-child(6), table.expenses td:nth-child(6) { width: 20%; }
 `;
