@@ -41,6 +41,7 @@ export default function AddExpenseDialog({
   trip,
 }: AddExpenseDialogProps) {
   const [description, setDescription] = useState('');
+  const [remark, setRemark] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('food');
   const [paidBy, setPaidBy] = useState(trip.members[0]?.id || '');
@@ -119,11 +120,13 @@ export default function AddExpenseDialog({
       category,
       paidBy,
       new Date(date).getTime(),
-      splits
+      splits,
+      remark
     );
 
     // Reset form
     setDescription('');
+    setRemark('');
     setAmount('');
     setCategory('food');
     setPaidBy(trip.members[0]?.id || '');
@@ -170,6 +173,11 @@ export default function AddExpenseDialog({
               className="border-2 border-black rounded-lg mt-1"
               required
             />
+          </div>
+
+          <div>
+            <Label htmlFor="expense-remark" className="font-bold text-black">Remark (optional)</Label>
+            <Input id="expense-remark" value={remark} maxLength={300} onChange={(e) => setRemark(e.target.value)} placeholder="Add a note about this expense" className="border-2 border-black rounded-lg mt-1" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
