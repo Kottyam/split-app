@@ -66,7 +66,7 @@ describe('member-add reliability contracts', () => {
   it('uses the latest persisted Group Fund before importing contacts and refreshes immediately', () => {
     const source = read('client/src/pages/GroupFundDetail.tsx');
     expect(source).toContain('getGroupFundById(params.id) ?? fund');
-    expect(source).toContain('appendUniqueMembers(latestFund.members, incomingMembers)');
+    expect(source).toContain('appendUniqueMembers(latestFund.members, incomingMembers, { dedupeByPhone: false })');
     expect(source).toContain('refresh(next);');
     expect(source).toContain('if (isImportingContacts) return;');
   });
