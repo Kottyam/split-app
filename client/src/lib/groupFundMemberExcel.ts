@@ -9,8 +9,8 @@ const decoder = new TextDecoder();
 
 function crc32(bytes: Uint8Array): number {
   let crc = 0xffffffff;
-  for (const byte of bytes) {
-    crc ^= byte;
+  for (let index = 0; index < bytes.length; index += 1) {
+    crc ^= bytes[index];
     for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
   }
   return (crc ^ 0xffffffff) >>> 0;
@@ -47,7 +47,7 @@ function zipStore(files: { name: string; content: string }[]): Blob {
   const ev = new DataView(end.buffer);
   u32(ev, 0, 0x06054b50); u16(ev, 8, files.length); u16(ev, 10, files.length);
   u32(ev, 12, centralSize); u32(ev, 16, offset);
-  return new Blob([...local, ...central, end], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  return new Blob([...local, ...central, end].map(part => new Uint8Array(part).buffer as ArrayBuffer), { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
 
 export function createGroupFundMemberTemplate(): Blob {
@@ -125,7 +125,7 @@ export async function parseGroupFundMemberXlsx(file: File): Promise<GroupFundExc
   const phoneCol = ['A', 'B', 'C'].find(col => ['mobile number', 'mobile', 'phone', 'phone number'].includes(cellValue(header, col).trim().toLowerCase()));
   const amountCol = ['A', 'B', 'C'].find(col => ['expected amount', 'expected contribution', 'amount'].includes(cellValue(header, col).trim().toLowerCase()));
   if (!nameCol || !phoneCol || !amountCol) throw new Error('Excel columns must be Name, Mobile Number, Expected Amount');
-  return rows.slice(1).map(row => {
+  const parsed: (GroupFundExcelMemberRow | null)[] = rows.slice(1).map(row => {
     const name = cellValue(row, nameCol).trim();
     const mobileNumber = cellValue(row, phoneCol).replace(/\D/g, '').trim();
     const rawAmount = cellValue(row, amountCol).trim();
@@ -133,5 +133,6 @@ export async function parseGroupFundMemberXlsx(file: File): Promise<GroupFundExc
     if (!name && !mobileNumber && !rawAmount) return null;
     if (!name || mobileNumber.length !== 10 || (expectedAmount !== undefined && (!Number.isFinite(expectedAmount) || expectedAmount < 0))) return null;
     return { name, mobileNumber, expectedAmount };
-  }).filter((row): row is GroupFundExcelMemberRow => row !== null);
+  });
+  return parsed.filter((row): row is GroupFundExcelMemberRow => row !== null);
 }
