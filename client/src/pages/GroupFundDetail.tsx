@@ -781,13 +781,13 @@ export default function GroupFundDetail() {
           <table>
             <thead>
               <tr>
-                <th colspan="1" style="width: 28%;">${t('auditMemberName' as any)}</th>
-                <th colspan="1" style="width: 19%;">${t('auditMobile' as any)}</th>
-                <th colspan="1" style="width: 15%;">${t('auditAmountPaid' as any)}</th>
-                <th colspan="1" style="width: 16%;">${t('auditPaymentDate' as any)}</th>
-                <th colspan="1" style="width: 10%;">${t('auditMethod' as any)}</th>
-                <th colspan="1" style="width: 10%;">${t('auditStatus' as any)}</th>
-                <th colspan="1" style="width: 20%;">Remarks</th>
+                <th colspan="1" style="width: 18%;">${t('auditMemberName' as any)}</th>
+                <th colspan="1" style="width: 14%;">${t('auditMobile' as any)}</th>
+                <th colspan="1" style="width: 12%;">${t('auditAmountPaid' as any)}</th>
+                <th colspan="1" style="width: 13%;">${t('auditPaymentDate' as any)}</th>
+                <th colspan="1" style="width: 9%;">${t('auditMethod' as any)}</th>
+                <th colspan="1" style="width: 9%;">${t('auditStatus' as any)}</th>
+                <th colspan="1" style="width: 25%;">Remarks</th>
               </tr>
             </thead>
             <tbody>
