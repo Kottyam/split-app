@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Bell, Plane, Search, Settings } from 'lucide-react';
+import { ArrowRight, Bell, Landmark, Plane, Search, Settings } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { Card } from '@/components/ui/card';
 
@@ -54,17 +54,13 @@ export default function Home() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
           <CategoryCard icon={<Plane size={30} />} title={t('myTrips')} description={t('tripsDescription')} action={t('openTrips')} accent="orange" onClick={() => navigate(appCategories.trips.path)} />
-          <CategoryCard icon={<LandmarkIcon />} title={t('groupFunds')} description={t('groupFundsDescription')} action={t('openFunds')} accent="orange" onClick={() => navigate(appCategories.groupFunds.path)} />
+          <CategoryCard icon={<Landmark size={30} />} title={t('groupFunds')} description={t('groupFundsDescription')} action={t('openFunds')} accent="orange" onClick={() => navigate(appCategories.groupFunds.path)} />
         </div>
       </main>
       <AppSettingsDialog open={showSettings} onOpenChange={setShowSettings} />
       <BottomNavigation />
     </div>
   );
-}
-
-function LandmarkIcon() {
-  return <span className="text-[30px] leading-none" aria-hidden="true">◎</span>;
 }
 
 function HeaderAction({ children, label, ariaLabel, onClick, badge }: { children: React.ReactNode; label: string; ariaLabel: string; onClick: () => void; badge?: string }) {
