@@ -957,7 +957,7 @@ export default function GroupFundDetail() {
             isActive: true,
             createdAt: Date.now(),
           }));
-        const { members, added } = appendUniqueMembers(latestFund.members, incomingMembers);
+        const { members, added } = appendUniqueMembers(latestFund.members, incomingMembers, { dedupeByPhone: false });
         if (added.length > 0) {
           const next = appendActivity({
             ...latestFund,
