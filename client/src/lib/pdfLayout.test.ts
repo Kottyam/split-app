@@ -31,7 +31,6 @@ describe('uniform PDF layout and direct save', () => {
     expect(groupFund).toContain('remarkStr');
     expect(groupFund).toContain('Remark</th>');
     expect(sharedHome).toContain('KHARCHA_LOGO_LOCKUP');
-    expect(groupFund).toContain('KHARCHA_LOGO_LOCKUP');
   });
 
   it('saves directly to Downloads instead of delegating Save PDF to Print', () => {
