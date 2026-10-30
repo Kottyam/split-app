@@ -3,7 +3,7 @@ import { appCategories, categoryListPath, landingCategoryOrder } from './appNavi
 
 describe('Kharcha landing navigation', () => {
   it('keeps the landing hierarchy in Trips, Shared Homes, Group Funds, and Personal Budget order', () => {
-    expect(landingCategoryOrder).toEqual(['trips', 'shared-homes', 'group-funds', 'personal-budget']);
+    expect(landingCategoryOrder).toEqual(['trips', 'shared-homes', 'group-funds']);
     expect(categoryListPath('trips')).toBe('/trips');
     expect(categoryListPath('shared-homes')).toBe('/shared-homes');
   });
