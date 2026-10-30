@@ -261,6 +261,10 @@ export default function GroupFundDetail() {
 
   const periodContributions = fund.contributions.filter((c: Contribution) => c.status !== 'Cancelled' && (!c.note || c.note.includes(selectedPeriod)));
   const totalCollected = periodContributions.reduce((s: number, c: Contribution) => s + c.amount, 0) + (selectedPeriod === collectionPeriods[0] ? (fund.startingBalance ?? 0) : 0);
+  // Dashboard totals are lifetime totals, matching the Group Funds list. Period totals remain scoped to selectedPeriod for collection/report workflows.
+  const lifetimeTotalCollected = fund.contributions
+    .filter((contribution: Contribution) => contribution.status === 'Paid')
+    .reduce((sum: number, contribution: Contribution) => sum + contribution.amount, 0) + (fund.startingBalance ?? 0);
   const expectedTotal = fund.isRecurring
     ? fund.members.reduce((sum: number, m: GroupFundMember) => sum + calculateExpectedAmountForPeriod(fund, m, selectedPeriod), 0)
     : fund.members.reduce((sum: number, m: GroupFundMember) => sum + (m.expectedAmount ?? fund.defaultContributionAmount ?? 0), 0);
@@ -1296,7 +1300,7 @@ export default function GroupFundDetail() {
             <div className="grid gap-4 sm:grid-cols-3">
               <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-5 shadow-sm">
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)}</p>
-                <h3 className="text-2xl font-black text-[#16834b] mt-1">₹{totalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
+                <h3 className="text-2xl font-black text-[#16834b] mt-1">₹{lifetimeTotalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
               </Card>
               <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-5 shadow-sm">
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalExpenses' as any)}</p>
@@ -1304,8 +1308,8 @@ export default function GroupFundDetail() {
               </Card>
               <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-5 shadow-sm">
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditRemainingBalance' as any)}</p>
-                <h3 className={`text-2xl font-black mt-1 ${remainingBalance >= 0 ? 'text-[#16834b]' : 'text-red-600'}`}>
-                  ₹{remainingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <h3 className={`text-2xl font-black mt-1 ${(lifetimeTotalCollected - totalExpenses) >= 0 ? 'text-[#16834b]' : 'text-red-600'}`}>
+                  ₹{(lifetimeTotalCollected - totalExpenses).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </h3>
               </Card>
             </div>
