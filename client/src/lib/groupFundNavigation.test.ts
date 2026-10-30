@@ -25,7 +25,7 @@ describe('Group Fund UI navigation contract', () => {
       "id: 'collection'",
       "id: 'members'",
       "id: 'expenses'",
-      "id: 'settle'",
+      "id: 'settings'",
       "id: 'reports'",
     ];
     let previousIndex = -1;
