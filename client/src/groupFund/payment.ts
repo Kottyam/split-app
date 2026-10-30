@@ -36,7 +36,7 @@ export interface GroupFundWhatsAppReminderRequest {
 export function normalizeWhatsAppNumber(input?: string): string | undefined {
   const raw = (input ?? '').trim();
   if (!raw) return undefined;
-  let digits = raw.replace(/\\D/g, '');
+  let digits = raw.replace(/\D/g, '');
   if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
   if (digits.length === 10) return `91${digits}`;
   if (digits.length === 12 && digits.startsWith('91')) return digits;
@@ -70,7 +70,7 @@ export function generateGroupFundUpiDeepLink(req: GroupFundPaymentRequest): stri
 export async function shareGroupFundPaymentRequest(req: GroupFundPaymentRequest): Promise<'shared' | 'copied' | 'failed'> {
   const link = generateGroupFundUpiDeepLink(req);
   if (!link) return 'failed';
-  const text = `Group Fund Contribution Request\\nFund: ${req.fundName}\\nMember: ${req.memberName}\\nAmount: ₹${req.amount.toFixed(2)}\\nPay via UPI: ${link}`;
+  const text = `Group Fund Contribution Request\nFund: ${req.fundName}\nMember: ${req.memberName}\nAmount: ₹${req.amount.toFixed(2)}\nPay via UPI: ${link}`;
   if (await shareLink(`Contribution Request - ${req.fundName}`, text, link)) return 'shared';
   return (await copyToClipboard(text)) ? 'copied' : 'failed';
 }
@@ -82,7 +82,7 @@ export function generateGroupFundWhatsAppPaymentMessage(req: GroupFundWhatsAppPa
   const sentDate = new Date().toLocaleDateString('en-IN');
   const upiId = req.upiId!.trim();
   const qrCodeUrl = req.qrCodeUrl?.trim() || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(link)}`;
-  return `Hello ${req.memberName}, please pay ₹${req.amount.toFixed(2)} for ${req.fundName} (${req.period}).\\nDate: ${sentDate}\\n\\nUPI ID: ${upiId}\\nPayment QR Code: ${qrCodeUrl}\\nUPI payment link: ${link}\\n\\nAfter completing the payment, please share the payment screenshot and confirm the payment.\\n\\n${confirmation}`;
+  return `Hello ${req.memberName}, please pay ₹${req.amount.toFixed(2)} for ${req.fundName} (${req.period}).\nDate: ${sentDate}\n\nUPI ID: ${upiId}\nPayment QR Code: ${qrCodeUrl}\nUPI payment link: ${link}\n\nAfter completing the payment, please share the payment screenshot and confirm the payment.\n\n${confirmation}`;
 }
 
 export function generateGroupFundWhatsAppPaymentUrl(req: GroupFundWhatsAppPaymentRequest): string {
@@ -96,13 +96,13 @@ export function generateGroupFundWhatsAppReminderUrl(req: GroupFundWhatsAppRemin
   const recipient = normalizeWhatsAppNumber(req.mobileNumber);
   if (!recipient) return '';
   const sentDate = new Date().toLocaleDateString('en-IN');
-  const datedMessage = `${req.message}\\nDate: ${sentDate}`;
+  const datedMessage = `${req.message}\nDate: ${sentDate}`;
   return `https://wa.me/${recipient}?text=${encodeURIComponent(datedMessage)}`;
 }
 
 export function generateGroupFundThankYouMessage(req: GroupFundThankYouRequest): string {
   const sentDate = new Date().toLocaleDateString('en-IN');
-  return req.message ? `${req.message}\\nDate: ${sentDate}` : `Hello ${req.memberName}, thank you for your ₹${req.amount.toFixed(2)} contribution to "${req.fundName}" for ${req.period}. Your collection has been recorded.\\nDate: ${sentDate}`;
+  return req.message ? `${req.message}\nDate: ${sentDate}` : `Hello ${req.memberName}, thank you for your ₹${req.amount.toFixed(2)} contribution to "${req.fundName}" for ${req.period}. Your collection has been recorded.\nDate: ${sentDate}`;
 }
 
 export async function shareGroupFundThankYou(req: GroupFundThankYouRequest): Promise<'shared' | 'copied' | 'failed'> {
