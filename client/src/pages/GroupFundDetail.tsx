@@ -958,7 +958,11 @@ export default function GroupFundDetail() {
     setIsImportingContacts(true);
     try {
       const contacts = await pickMultipleContacts();
-      if (contacts && contacts.length > 0) {
+      if (!contacts || contacts.length === 0) {
+        toast.info(t('auditNoNewContacts' as any));
+        return;
+      }
+      if (contacts.length > 0) {
         const latestFund = getGroupFundById(params.id) ?? fund;
         const incomingMembers: GroupFundMember[] = contacts
           .filter(contact => Boolean(contact.name?.trim()))
@@ -1007,7 +1011,8 @@ export default function GroupFundDetail() {
           toast.info(t('auditNoNewContacts' as any));
         }
       }
-    } catch {
+    } catch (error) {
+      console.error('Failed to import Group Fund contacts:', error);
       toast.error(t('failedContact'));
     } finally {
       setIsImportingContacts(false);
