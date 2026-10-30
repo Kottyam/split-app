@@ -158,7 +158,8 @@ describe('Android packaging readiness', () => {
     expect(mainActivity).not.toContain('openOutputStream(uri, "w")');
     expect(tripDetail).toContain('handleGeneratePdfReport');
     expect(tripDetail).toContain('buildTripReportModel');
-    expect(tripDetail).toContain('KHARCHA_LOGO_LOCKUP');
+    expect(tripDetail).toContain('class=\"brand-name\">Kharcha</div>');
+    expect(tripDetail).not.toContain('KHARCHA_LOGO_LOCKUP');
     expect(tripDetail).toContain('KharchaPdf');
     expect(tripDetail).toContain('auditPdfPrint');
     expect(tripDetail).toContain('auditPdfSave');
