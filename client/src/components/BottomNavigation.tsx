@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home as HomeIcon, MoreHorizontal, Plane, WalletCards } from 'lucide-react';
+import { Home as HomeIcon, MoreHorizontal, Plane } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
@@ -7,8 +7,6 @@ import { cn } from '@/lib/utils';
 const items = [
   { key: 'home', path: '/', icon: HomeIcon },
   { key: 'trips', path: '/trips', icon: Plane },
-  { key: 'shared', path: '/shared-homes', icon: HomeIcon },
-  { key: 'budget', path: '/personal-budget', icon: WalletCards },
   { key: 'more', path: '/more', icon: MoreHorizontal },
 ] as const;
 
@@ -24,8 +22,6 @@ export default function BottomNavigation() {
   const labels: Record<(typeof items)[number]['key'], string> = {
     home: t('home' as any),
     trips: t('tripsNav' as any),
-    shared: t('sharedNav' as any),
-    budget: t('budget' as any),
     more: t('more' as any),
   };
 
