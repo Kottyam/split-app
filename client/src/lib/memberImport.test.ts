@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GroupFundMember } from '@/groupFund/types';
 import type { SharedHomeMember } from '@/sharedHome/types';
-import { appendUniqueMembers } from './memberImport';
+import { appendUniqueMembers, parseMemberImportText } from './memberImport';
 
 function sharedMember(name: string, mobileNumber = ''): SharedHomeMember {
   return {
@@ -63,5 +63,22 @@ describe('appendUniqueMembers', () => {
 
     expect(result.added.map(member => member.name)).toEqual(['Binu']);
     expect(result.members).toHaveLength(2);
+  });
+});
+
+
+describe('parseMemberImportText', () => {
+  it('parses Excel-exported CSV with headers and quoted commas', () => {
+    expect(parseMemberImportText('Name,Mobile Number\n"Anu, K",9876543210\nBinu,9876543211')).toEqual([
+      { name: 'Anu, K', mobileNumber: '9876543210' },
+      { name: 'Binu', mobileNumber: '9876543211' },
+    ]);
+  });
+
+  it('parses tab-separated files and ignores empty rows', () => {
+    expect(parseMemberImportText('Name\tPhone\nAnu\t9876543210\n\nBinu\t9876543211')).toEqual([
+      { name: 'Anu', mobileNumber: '9876543210' },
+      { name: 'Binu', mobileNumber: '9876543211' },
+    ]);
   });
 });
