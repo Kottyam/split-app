@@ -332,7 +332,7 @@ export default function GroupFundDetail() {
 
   const buildBulkMessageUrl = (member: GroupFundMember) => {
     const customMessage = bulkMessageText.trim();
-    if (customMessage) return generateWhatsAppMessageUrl(member.mobileNumber, customMessage) ?? '';
+    if (customMessage) return generateWhatsAppMessageUrl(member.mobileNumber, `${customMessage}\\nDate: ${new Date().toLocaleDateString('en-IN')}`) ?? '';
     const upiIdConfig = fund.paymentConfig?.upiId?.trim();
     const savedAmount = getSavedCollectionAmount(member);
     const mobileNumber = member.mobileNumber!.trim();
@@ -2024,6 +2024,13 @@ export default function GroupFundDetail() {
                             maxLength={160}
                             className="w-36 h-8 text-xs"
                           />
+                          {fund.paymentConfig?.upiId && currentVal.trim() && Number.isFinite(Number(currentVal)) && Number(currentVal) > 0 && (
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(`upi://pay?pa=${fund.paymentConfig.upiId}&pn=${encodeURIComponent(fund.name)}&am=${Number(currentVal).toFixed(2)}&tn=${encodeURIComponent(`Contribution - ${m.name}`) }`)}`}
+                              alt={`UPI QR for ${m.name}, ₹${currentVal}`}
+                              className="w-20 h-20 mx-auto rounded-md border bg-white p-1"
+                            />
+                          )}
                         </div>
                         <Button
                           size="sm"
