@@ -364,6 +364,7 @@ export default function GroupFundDetail() {
         memberName: member.name,
         amount: savedAmount!,
         upiId: upiIdConfig!,
+        qrCodeUrl: fund.paymentConfig?.qrCodeUrl,
         period: selectedPeriod,
         mobileNumber,
         confirmationMessage: t('auditPaymentConfirmationInstruction' as any),
