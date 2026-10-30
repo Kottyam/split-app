@@ -11,11 +11,11 @@ describe('Home More menu', () => {
     expect(source).not.toContain("t('editAndSyncTitle'");
   });
 
-  it('preserves the existing More destinations and Settings action', () => {
+  it('keeps Group Funds, Trips and Settings while hiding Shared Homes and Personal Finance', () => {
     expect(source).toContain("path: '/group-funds'");
     expect(source).toContain("path: '/trips'");
-    expect(source).toContain("path: '/shared-homes'");
-    expect(source).toContain("path: '/personal-budget'");
+    expect(source).not.toContain("path: '/shared-homes'");
+    expect(source).not.toContain("path: '/personal-budget'");
     expect(source).toContain("t('settings'");
   });
 });
