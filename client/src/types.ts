@@ -17,6 +17,7 @@ export interface Expense {
   id: string;
   tripId: string;
   description: string;
+  remark?: string; // optional expense note shown in lists and reports
   amount: number; // in rupees
   category: ExpenseCategory;
   paidBy: string; // member id
