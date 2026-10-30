@@ -34,7 +34,7 @@ describe('contact import responsiveness', () => {
 
   it('keeps Group Fund contact imports batched in one members update', () => {
     const source = read('client/src/pages/GroupFundDetail.tsx');
-    expect(source).toContain('appendUniqueMembers(latestFund.members, incomingMembers)');
+    expect(source).toContain('appendUniqueMembers(latestFund.members, incomingMembers, { dedupeByPhone: false })');
     expect(source).toContain('members,');
   });
 
