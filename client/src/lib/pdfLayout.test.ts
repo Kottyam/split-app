@@ -27,7 +27,10 @@ describe('uniform PDF layout and direct save', () => {
     expect(trip).toContain('class=\"brand-name\">Kharcha</div>');
     expect(trip).not.toContain('KHARCHA_LOGO_LOCKUP');
     expect(sharedHome).toContain('KHARCHA_LOGO_LOCKUP');
-    expect(groupFund).toContain('KHARCHA_LOGO_LOCKUP');
+    expect(groupFund).toContain('class=\\\"brand-name\\\"');
+    expect(groupFund).not.toContain('KHARCHA_LOGO_LOCKUP');
+    expect(groupFund).toContain('>Remarks</th>');
+    expect(groupFund).toContain('getMemberPaymentRequestAmount(fund, m, selectedPeriod)');
   });
 
   it('saves directly to Downloads instead of delegating Save PDF to Print', () => {
