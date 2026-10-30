@@ -55,10 +55,12 @@ export default function GroupFundDetail() {
   const [collectionAmount, setCollectionAmount] = useState('');
   const [upiInputAmount, setUpiInputAmount] = useState('');
   const [savedAmountInput, setSavedAmountInput] = useState('');
+  const [collectionRemark, setCollectionRemark] = useState('');
 
   const [showBulkQrModal, setShowBulkQrModal] = useState(false);
   const [showEditSync, setShowEditSync] = useState(false);
   const [bulkAmounts, setBulkAmounts] = useState<Record<string, string>>({});
+  const [bulkRemarks, setBulkRemarks] = useState<Record<string, string>>({});
   const [showBulkMessageModal, setShowBulkMessageModal] = useState(false);
   const [bulkMessageSelectedIds, setBulkMessageSelectedIds] = useState<string[]>([]);
   const [bulkMessageQueue, setBulkMessageQueue] = useState<string[]>([]);
@@ -484,7 +486,7 @@ export default function GroupFundDetail() {
       expectedAmount: expected,
       method: 'Cash',
       date: Date.now(),
-      note: `Cash Collection (${selectedPeriod})`,
+      note: `Cash Collection (${selectedPeriod})${collectionRemark.trim() ? ` — ${collectionRemark.trim()}` : ''}`, 
       status,
       verifiedBy: 'auto_verified',
       createdAt: Date.now(),
@@ -502,6 +504,7 @@ export default function GroupFundDetail() {
     refresh(next);
     setSelectedMemberForCollection(undefined);
     setCollectionAmount('');
+    setCollectionRemark('');
     toast.success(t('auditCollectedCash' as any, { name: selectedMemberForCollection.name, amount: amt }));
   };
 
@@ -535,7 +538,7 @@ export default function GroupFundDetail() {
       expectedAmount: expected,
       method: 'UPI',
       date: Date.now(),
-      note: `UPI Collection (${selectedPeriod})`,
+      note: `UPI Collection (${selectedPeriod})${collectionRemark.trim() ? ` — ${collectionRemark.trim()}` : ''}`, 
       status,
       verifiedBy: 'user_confirmed',
       createdAt: Date.now(),
@@ -553,6 +556,7 @@ export default function GroupFundDetail() {
     refresh(next);
     setSelectedMemberForCollection(undefined);
     setUpiInputAmount('');
+    setCollectionRemark('');
     toast.success(t('auditCollectedUpi' as any, { name: selectedMemberForCollection.name, amount: amt }));
   };
 
@@ -581,7 +585,7 @@ export default function GroupFundDetail() {
       expectedAmount: expected,
       method: 'UPI',
       date: Date.now(),
-      note: `Bulk UPI Collection (${selectedPeriod})`,
+      note: `Bulk UPI Collection (${selectedPeriod})${bulkRemarks[m.id]?.trim() ? ` — ${bulkRemarks[m.id].trim()}` : ''}`, 
       status,
       verifiedBy: 'user_confirmed',
       createdAt: Date.now(),
@@ -597,6 +601,7 @@ export default function GroupFundDetail() {
     }, t('auditBulkCollectionActivity' as any, { amount: amt, name: m.name, period: selectedPeriod }));
 
     refresh(next);
+    setBulkRemarks(current => ({ ...current, [m.id]: '' }));
     toast.success(t('auditCollectedBulk' as any, { name: m.name, amount: amt }));
   };
 
@@ -1211,6 +1216,7 @@ export default function GroupFundDetail() {
                                 : '';
                               setCollectionAmount(defaultCollectionAmount);
                               setUpiInputAmount(defaultCollectionAmount);
+                              setCollectionRemark('');
                               setSavedAmountInput(getSavedCollectionAmount(m)?.toString() ?? '');
                             }}
                             className="bg-[#16834b] text-white font-black h-10 px-4 text-xs rounded-xl hover:bg-green-700 border border-[#d7e4dc] shadow-sm"
@@ -1712,6 +1718,10 @@ export default function GroupFundDetail() {
                     </div>
                   </div>
                 )}
+                <div className="space-y-1">
+                  <Label className="font-black text-kharcha-navy">Remark (optional)</Label>
+                  <Input value={collectionRemark} onChange={e => setCollectionRemark(e.target.value)} placeholder="e.g. Advance / Balance / Cash received" maxLength={160} />
+                </div>
               </div>
 
               <DialogFooter className="flex flex-wrap gap-2">
@@ -1997,15 +2007,24 @@ export default function GroupFundDetail() {
                       </span>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          min="0"
-                          step="any"
-                          placeholder={t('auditAmountPlaceholder' as any)}
-                          value={currentVal}
-                          onChange={e => setBulkAmounts({ ...bulkAmounts, [m.id]: e.target.value })}
-                          className="w-28 h-9 border border-[#d7e4dc] rounded-lg text-sm font-black text-kharcha-navy bg-white text-center shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
-                        />
+                        <div className="flex min-w-0 flex-col gap-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            step="any"
+                            placeholder={t('auditAmountPlaceholder' as any)}
+                            value={currentVal}
+                            onChange={e => setBulkAmounts({ ...bulkAmounts, [m.id]: e.target.value })}
+                            className="w-28 h-9 border border-[#d7e4dc] rounded-lg text-sm font-black text-kharcha-navy bg-white text-center"
+                          />
+                          <Input
+                            value={bulkRemarks[m.id] ?? ''}
+                            onChange={e => setBulkRemarks(current => ({ ...current, [m.id]: e.target.value }))}
+                            placeholder="Individual remark"
+                            maxLength={160}
+                            className="w-36 h-8 text-xs"
+                          />
+                        </div>
                         <Button
                           size="sm"
                           onClick={() => handleBulkMemberCollect(m)}
