@@ -5,7 +5,6 @@ import { calculateExpectedAmount, calculateExpectedAmountForPeriod, calculateMem
 import type { CollectionPeriodMode } from '@/groupFund/calculations';
 import { canCloseCollectionPeriod, closePeriod, getActivePeriodContributions, getAmountAfterCredit, getCreditAfterPayment, getMemberCreditBalance, getMemberPaymentRequestAmount, getPeriodCollectedAmount, getPeriodCollectionStatus, getSavedCollectionAmount, reopenPeriod } from '@/groupFund/collection';
 import type { GroupFund, GroupFundMember, Contribution, ContributionStatus, GroupFundExpense } from '@/groupFund/types';
-import { KHARCHA_LOGO_LOCKUP } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -755,7 +754,6 @@ export default function GroupFundDetail() {
 
   const handleGeneratePdfReport = (action: 'view' | 'print' | 'save' | 'share' = 'view') => {
     const reportTitle = `${fund.name} - ${selectedPeriod}`;
-    const reportLogoUrl = new URL(KHARCHA_LOGO_LOCKUP, window.location.origin).href;
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -766,7 +764,7 @@ export default function GroupFundDetail() {
         <body>
           <div class="report">
             <div class="report-header">
-              <img class="report-logo" src="${escapePdfHtml(reportLogoUrl)}" alt="Kharcha" />
+              <div class="brand-name" style="white-space: nowrap; flex: 0 0 auto;">Kharcha</div>
               <div class="report-heading">
                 <h1>${escapePdfHtml(fund.name)}</h1>
                 <p>${escapePdfHtml(t('auditPurposeReport' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.purpose))} (${escapePdfHtml(groupFundOptionLabel(t, fund.contributionType))}) ${fund.isRecurring ? `| ${escapePdfHtml(t('auditFrequencyShort' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.recurringFrequency))}` : ''} | ${escapePdfHtml(t('auditPeriodLabel' as any))}: ${escapePdfHtml(selectedPeriod)} | ${escapePdfHtml(t('auditGeneratedOn' as any))}: ${escapePdfHtml(new Date().toLocaleDateString())}</p>
@@ -783,12 +781,13 @@ export default function GroupFundDetail() {
           <table>
             <thead>
               <tr>
-                <th colspan="1" style="width: 28%;">${t('auditMemberName' as any)}</th>
-                <th colspan="1" style="width: 19%;">${t('auditMobile' as any)}</th>
-                <th colspan="1" style="width: 15%;">${t('auditAmountPaid' as any)}</th>
-                <th colspan="1" style="width: 16%;">${t('auditPaymentDate' as any)}</th>
-                <th colspan="1" style="width: 10%;">${t('auditMethod' as any)}</th>
-                <th colspan="1" style="width: 12%;">${t('auditStatus' as any)}</th>
+                <th colspan="1" style="width: 18%;">${t('auditMemberName' as any)}</th>
+                <th colspan="1" style="width: 14%;">${t('auditMobile' as any)}</th>
+                <th colspan="1" style="width: 12%;">${t('auditAmountPaid' as any)}</th>
+                <th colspan="1" style="width: 13%;">${t('auditPaymentDate' as any)}</th>
+                <th colspan="1" style="width: 9%;">${t('auditMethod' as any)}</th>
+                <th colspan="1" style="width: 9%;">${t('auditStatus' as any)}</th>
+                <th colspan="1" style="width: 25%;">Remarks</th>
               </tr>
             </thead>
             <tbody>
@@ -798,6 +797,11 @@ export default function GroupFundDetail() {
                 const dateStr = mc.length > 0 ? new Date(mc[mc.length - 1].date).toLocaleDateString() : '-';
                 const methodStr = mc.length > 0 ? groupFundOptionLabel(t, mc[mc.length - 1].method) : '-';
                 const statusStr = getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) === 'Collected' ? t('auditCollectedStatus' as any) : t('auditPending' as any);
+                const remarks = mc.map(contribution => {
+                  const note = String(contribution.note ?? '');
+                  const separatorIndex = note.indexOf(' — ');
+                  return separatorIndex >= 0 ? note.slice(separatorIndex + 3).trim() : '';
+                }).filter(Boolean).join('; ');
                 return `
                   <tr>
                     <td class="member-name">${escapePdfHtml(m.name)}</td>
@@ -806,6 +810,7 @@ export default function GroupFundDetail() {
                     <td class="date">${escapePdfHtml(dateStr)}</td>
                     <td class="method">${escapePdfHtml(methodStr)}</td>
                     <td class="status">${escapePdfHtml(statusStr)}</td>
+                    <td class="remarks">${escapePdfHtml(remarks || '-')}</td>
                   </tr>
                 `;
               }).join('')}
@@ -1244,9 +1249,7 @@ export default function GroupFundDetail() {
                             onClick={() => {
                               setSelectedMemberForCollection(m);
                               setCollectionMethod('UPI');
-                              const defaultExpected = fund.isRecurring && fund.amountType === 'Default Amount'
-                                ? calculateExpectedAmountForPeriod(fund, m, selectedPeriod)
-                                : undefined;
+                              const defaultExpected = getMemberPaymentRequestAmount(fund, m, selectedPeriod);
                               const defaultCollectionAmount = defaultExpected !== undefined && Number.isFinite(defaultExpected) && defaultExpected > 0
                                 ? String(defaultExpected)
                                 : '';
