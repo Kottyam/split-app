@@ -45,8 +45,9 @@ describe("Android launch flow", () => {
     expect(manifest).toContain('android:name="LauncherActivity"');
     expect(main).toContain("new WebView(this)");
     expect(main).toContain("Search contact name or number");
-    expect(main).toContain("Select All");
-    expect(main).toContain("Clear All");
+    expect(main).not.toContain("Select All");
+    expect(main).not.toContain("Clear All");
+    expect(main).toContain("Button addSelected");
     expect(main).toContain("Add selected");
     expect(main).toContain("matchesContact");
     expect(main).toContain("KharchaSecurity");
