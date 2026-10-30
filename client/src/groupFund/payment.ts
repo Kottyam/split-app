@@ -73,7 +73,8 @@ export async function shareGroupFundPaymentRequest(req: GroupFundPaymentRequest)
 export function generateGroupFundWhatsAppPaymentMessage(req: GroupFundWhatsAppPaymentRequest): string {
   const link = generateGroupFundUpiDeepLink(req);
   const confirmation = req.confirmationMessage || 'Once payment is done, please give a confirmation.';
-  return `Hello ${req.memberName}, please pay ₹${req.amount.toFixed(2)} for ${req.fundName} (${req.period}). Pay here: ${link}\n\n${confirmation}`;
+  const sentDate = new Date().toLocaleDateString('en-IN');
+  return `Hello ${req.memberName}, please pay ₹${req.amount.toFixed(2)} for ${req.fundName} (${req.period}).\nDate: ${sentDate}\nPay here: ${link}\n\n${confirmation}`;
 }
 
 export function generateGroupFundWhatsAppPaymentUrl(req: GroupFundWhatsAppPaymentRequest): string {
@@ -84,11 +85,14 @@ export function generateGroupFundWhatsAppPaymentUrl(req: GroupFundWhatsAppPaymen
 
 export function generateGroupFundWhatsAppReminderUrl(req: GroupFundWhatsAppReminderRequest): string {
   const recipient = normalizeWhatsAppNumber(req.mobileNumber) ?? '';
-  return `https://wa.me/${recipient}?text=${encodeURIComponent(req.message)}`;
+  const sentDate = new Date().toLocaleDateString('en-IN');
+  const datedMessage = `${req.message}\nDate: ${sentDate}`;
+  return `https://wa.me/${recipient}?text=${encodeURIComponent(datedMessage)}`;
 }
 
 export function generateGroupFundThankYouMessage(req: GroupFundThankYouRequest): string {
-  return req.message || `Hello ${req.memberName}, thank you for your ₹${req.amount.toFixed(2)} contribution to "${req.fundName}" for ${req.period}. Your collection has been recorded.`;
+  const sentDate = new Date().toLocaleDateString('en-IN');
+  return req.message ? `${req.message}\nDate: ${sentDate}` : `Hello ${req.memberName}, thank you for your ₹${req.amount.toFixed(2)} contribution to "${req.fundName}" for ${req.period}. Your collection has been recorded.\nDate: ${sentDate}`;
 }
 
 export async function shareGroupFundThankYou(req: GroupFundThankYouRequest): Promise<'shared' | 'copied' | 'failed'> {
