@@ -145,7 +145,7 @@ describe('Group Fund thank-you and localization contracts', () => {
     expect(generateGroupFundThankYouMessage({
       fundName: 'House Fund', memberName: 'Asha', amount: 0, period,
       message: 'നന്ദി {{name}}',
-    })).toBe('നന്ദി {{name}}');
+    })).toBe(`നന്ദി {{name}}\nDate: ${new Date().toLocaleDateString('en-IN')}`);
     expect(generateGroupFundThankYouMessage({ fundName: 'House Fund', memberName: 'Asha', amount: 0, period }))
       .toContain('collection has been recorded');
   });
