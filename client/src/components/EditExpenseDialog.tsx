@@ -43,6 +43,7 @@ export default function EditExpenseDialog({
 }: EditExpenseDialogProps) {
   const { t } = useLanguage();
   const [description, setDescription] = useState('');
+  const [remark, setRemark] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('food');
   const [paidBy, setPaidBy] = useState('');
@@ -65,6 +66,7 @@ export default function EditExpenseDialog({
   useEffect(() => {
     if (expense) {
       setDescription(expense.description);
+      setRemark(expense.remark || '');
       setAmount(expense.amount.toString());
       setCategory(expense.category);
       setPaidBy(expense.paidBy);
@@ -143,6 +145,7 @@ export default function EditExpenseDialog({
 
     updateExpense(trip.id, expense.id, {
       description,
+      remark: remark.trim() || undefined,
       amount: expenseAmount,
       category,
       paidBy,
@@ -178,6 +181,11 @@ export default function EditExpenseDialog({
               className="border-2 border-black rounded-lg mt-1"
               required
             />
+          </div>
+
+          <div>
+            <Label htmlFor="edit-expense-remark" className="font-bold text-black">Remark (optional)</Label>
+            <Input id="edit-expense-remark" value={remark} maxLength={300} onChange={(e) => setRemark(e.target.value)} placeholder="Add a note about this expense" className="border-2 border-black rounded-lg mt-1" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
