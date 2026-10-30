@@ -114,10 +114,11 @@ describe('Android packaging readiness', () => {
     expect(groupFundDetail).not.toContain("setUpiInputAmount(amount.toString())");
     expect(groupFundDetail).toContain('auditPdfUnavailable');
     expect(groupFundDetail).toContain('escapePdfHtml');
-    expect(groupFundDetail).toContain('KHARCHA_LOGO_LOCKUP');
+    expect(groupFundDetail).not.toContain('KHARCHA_LOGO_LOCKUP');
+    expect(groupFundDetail).toContain('class="brand-name">Kharcha</div>');
     expect(groupFundDetail).toContain('PDF_LAYOUT_CSS');
     expect(pdfLayout).toContain('table-layout: fixed');
-    expect(groupFundDetail).toContain('class="report-logo"');
+    expect(groupFundDetail).not.toContain('class="report-logo"');
     expect(pdfLayout).toContain('max-width: 100%');
     expect(pdfLayout).toContain('overflow-wrap: anywhere');
     expect(pdfLayout).toContain('word-break: break-word');
