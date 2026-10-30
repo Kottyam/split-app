@@ -1080,8 +1080,10 @@ public class MainActivity extends FragmentActivity {
                     .append("\",\"email\":\"").append(escapeJson(contact.email)).append("\"}");
         }
         json.append(']');
-        String script = "window.dispatchEvent(new CustomEvent('" + CONTACT_EVENT
-                + "', {detail: " + json + "}));";
+        String script = "(function(){var contacts=" + json
+                + ";if(typeof window.__kharchaContactsResolve==='function'){window.__kharchaContactsResolve(contacts);}"
+                + "window.dispatchEvent(new CustomEvent('" + CONTACT_EVENT
+                + "', {detail: contacts}));})();";
         runOnUiThread(() -> {
             if (webView != null) webView.evaluateJavascript(script, null);
         });
