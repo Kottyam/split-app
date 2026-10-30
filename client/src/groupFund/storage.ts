@@ -2,6 +2,22 @@ import type { GroupFund } from './types';
 
 const STORAGE_KEY = 'kharcha_group_funds';
 
+/** Merge contribution history so a stale Group Fund snapshot cannot erase payments saved since it was loaded. */
+export function mergeContributionHistory(
+  updatedContributions: GroupFund['contributions'],
+  latestContributions: GroupFund['contributions'],
+): GroupFund['contributions'] {
+  const merged = new Map<string, GroupFund['contributions'][number]>();
+  for (const contribution of latestContributions) merged.set(contribution.id, contribution);
+  for (const contribution of updatedContributions) {
+    const latest = merged.get(contribution.id);
+    if (!latest || (contribution.updatedAt ?? contribution.createdAt) >= (latest.updatedAt ?? latest.createdAt)) {
+      merged.set(contribution.id, contribution);
+    }
+  }
+  return Array.from(merged.values()).sort((a, b) => b.date - a.date);
+}
+
 export function getGroupFunds(): GroupFund[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
