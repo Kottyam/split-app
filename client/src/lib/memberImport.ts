@@ -25,10 +25,11 @@ function normalisePhone(phone: string | undefined): string {
 export function appendUniqueMembers<T extends MemberImportIdentity>(
   existing: T[],
   incoming: T[],
+  options: { dedupeByPhone?: boolean } = {},
 ): MemberImportResult<T> {
   const seenNames = new Set(existing.map(member => normaliseName(member.name)));
   const seenPhones = new Set(
-    existing.map(member => normalisePhone(member.mobileNumber)).filter(Boolean),
+    options.dedupeByPhone === false ? [] : existing.map(member => normalisePhone(member.mobileNumber)).filter(Boolean),
   );
   const added: T[] = [];
 
@@ -37,10 +38,10 @@ export function appendUniqueMembers<T extends MemberImportIdentity>(
     if (!name || seenNames.has(name)) continue;
 
     const phone = normalisePhone(member.mobileNumber);
-    if (phone && seenPhones.has(phone)) continue;
+    if (options.dedupeByPhone !== false && phone && seenPhones.has(phone)) continue;
 
     seenNames.add(name);
-    if (phone) seenPhones.add(phone);
+    if (options.dedupeByPhone !== false && phone) seenPhones.add(phone);
     added.push(member);
   }
 
