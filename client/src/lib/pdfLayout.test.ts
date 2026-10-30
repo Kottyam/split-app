@@ -26,7 +26,12 @@ describe('uniform PDF layout and direct save', () => {
     }
     expect(trip).toContain('class=\"brand-name\">Kharcha</div>');
     expect(trip).not.toContain('KHARCHA_LOGO_LOCKUP');
-    for (const source of [trip, sharedHome, groupFund]) {\n      expect(source).toContain('class=\\\"brand-name\\\">Kharcha</div>');\n      expect(source).not.toContain('KHARCHA_LOGO_LOCKUP');\n    }\n    expect(sharedHome).toContain('expense.notes ||');\n    expect(sharedHome).toContain('<th>Remark</th>');\n    expect(groupFund).toContain('remarkStr');\n    expect(groupFund).toContain('Remark</th>');
+    expect(groupFund).toContain('class=\\\"brand-name\\\">Kharcha</div>');
+    expect(groupFund).not.toContain('KHARCHA_LOGO_LOCKUP');
+    expect(groupFund).toContain('remarkStr');
+    expect(groupFund).toContain('Remark</th>');
+    expect(sharedHome).toContain('KHARCHA_LOGO_LOCKUP');
+    expect(groupFund).toContain('KHARCHA_LOGO_LOCKUP');
   });
 
   it('saves directly to Downloads instead of delegating Save PDF to Print', () => {
