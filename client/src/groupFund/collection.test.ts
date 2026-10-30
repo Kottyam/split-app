@@ -96,6 +96,12 @@ describe('Group Fund collection periods', () => {
     expect(getMemberPaymentRequestAmount(fund, legacy, period)).toBe(125);
   });
 
+  it('provides the configured default amount for individual collection in non-recurring funds', () => {
+    const member: GroupFundMember = { id: 'Asha', name: 'Asha', isActive: true, createdAt: Date.UTC(2026, 7, 1) };
+    const fund = { ...makeFund([member], []), isRecurring: false, recurringFrequency: undefined };
+    expect(getMemberPaymentRequestAmount(fund, member, period)).toBe(100);
+  });
+
   it('applies member credit to the next due amount without treating credit as pending or expense', () => {
     const member = { ...makeMember('Asha', 500), creditBalance: 300 };
     expect(getMemberCreditBalance(member)).toBe(300);
