@@ -67,6 +67,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -867,11 +868,11 @@ public class MainActivity extends FragmentActivity {
         deviceAuthResultSent = true;
         deviceAuthInFlight = false;
         persistDeviceAuthResult(result);
-        String safeResult = escapeJson(result);
-        String script = "try { localStorage.setItem('kharcha_native_device_auth_result', '"
-                + safeResult + "'); } catch (ignored) {}"
-                + "window.dispatchEvent(new CustomEvent('kharcha-device-auth-result', {detail: '"
-                + safeResult + "'}));";
+        String safeResult = JSONObject.quote(result);
+        String script = "try { localStorage.setItem('kharcha_native_device_auth_result', "
+                + safeResult + "); } catch (ignored) {}"
+                + "window.dispatchEvent(new CustomEvent('kharcha-device-auth-result', {detail: "
+                + safeResult + "}));";
         runOnUiThread(() -> {
             if (webView != null) webView.evaluateJavascript(script, null);
         });
@@ -1071,13 +1072,16 @@ public class MainActivity extends FragmentActivity {
     }
 
     private void dispatchContacts(List<ContactRow> contacts) {
+        // JSONObject.quote safely escapes every JSON control character. Contact names can
+        // contain tabs, line breaks and other characters that would otherwise break the
+        // JavaScript payload and cause the entire multi-contact selection to be discarded.
         StringBuilder json = new StringBuilder("[");
         for (int i = 0; i < contacts.size(); i++) {
             if (i > 0) json.append(',');
             ContactRow contact = contacts.get(i);
-            json.append("{\"name\":\"").append(escapeJson(contact.name))
-                    .append("\",\"tel\":\"").append(escapeJson(contact.tel))
-                    .append("\",\"email\":\"").append(escapeJson(contact.email)).append("\"}");
+            json.append("{\"name\":").append(JSONObject.quote(contact.name))
+                    .append(",\"tel\":").append(JSONObject.quote(contact.tel))
+                    .append(",\"email\":").append(JSONObject.quote(contact.email)).append('}');
         }
         json.append(']');
         String script = "(function(){var contacts=" + json
@@ -1085,17 +1089,12 @@ public class MainActivity extends FragmentActivity {
                 + "window.dispatchEvent(new CustomEvent('" + CONTACT_EVENT
                 + "', {detail: contacts}));})();";
         runOnUiThread(() -> {
-            if (webView != null) webView.evaluateJavascript(script, null);
+            if (webView != null) {
+                webView.evaluateJavascript(script, null);
+            } else {
+                contactRequestInFlight = false;
+            }
         });
-    }
-
-    private String escapeJson(String value) {
-        return value.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\r", "\\r")
-                .replace("\n", "\\n")
-                .replace("\u2028", "\\u2028")
-                .replace("\u2029", "\\u2029");
     }
 
     private static final class ContactRow {
