@@ -67,6 +67,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -1071,13 +1072,16 @@ public class MainActivity extends FragmentActivity {
     }
 
     private void dispatchContacts(List<ContactRow> contacts) {
+        // JSONObject.quote safely escapes every JSON control character. Contact names can
+        // contain tabs, line breaks and other characters that would otherwise break the
+        // JavaScript payload and cause the entire multi-contact selection to be discarded.
         StringBuilder json = new StringBuilder("[");
         for (int i = 0; i < contacts.size(); i++) {
             if (i > 0) json.append(',');
             ContactRow contact = contacts.get(i);
-            json.append("{\"name\":\"").append(escapeJson(contact.name))
-                    .append("\",\"tel\":\"").append(escapeJson(contact.tel))
-                    .append("\",\"email\":\"").append(escapeJson(contact.email)).append("\"}");
+            json.append("{\\"name\\":").append(JSONObject.quote(contact.name))
+                    .append(",\\"tel\\":").append(JSONObject.quote(contact.tel))
+                    .append(",\\"email\\":").append(JSONObject.quote(contact.email)).append('}');
         }
         json.append(']');
         String script = "(function(){var contacts=" + json
@@ -1085,7 +1089,11 @@ public class MainActivity extends FragmentActivity {
                 + "window.dispatchEvent(new CustomEvent('" + CONTACT_EVENT
                 + "', {detail: contacts}));})();";
         runOnUiThread(() -> {
-            if (webView != null) webView.evaluateJavascript(script, null);
+            if (webView != null) {
+                webView.evaluateJavascript(script, null);
+            } else {
+                contactRequestInFlight = false;
+            }
         });
     }
 
