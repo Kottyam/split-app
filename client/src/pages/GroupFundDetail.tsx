@@ -958,62 +958,83 @@ export default function GroupFundDetail() {
     setIsImportingContacts(true);
     try {
       const contacts = await pickMultipleContacts();
-      if (!contacts || contacts.length === 0) {
+      if (!contacts?.length) {
         toast.info(t('auditNoNewContacts' as any));
         return;
       }
-      if (contacts.length > 0) {
-        const latestFund = getGroupFundById(params.id) ?? fund;
-        const incomingMembers: GroupFundMember[] = contacts
-          .filter(contact => Boolean(contact.name?.trim()))
-          .map(contact => ({
+
+      const latestFund = getGroupFundById(params.id) ?? fund;
+      const incomingMembers: GroupFundMember[] = contacts
+        .filter(contact => Boolean(contact.name?.trim()))
+        .map(contact => {
+          const mobileNumber = contact.tel ? formatPhoneNumber(contact.tel) : '';
+          return {
             id: nanoid(),
             name: contact.name!.trim(),
-            mobileNumber: contact.tel ? formatPhoneNumber(contact.tel) : undefined,
+            mobileNumber: mobileNumber || undefined,
             startDate: latestFund.isRecurring ? new Date().toISOString().slice(0, 10) : undefined,
             isActive: true,
             createdAt: Date.now(),
-          }));
-        // Contact names are not unique: two different people may share the
-        // same name. Prefer phone-number identity, and use the name only when
-        // a contact has no usable phone number.
-        const seenPhones = new Set(
-          latestFund.members
-            .map(member => (member.mobileNumber ?? '').replace(/\\D/g, '').slice(-10))
-            .filter(Boolean),
-        );
-        const seenNamesWithoutPhone = new Set(
-          latestFund.members
-            .filter(member => !(member.mobileNumber ?? '').replace(/\\D/g, '').slice(-10))
-            .map(member => member.name.trim().toLocaleLowerCase()),
-        );
-        const added: GroupFundMember[] = [];
-        for (const member of incomingMembers) {
-          const phone = (member.mobileNumber ?? '').replace(/\\D/g, '').slice(-10);
-          const nameKey = member.name.trim().toLocaleLowerCase();
-          if (phone) {
-            if (seenPhones.has(phone)) continue;
-            seenPhones.add(phone);
-          } else {
-            if (!nameKey || seenNamesWithoutPhone.has(nameKey)) continue;
-            seenNamesWithoutPhone.add(nameKey);
-          }
-          added.push(member);
-        }
-        if (added.length > 0) {
-          const next = appendActivity({
-            ...latestFund,
-            members: [...latestFund.members, ...added],
-          }, t('auditMembersAdded' as any, { count: added.length }));
-          refresh(next);
-          toast.success(t('auditMembersAdded' as any, { count: added.length }));
-        } else {
-          toast.info(t('auditNoNewContacts' as any));
-        }
+          };
+        });
+
+      if (incomingMembers.length === 0) {
+        toast.error('The selected contacts did not contain any usable names. Please try again.');
+        return;
       }
+
+      // Keep people with the same name when they have different phone numbers.
+      // Compare normalized 10-digit phone numbers so +91/spacing differences
+      // do not create duplicate members.
+      const seenPhones = new Set(
+        latestFund.members
+          .map(member => formatPhoneNumber(member.mobileNumber ?? ''))
+          .filter(Boolean),
+      );
+      const seenNamesWithoutPhone = new Set(
+        latestFund.members
+          .filter(member => !formatPhoneNumber(member.mobileNumber ?? ''))
+          .map(member => member.name.trim().toLocaleLowerCase()),
+      );
+      const added: GroupFundMember[] = [];
+      for (const member of incomingMembers) {
+        const phone = formatPhoneNumber(member.mobileNumber ?? '');
+        const nameKey = member.name.trim().toLocaleLowerCase();
+        if (phone) {
+          if (seenPhones.has(phone)) continue;
+          seenPhones.add(phone);
+        } else {
+          if (!nameKey || seenNamesWithoutPhone.has(nameKey)) continue;
+          seenNamesWithoutPhone.add(nameKey);
+        }
+        added.push(member);
+      }
+
+      if (added.length === 0) {
+        toast.info(t('auditNoNewContacts' as any));
+        return;
+      }
+
+      const next = appendActivity({
+        ...latestFund,
+        members: [...latestFund.members, ...added],
+      }, t('auditMembersAdded' as any, { count: added.length }));
+      refresh(next);
+
+      // saveGroupFund uses local storage synchronously. Verify that every
+      // selected member was actually persisted instead of silently reporting
+      // success if the device storage rejected the write.
+      const savedFund = getGroupFundById(latestFund.id);
+      const savedIds = new Set((savedFund?.members ?? []).map(member => member.id));
+      const persistedCount = added.filter(member => savedIds.has(member.id)).length;
+      if (persistedCount !== added.length) {
+        throw new Error(`Only ${persistedCount} of ${added.length} imported contacts were saved.`);
+      }
+
+      toast.success(t('auditMembersAdded' as any, { count: persistedCount }));
     } catch (error) {
       console.error('Failed to import Group Fund contacts:', error);
-      toast.error(t('failedContact'));
+      toast.error(error instanceof Error ? error.message : t('failedContact'));
     } finally {
       setIsImportingContacts(false);
     }
