@@ -1079,9 +1079,9 @@ public class MainActivity extends FragmentActivity {
         for (int i = 0; i < contacts.size(); i++) {
             if (i > 0) json.append(',');
             ContactRow contact = contacts.get(i);
-            json.append("{\\"name\\":").append(JSONObject.quote(contact.name))
-                    .append(",\\"tel\\":").append(JSONObject.quote(contact.tel))
-                    .append(",\\"email\\":").append(JSONObject.quote(contact.email)).append('}');
+            json.append("{\"name\":").append(JSONObject.quote(contact.name))
+                    .append(",\"tel\":").append(JSONObject.quote(contact.tel))
+                    .append(",\"email\":").append(JSONObject.quote(contact.email)).append('}');
         }
         json.append(']');
         String script = "(function(){var contacts=" + json
@@ -1098,12 +1098,12 @@ public class MainActivity extends FragmentActivity {
     }
 
     private String escapeJson(String value) {
-        return value.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\r", "\\r")
-                .replace("\n", "\\n")
-                .replace("\u2028", "\\u2028")
-                .replace("\u2029", "\\u2029");
+        return value.replace("\", "\\")
+                .replace("\"", "\\"")
+                .replace("\r", "\r")
+                .replace("\n", "\n")
+                .replace("\u2028", "\u2028")
+                .replace("\u2029", "\u2029");
     }
 
     private static final class ContactRow {
