@@ -868,7 +868,7 @@ public class MainActivity extends FragmentActivity {
         deviceAuthResultSent = true;
         deviceAuthInFlight = false;
         persistDeviceAuthResult(result);
-        String safeResult = escapeJson(result);
+        String safeResult = JSONObject.quote(result);
         String script = "try { localStorage.setItem('kharcha_native_device_auth_result', '"
                 + safeResult + "'); } catch (ignored) {}"
                 + "window.dispatchEvent(new CustomEvent('kharcha-device-auth-result', {detail: '"
