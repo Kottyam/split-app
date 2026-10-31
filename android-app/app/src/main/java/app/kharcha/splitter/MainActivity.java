@@ -1097,15 +1097,6 @@ public class MainActivity extends FragmentActivity {
         });
     }
 
-    private String escapeJson(String value) {
-        return value.replace("\", "\\")
-                .replace("\"", "\\"")
-                .replace("\r", "\r")
-                .replace("\n", "\n")
-                .replace("\u2028", "\u2028")
-                .replace("\u2029", "\u2029");
-    }
-
     private static final class ContactRow {
         private final String name;
         private final String tel;
