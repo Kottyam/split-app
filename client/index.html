@@ -2,6 +2,9 @@
 <html lang="en">
 
   <head>
+    <!-- Web deep links (/s/..., /trip/...) are served from 404.html; pin asset base to the site root there.
+         Android keeps the relative ./ base. Must stay first in <head>. -->
+    <script>if(/(^|\.)kharchasplit\.in$|\.github\.io$/i.test(location.hostname)){document.write('<base href="/">')}</script>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
