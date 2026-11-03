@@ -468,6 +468,82 @@ body {
   }
 }
 
+
+/* Unified app-wide visual system (UI only). Normalises legacy "Memphis" styling
+   across Trip, Group Fund, Shared Home and other pages: soft card shadows,
+   1px brand-tinted borders, one radius scale, calmer weights, and brand colours
+   instead of stray blues. */
+#root [class*="shadow-[6px_6px_0px"],
+#root [class*="shadow-[3px_3px_0px"],
+#root [class*="shadow-[1px_1px_0px"],
+#root [class*="shadow-[0_2px_0_0_rgba(0,0,0"] {
+  box-shadow: 0 4px 16px rgba(24, 50, 75, 0.07) !important;
+}
+
+#root .border-2 {
+  border-width: 1px;
+}
+
+#root .rounded-none {
+  border-radius: 0.75rem;
+}
+
+#root .font-black {
+  font-weight: 800;
+}
+
+#root [data-slot="card"] {
+  border-color: var(--kharcha-line);
+  border-radius: var(--kharcha-radius);
+  box-shadow: 0 4px 16px rgba(24, 50, 75, 0.06);
+}
+
+#root [data-slot="card-title"] {
+  color: var(--kharcha-navy);
+  letter-spacing: -0.01em;
+}
+
+#root [data-slot="button"] {
+  border-radius: 0.75rem;
+  font-weight: 700;
+}
+
+#root .bg-blue-600,
+#root .bg-blue-700 {
+  background-color: var(--kharcha-green) !important;
+  color: #ffffff;
+}
+
+#root .bg-blue-50 {
+  background-color: var(--kharcha-green-soft) !important;
+}
+
+#root .border-dashed {
+  border-color: var(--kharcha-line);
+  border-radius: var(--kharcha-radius);
+  background-color: #fbfdfc;
+}
+
+#root .uppercase {
+  letter-spacing: 0.04em;
+}
+
+#root [data-slot="badge"] {
+  border-radius: 999px;
+}
+
+#root [data-slot="dialog-content"],
+#root [data-slot="sheet-content"] {
+  border-color: var(--kharcha-line);
+  box-shadow: 0 20px 60px rgba(24, 50, 75, 0.16);
+}
+
+#root [data-slot="dialog-title"] {
+  color: var(--kharcha-navy);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
 @media (max-width: 640px) {
   #root main {
     padding-left: var(--kharcha-page-gutter);
