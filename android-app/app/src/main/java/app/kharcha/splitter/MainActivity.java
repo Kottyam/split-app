@@ -620,6 +620,22 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    @SuppressWarnings("deprecation")
+    private int reportContentHeightPx(WebView reportView) {
+        float zoom = reportView.getScale();
+        if (zoom <= 0f) zoom = getResources().getDisplayMetrics().density;
+        return (int) Math.ceil(reportView.getContentHeight() * zoom);
+    }
+
+    /** Only pages that contain report content; ignores a sliver of trailing padding. */
+    static int pdfPageCount(int contentHeightPx, int pageHeightPx) {
+        if (contentHeightPx <= 0 || pageHeightPx <= 0) return 1;
+        int pages = contentHeightPx / pageHeightPx;
+        int remainder = contentHeightPx % pageHeightPx;
+        if (remainder > Math.max(8, pageHeightPx / 50)) pages++;
+        return Math.max(1, pages);
+    }
+
     private void renderReportPdf(OutputStream output, WebView reportView) throws IOException {
         PdfDocument document = new PdfDocument();
         try {
@@ -630,9 +646,12 @@ public class MainActivity extends FragmentActivity {
             reportView.measure(
                     View.MeasureSpec.makeMeasureSpec(viewWidth, View.MeasureSpec.EXACTLY),
                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-            int density = Math.max(1, Math.round(getResources().getDisplayMetrics().density));
-            int contentHeight = Math.round(reportView.getContentHeight() * density);
-            int viewHeight = Math.max(Math.max(reportView.getMeasuredHeight(), contentHeight), dp(1));
+            // getContentHeight() is in CSS pixels; convert it with the WebView's real
+            // zoom scale. Multiplying by the rounded display density (and taking the
+            // UNSPECIFIED measured height) overestimated the height and produced
+            // several trailing blank PDF pages.
+            int contentHeight = reportContentHeightPx(reportView);
+            int viewHeight = Math.max(contentHeight, dp(1));
             reportView.layout(0, 0, viewWidth, viewHeight);
 
             final int pageWidth = 595;
@@ -643,7 +662,9 @@ public class MainActivity extends FragmentActivity {
             final int printableHeight = pageHeight - (pageMargin * 2);
             final int contentHeightPerPage = Math.max(1, (int) (printableHeight / scale));
             int pageNumber = 1;
-            for (int top = 0; top < viewHeight; top += contentHeightPerPage) {
+            int pageCount = pdfPageCount(viewHeight, contentHeightPerPage);
+            for (int index = 0; index < pageCount; index++) {
+                int top = index * contentHeightPerPage;
                 PdfDocument.Page page = document.startPage(new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber++).create());
                 Canvas canvas = page.getCanvas();
                 canvas.save();

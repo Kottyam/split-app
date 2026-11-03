@@ -8,13 +8,14 @@ const read = (relativePath: string) => fs.readFileSync(path.resolve(root, relati
 const languages = ['en', 'ml', 'hi', 'ta', 'kn', 'te', 'mr', 'bn', 'gu', 'pa', 'or', 'as'] as const;
 
 describe('Help & Guide experience', () => {
-  it('keeps the four feature sections in the required order for every language', () => {
-    const expected = ['trips', 'sharedHomes', 'groupFunds', 'personalBudget'];
+  it('keeps only the two main feature sections in the required order for every language', () => {
+    const expected = ['trips', 'groupFunds'];
     for (const language of languages) {
       const copy = getHelpGuideCopy(language);
       expect(copy.sections.map(section => section.id)).toEqual(expected);
       expect(copy.sections.every(section => section.title.length > 0 && section.paragraphs.length >= 3)).toBe(true);
       expect(copy.backupWarning.length).toBeGreaterThan(20);
+      expect(JSON.stringify(copy)).not.toMatch(/Shared Homes|Personal Budgeting|four|നാല്/);
     }
   });
 
@@ -38,6 +39,7 @@ describe('Help & Guide experience', () => {
   it('keeps HelpGuideModal free of hard-coded feature body copy', () => {
     const modal = read('client/src/components/HelpGuideModal.tsx');
     expect(modal).toContain('getHelpGuideCopy(language)');
+    expect(modal).not.toContain('border-2 border-[#16834b]');
     expect(modal).not.toContain('My Trips helps you organize');
     expect(modal).not.toContain('Shared Homes is designed');
   });

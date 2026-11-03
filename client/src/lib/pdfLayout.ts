@@ -1,7 +1,8 @@
 export const PDF_LAYOUT_CSS = `
   @page { size: A4 portrait; margin: 12mm; }
   * { box-sizing: border-box; }
-  html, body { width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: hidden; }
+  html, body { width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: hidden; height: auto; min-height: 0; }
+  .report > :last-child, body > :last-child { margin-bottom: 0 !important; page-break-after: auto; break-after: auto; }
   body {
     font-family: Arial, sans-serif;
     color: #18324b;

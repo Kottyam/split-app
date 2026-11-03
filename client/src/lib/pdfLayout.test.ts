@@ -43,3 +43,17 @@ describe('uniform PDF layout and direct save', () => {
     expect(mainActivity).toContain('PDF saved to Downloads');
   });
 });
+
+describe('PDF pages contain only content', () => {
+  const java = fs.readFileSync(path.resolve(root, 'android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java'), 'utf8');
+
+  it('sizes the native PDF by real content height instead of density-inflated height', () => {
+    expect(java).not.toContain('reportView.getContentHeight() * density');
+    expect(java).not.toContain('Math.max(reportView.getMeasuredHeight(), contentHeight)');
+    expect(java).toContain('int pageCount = pdfPageCount(viewHeight, contentHeightPerPage);');
+  });
+
+  it('keeps the report body auto-height so print does not add blank pages', () => {
+    expect(fs.readFileSync(path.resolve(root, 'client/src/lib/pdfLayout.ts'), 'utf8')).toContain('height: auto; min-height: 0;');
+  });
+});

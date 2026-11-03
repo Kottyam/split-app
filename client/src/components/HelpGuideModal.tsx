@@ -18,7 +18,7 @@ export default function HelpGuideModal({ open, onOpenChange, showLanguageSelecto
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl rounded-2xl border-2 border-[#16834b] bg-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl rounded-2xl border border-[#d7e4dc] bg-white shadow-[0_20px_60px_rgba(24,50,75,0.16)] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between gap-3">
             <DialogTitle className="flex items-center gap-2 font-black text-kharcha-navy">
