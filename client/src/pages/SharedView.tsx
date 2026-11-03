@@ -13,6 +13,8 @@ import DashboardView from '@/components/DashboardView';
 import SharedTripViewOnlyHeader from '@/components/SharedTripViewOnlyHeader';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SharedUpiPayCard from '@/components/SharedUpiPayCard';
+import InstallAppButton from '@/components/InstallAppButton';
 
 function formatSharedViewDate(value: number, language: string): string {
   return new Date(value).toLocaleDateString(language === 'en' ? 'en-IN' : `${language}-IN`);
@@ -53,7 +55,7 @@ export default function SharedView() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[#f3f7fc] pb-24">
       <SharedTripViewOnlyHeader
         tripName={trip.name}
         onBack={() => navigate('/')}
@@ -71,6 +73,8 @@ export default function SharedView() {
             <p className="text-sm text-gray-700">{trip.description}</p>
           </Card>
         )}
+
+        <SharedUpiPayCard accent="orange" payees={trip.members.filter(m => m.upiId).map(m => ({ name: m.name, upiId: m.upiId as string, note: trip.name }))} />
 
         {/* Tabs */}
         <Tabs defaultValue="expenses" className="w-full">
@@ -162,6 +166,7 @@ export default function SharedView() {
             ))}
           </div>
         </Card>
+        <InstallAppButton />
       </div>
     </div>
   );

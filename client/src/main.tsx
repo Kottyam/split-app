@@ -16,6 +16,13 @@ const androidShell =
   navigator.userAgent.includes("KharchaAndroid");
 if (androidShell) document.documentElement.classList.add("android-shell");
 
+// Installable web app (PWA) on the public site only; the Android app ships its own assets.
+if (import.meta.env.PROD && "serviceWorker" in navigator && /(^|\.)kharchasplit\.in$/.test(window.location.hostname)) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(error => console.warn("Service worker registration failed", error));
+  });
+}
+
 const queryClient = new QueryClient();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {

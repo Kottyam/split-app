@@ -1,9 +1,15 @@
 import { Trip } from '@/types';
-import { compressData, decompressData, createMinimalTripData, restoreMinimalTripData } from './compression';
+import { compressData, decompressData, createMinimalTripData, restoreMinimalTripData, createCompactTripDataV3, restoreCompactTripDataV3 } from './compression';
+import { buildShortShareUrl, getShortSharePayload } from '@/share/origin';
 
 /** Encode trip data into a compact URL-safe payload. */
 export function encodeTripData(trip: Trip): string {
   return compressData(JSON.stringify(createMinimalTripData(trip)));
+}
+
+/** Smallest payload, used by short /s/t links. */
+export function encodeTripDataCompact(trip: Trip): string {
+  return compressData(JSON.stringify(createCompactTripDataV3(trip)));
 }
 
 /** Decode both current compact links and older Kharcha share links. */
@@ -12,6 +18,8 @@ export function decodeTripData(encoded: string): Trip | null {
     const jsonString = decompressData(decodeURIComponent(encoded));
     if (!jsonString) return null;
     const minimal = JSON.parse(jsonString);
+    const sharedId = `shared-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    if (Array.isArray(minimal) && minimal[0] === 3) return restoreCompactTripDataV3(minimal, sharedId) as Trip;
     return restoreMinimalTripData(minimal, {
       id: `shared-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     });
@@ -23,13 +31,14 @@ export function decodeTripData(encoded: string): Trip | null {
 
 /** Generate a shareable link. The raw URL is used internally only. */
 export function generateShareLink(trip: Trip): string {
-  const encoded = encodeTripData(trip);
-  return `${window.location.origin}/share/${encoded}`;
+  return buildShortShareUrl('t', encodeTripDataCompact(trip));
 }
 
 /** Extract encoded data from the current /share/:payload route. */
 export function getEncodedDataFromUrl(): string | null {
   const path = window.location.pathname;
+  const short = getShortSharePayload('t', path);
+  if (short) return short;
   const match = path.match(/\/share\/(.+)$/);
   return match ? decodeURIComponent(match[1]) : null;
 }

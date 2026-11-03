@@ -1,3 +1,5 @@
+import { generateFundShareLink } from '@/share/fundShare';
+import { shareLink, copyToClipboard } from '@/lib/shareLink';
 import { contributionMatchesPeriod, ONE_TIME_PERIOD } from '@/groupFund/collection';
 import { toLocalDateKey } from '@/lib/localDate';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -14,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Landmark, Users, Wallet, QrCode, CheckCircle2, History, Trash2, Edit, Search, Upload, UserPlus, Phone, Check, MessageSquare, FileText, RotateCcw, Receipt, AlertCircle, Loader2, Share2, Settings } from 'lucide-react';
+import { ArrowLeft, Landmark, Users, Wallet, QrCode, CheckCircle2, History, Trash2, Edit, Search, Upload, UserPlus, Phone, Check, MessageSquare, FileText, RotateCcw, Receipt, AlertCircle, Loader2, Share2, Settings, Link2 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { toast } from 'sonner';
 import { pickMultipleContacts, formatPhoneNumber } from '@/lib/contacts';
@@ -290,6 +292,12 @@ export default function GroupFundDetail() {
 
   const activeExpenses = (fund.expenses || []).filter((e: GroupFundExpense) => e.status !== 'cancelled');
   const totalExpenses = activeExpenses.reduce((s: number, e: GroupFundExpense) => s + e.amount, 0);
+  const handleShareViewLink = async () => {
+    const url = generateFundShareLink(fund);
+    if (await shareLink(fund.name, t('auditShareViewLink' as any), url)) return;
+    if (await copyToClipboard(url)) toast.success(t('linkCopied'));
+    else toast.error(t('failedCopy'));
+  };
   const remainingBalance = totalCollected - totalExpenses;
 
   const handleSaveMemberAmount = () => {
@@ -1115,7 +1123,7 @@ export default function GroupFundDetail() {
         accent="green"
         onBack={() => navigate('/group-funds')}
         backLabel={t('auditBackToKharcha' as any)}
-        actions={<><Button variant="fund" onClick={() => setShowEditSync(true)} className="w-full min-h-12 text-base"><Share2 size={16} className="mr-1.5" /> {t('sharedHomeShare')}</Button><Button variant="soft" onClick={() => setShowQrDialog(true)} className="w-full min-h-11"><QrCode size={16} className="mr-1" /> {t('auditQrCode' as any)}</Button></>}
+        actions={<><Button variant="fund" onClick={() => setShowEditSync(true)} className="w-full min-h-12 text-base"><Share2 size={16} className="mr-1.5" /> {t('sharedHomeShare')}</Button><Button variant="soft" onClick={handleShareViewLink} className="w-full min-h-11"><Link2 size={16} className="mr-1" /> {t('auditShareViewLink' as any)}</Button><Button variant="soft" onClick={() => setShowQrDialog(true)} className="w-full min-h-11"><QrCode size={16} className="mr-1" /> {t('auditQrCode' as any)}</Button></>}
       >
         <div className="mx-auto mt-3 grid max-w-5xl grid-cols-3 gap-2 text-xs font-black sm:grid-cols-6">
           {[

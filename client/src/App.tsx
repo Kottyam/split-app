@@ -11,6 +11,7 @@ import Notifications from "./pages/Notifications";
 import More from "./pages/More";
 import TripDetail from "./pages/TripDetail";
 import SharedView from "./pages/SharedView";
+import ShortShareView from "./pages/ShortShareView";
 import SharedHomeRedesign from "./pages/SharedHomeRedesign";
 import SharedHomeDetail from "./pages/SharedHomeDetail";
 import SharedHomeSharedView from "./pages/SharedHomeSharedView";
@@ -44,6 +45,7 @@ function Router() {
       <Route path={/^\/shared-home-share\/.+$/} component={SharedHomeSharedView} />
       <Route path={/^\/shared-home-payment\/.+$/} component={SharedHomePaymentRequest} />
       <Route path={/^\/share\/.+$/} component={SharedView} />
+      <Route path={/^\/s\/[tf].+$/} component={ShortShareView} />
       <Route path={/^\/edit-sync\/.+$/} component={EditSyncRecipient} />
       <Route path={/^\/sync-review\/.+$/} component={SyncReview} />
       <Route path="/sync-updates" component={SyncUpdates} />
