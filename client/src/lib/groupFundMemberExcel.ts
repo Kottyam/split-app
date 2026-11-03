@@ -2,6 +2,7 @@ export interface GroupFundExcelMemberRow {
   name: string;
   mobileNumber: string;
   expectedAmount?: number;
+  remarks?: string;
 }
 
 const encoder = new TextEncoder();
@@ -56,7 +57,7 @@ export function createGroupFundMemberTemplate(): Blob {
     { name: '_rels/.rels', content: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
     { name: 'xl/workbook.xml', content: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Members" sheetId="1" r:id="rId1"/></sheets></workbook>' },
     { name: 'xl/_rels/workbook.xml.rels', content: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>' },
-    { name: 'xl/worksheets/sheet1.xml', content: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView showGridLines="1" workbookViewId="0"/></sheetViews><cols><col min="1" max="1" width="28" customWidth="1"/><col min="2" max="2" width="20" customWidth="1"/><col min="3" max="3" width="20" customWidth="1"/></cols><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Name</t></is></c><c r="B1" t="inlineStr"><is><t>Mobile Number</t></is></c><c r="C1" t="inlineStr"><is><t>Expected Amount</t></is></c></row><row r="2"><c r="A2" t="inlineStr"><is><t>Rahul</t></is></c><c r="B2" t="inlineStr"><is><t>9876543210</t></is></c><c r="C2"><v>1000</v></c></row></sheetData></worksheet>' },
+    { name: 'xl/worksheets/sheet1.xml', content: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView showGridLines="1" workbookViewId="0"/></sheetViews><cols><col min="1" max="1" width="28" customWidth="1"/><col min="2" max="2" width="20" customWidth="1"/><col min="3" max="3" width="20" customWidth="1"/><col min="4" max="4" width="30" customWidth="1"/></cols><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Name</t></is></c><c r="B1" t="inlineStr"><is><t>Mobile Number</t></is></c><c r="C1" t="inlineStr"><is><t>Expected Amount</t></is></c><c r="D1" t="inlineStr"><is><t>Remarks</t></is></c></row><row r="2"><c r="A2" t="inlineStr"><is><t>Rahul</t></is></c><c r="B2" t="inlineStr"><is><t>9876543210</t></is></c><c r="C2"><v>1000</v></c></row></sheetData></worksheet>' },
   ];
   return zipStore(files);
 }
@@ -103,6 +104,7 @@ function xmlText(element: Element | null): string {
 
 const NAME_HEADERS = ['name', 'member name', 'member', 'full name', 'പേര്', 'അംഗത്തിന്റെ പേര്'];
 const PHONE_HEADERS = ['mobile number', 'mobile', 'phone', 'phone number', 'mobile no', 'contact', 'contact number', 'മൊബൈൽ', 'മൊബൈൽ നമ്പർ', 'ഫോൺ', 'ഫോൺ നമ്പർ'];
+const REMARKS_HEADERS = ['remarks', 'remark', 'notes', 'note', 'കുറിപ്പ്', 'അഭിപ്രായം'];
 const AMOUNT_HEADERS = ['expected amount', 'expected contribution', 'amount', 'contribution', 'തുക', 'പ്രതീക്ഷിക്കുന്ന തുക'];
 
 function normaliseHeader(value: string): string {
@@ -179,6 +181,7 @@ export async function parseGroupFundMemberXlsxDetailed(file: Blob): Promise<Grou
   let nameCol: string | undefined;
   let phoneCol: string | undefined;
   let amountCol: string | undefined;
+  let remarksCol: string | undefined;
   for (let i = 0; i < Math.min(rows.length, 5) && headerIndex < 0; i += 1) {
     const cells = cellsOf(rows[i]);
     for (const [col, value] of Array.from(cells.entries())) {
@@ -186,9 +189,10 @@ export async function parseGroupFundMemberXlsxDetailed(file: Blob): Promise<Grou
       if (!nameCol && NAME_HEADERS.includes(header)) nameCol = col;
       else if (!phoneCol && PHONE_HEADERS.includes(header)) phoneCol = col;
       else if (!amountCol && AMOUNT_HEADERS.includes(header)) amountCol = col;
+      else if (!remarksCol && REMARKS_HEADERS.includes(header)) remarksCol = col;
     }
     if (nameCol) headerIndex = i;
-    else { phoneCol = undefined; amountCol = undefined; }
+    else { phoneCol = undefined; amountCol = undefined; remarksCol = undefined; }
   }
   if (!nameCol) throw new Error('Excel must have a Name column');
   const parsed: GroupFundExcelMemberRow[] = [];
@@ -206,7 +210,8 @@ export async function parseGroupFundMemberXlsxDetailed(file: Blob): Promise<Grou
     if (digits && digits.length < 10) { skipped.push({ row: rowNumber, reason: 'invalidMobile' }); return; }
     const expectedAmount = rawAmount ? Number(rawAmount.replace(/[,₹\s]/g, '')) : undefined;
     if (expectedAmount !== undefined && (!Number.isFinite(expectedAmount) || expectedAmount < 0)) { skipped.push({ row: rowNumber, reason: 'invalidAmount' }); return; }
-    parsed.push({ name, mobileNumber, expectedAmount });
+    const remarks = remarksCol ? (cells.get(remarksCol) ?? '').trim() : '';
+    parsed.push(remarks ? { name, mobileNumber, expectedAmount, remarks } : { name, mobileNumber, expectedAmount });
   });
   return { rows: parsed, skipped };
 }

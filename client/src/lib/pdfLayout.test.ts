@@ -24,10 +24,11 @@ describe('uniform PDF layout and direct save', () => {
       expect(source).toContain('PDF_LAYOUT_CSS');
       expect(source).toContain('class="report"');
     }
-    expect(trip).toContain('class=\"brand-name\">Kharcha</div>');
-    expect(trip).not.toContain('KHARCHA_LOGO_LOCKUP');
-    expect(sharedHome).toContain('KHARCHA_LOGO_LOCKUP');
-    expect(groupFund).toContain('KHARCHA_LOGO_LOCKUP');
+    // PDFs use the coloured text wordmark instead of the logo image.
+    for (const source of [trip, sharedHome, groupFund]) {
+      expect(source).toContain('KHARCHA_PDF_WORDMARK_HTML');
+      expect(source).not.toContain('KHARCHA_LOGO_LOCKUP');
+    }
   });
 
   it('saves directly to Downloads instead of delegating Save PDF to Print', () => {

@@ -114,15 +114,16 @@ describe('Android packaging readiness', () => {
     expect(groupFundDetail).not.toContain("setUpiInputAmount(amount.toString())");
     expect(groupFundDetail).toContain('auditPdfUnavailable');
     expect(groupFundDetail).toContain('escapePdfHtml');
-    expect(groupFundDetail).toContain('KHARCHA_LOGO_LOCKUP');
+    expect(groupFundDetail).toContain('KHARCHA_PDF_WORDMARK_HTML');
     expect(groupFundDetail).toContain('PDF_LAYOUT_CSS');
     expect(pdfLayout).toContain('table-layout: fixed');
-    expect(groupFundDetail).toContain('class="report-logo"');
+    expect(groupFundDetail).not.toContain('class="report-logo"');
     expect(pdfLayout).toContain('max-width: 100%');
     expect(pdfLayout).toContain('overflow-wrap: anywhere');
     expect(pdfLayout).toContain('word-break: break-word');
     expect(groupFundDetail).toContain('class="member-name"');
-    expect(groupFundDetail).toContain('style="width: 28%;"');
+    expect(groupFundDetail).toContain('style="width: 21%;"');
+    expect(groupFundDetail).toContain("t('gfRemarks' as any)");
     expect(groupFundDetail).toContain('style="width: 27%;"');
     expect(pdfLayout).toContain('white-space: normal');
     expect(groupFundDetail).toContain('bulkMessageSelectedIds');
@@ -158,7 +159,7 @@ describe('Android packaging readiness', () => {
     expect(mainActivity).not.toContain('openOutputStream(uri, "w")');
     expect(tripDetail).toContain('handleGeneratePdfReport');
     expect(tripDetail).toContain('buildTripReportModel');
-    expect(tripDetail).toContain('class=\"brand-name\">Kharcha</div>');
+    expect(tripDetail).toContain('KHARCHA_PDF_WORDMARK_HTML');
     expect(tripDetail).not.toContain('KHARCHA_LOGO_LOCKUP');
     expect(tripDetail).toContain('KharchaPdf');
     expect(tripDetail).toContain('auditPdfPrint');

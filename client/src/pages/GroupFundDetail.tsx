@@ -5,7 +5,6 @@ import { calculateExpectedAmount, calculateExpectedAmountForPeriod, calculateMem
 import type { CollectionPeriodMode } from '@/groupFund/calculations';
 import { canCloseCollectionPeriod, closePeriod, getActivePeriodContributions, getAmountAfterCredit, getCreditAfterPayment, getMemberCreditBalance, getMemberPaymentRequestAmount, getPeriodCollectedAmount, getPeriodCollectionStatus, getSavedCollectionAmount, reopenPeriod } from '@/groupFund/collection';
 import type { GroupFund, GroupFundMember, Contribution, ContributionStatus, GroupFundExpense } from '@/groupFund/types';
-import { KHARCHA_LOGO_LOCKUP } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -28,7 +27,8 @@ import EditSyncShareDialog from '@/components/EditSyncShareDialog';
 import EditSyncBackBar from '@/components/EditSyncBackBar';
 import EditSyncReviewBar from '@/components/EditSyncReviewBar';
 import AppSectionHeader from '@/components/AppSectionHeader';
-import { PDF_LAYOUT_CSS } from '@/lib/pdfLayout';
+import { PDF_LAYOUT_CSS, KHARCHA_PDF_WORDMARK_HTML } from '@/lib/pdfLayout';
+import { downloadBlobFile } from '@/lib/fileDownload';
 
 function groupFundOptionLabel(t: (key: any, variables?: any) => string, value?: string) {
   const keys: Record<string, string> = { Food: 'auditFoodSnacks', Other: 'auditOther', Equipment: 'auditEquipment', Maintenance: 'auditMaintenance', Utility: 'auditUtility', Celebration: 'auditEventCelebration', Office: 'auditOffice', Club: 'auditClub', Outing: 'auditOuting', Welfare: 'auditWelfare', 'Common Collection': 'auditCommonCollection', Birthday: 'auditBirthday', Sports: 'auditSports', 'Custom Purpose': 'auditCustomPurpose', Daily: 'auditDaily', Weekly: 'auditWeekly', Monthly: 'auditMonthly', Fixed: 'auditFixed', Variable: 'auditVariable', Default: 'auditDefaultAmount', 'Default Amount': 'auditDefaultAmount', 'Variable Amount': 'auditVariableAmount' };
@@ -210,6 +210,7 @@ export default function GroupFundDetail() {
   const [memberName, setMemberName] = useState('');
   const [memberMobile, setMemberMobile] = useState('');
   const [memberExpected, setMemberExpected] = useState('');
+  const [memberRemarks, setMemberRemarks] = useState('');
   const [memberStartDate, setMemberStartDate] = useState('');
   const [memberStopFrom, setMemberStopFrom] = useState('');
   const [memberStopUntil, setMemberStopUntil] = useState('');
@@ -756,7 +757,6 @@ export default function GroupFundDetail() {
 
   const handleGeneratePdfReport = (action: 'view' | 'print' | 'save' | 'share' = 'view') => {
     const reportTitle = `${fund.name} - ${selectedPeriod}`;
-    const reportLogoUrl = new URL(KHARCHA_LOGO_LOCKUP, window.location.origin).href;
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -767,7 +767,7 @@ export default function GroupFundDetail() {
         <body>
           <div class="report">
             <div class="report-header">
-              <img class="report-logo" src="${escapePdfHtml(reportLogoUrl)}" alt="Kharcha" />
+              ${KHARCHA_PDF_WORDMARK_HTML}
               <div class="report-heading">
                 <h1>${escapePdfHtml(fund.name)}</h1>
                 <p>${escapePdfHtml(t('auditPurposeReport' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.purpose))} (${escapePdfHtml(groupFundOptionLabel(t, fund.contributionType))}) ${fund.isRecurring ? `| ${escapePdfHtml(t('auditFrequencyShort' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.recurringFrequency))}` : ''} | ${escapePdfHtml(t('auditPeriodLabel' as any))}: ${escapePdfHtml(selectedPeriod)} | ${escapePdfHtml(t('auditGeneratedOn' as any))}: ${escapePdfHtml(new Date().toLocaleDateString())}</p>
@@ -784,12 +784,13 @@ export default function GroupFundDetail() {
           <table>
             <thead>
               <tr>
-                <th colspan="1" style="width: 28%;">${t('auditMemberName' as any)}</th>
-                <th colspan="1" style="width: 19%;">${t('auditMobile' as any)}</th>
-                <th colspan="1" style="width: 15%;">${t('auditAmountPaid' as any)}</th>
-                <th colspan="1" style="width: 16%;">${t('auditPaymentDate' as any)}</th>
-                <th colspan="1" style="width: 10%;">${t('auditMethod' as any)}</th>
-                <th colspan="1" style="width: 12%;">${t('auditStatus' as any)}</th>
+                <th colspan="1" style="width: 21%;">${t('auditMemberName' as any)}</th>
+                <th colspan="1" style="width: 15%;">${t('auditMobile' as any)}</th>
+                <th colspan="1" style="width: 12%;">${t('auditAmountPaid' as any)}</th>
+                <th colspan="1" style="width: 13%;">${t('auditPaymentDate' as any)}</th>
+                <th colspan="1" style="width: 9%;">${t('auditMethod' as any)}</th>
+                <th colspan="1" style="width: 11%;">${t('auditStatus' as any)}</th>
+                <th colspan="1" style="width: 19%;">${t('gfRemarks' as any)}</th>
               </tr>
             </thead>
             <tbody>
@@ -798,6 +799,8 @@ export default function GroupFundDetail() {
                 const paid = mc.reduce((s: number, c: Contribution) => s + c.amount, 0);
                 const dateStr = mc.length > 0 ? new Date(mc[mc.length - 1].date).toLocaleDateString() : '-';
                 const methodStr = mc.length > 0 ? groupFundOptionLabel(t, mc[mc.length - 1].method) : '-';
+                const collectionRemarks = mc.map((c: Contribution) => (c.note ?? '').split(' — ').slice(1).join(' — ').trim()).filter(Boolean);
+                const remarksStr = [m.remarks?.trim(), ...collectionRemarks].filter(Boolean).join('; ');
                 const statusStr = getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) === 'Collected' ? t('auditCollectedStatus' as any) : t('auditPending' as any);
                 return `
                   <tr>
@@ -807,6 +810,7 @@ export default function GroupFundDetail() {
                     <td class="date">${escapePdfHtml(dateStr)}</td>
                     <td class="method">${escapePdfHtml(methodStr)}</td>
                     <td class="status">${escapePdfHtml(statusStr)}</td>
+                    <td class="remarks">${escapePdfHtml(remarksStr || '-')}</td>
                   </tr>
                 `;
               }).join('')}
@@ -905,7 +909,7 @@ export default function GroupFundDetail() {
         return;
       }
       const members = latestFund.members.map(item => item.id === editingMember.id
-        ? { ...item, name: trimmedName, mobileNumber: memberMobile.trim() || undefined, expectedAmount, startDate: normalizedStartDate, stopFrom: memberStopFrom || undefined, stopUntil: memberStopUntil || undefined }
+        ? { ...item, name: trimmedName, mobileNumber: memberMobile.trim() || undefined, remarks: memberRemarks.trim() || undefined, expectedAmount, startDate: normalizedStartDate, stopFrom: memberStopFrom || undefined, stopUntil: memberStopUntil || undefined }
         : item);
       const next = appendActivity({ ...latestFund, members }, `${t('edit')} ${trimmedName}`);
       refresh(next);
@@ -913,6 +917,7 @@ export default function GroupFundDetail() {
       setEditingMember(undefined);
       setMemberName('');
       setMemberMobile('');
+      setMemberRemarks('');
       setMemberExpected('');
       setMemberStartDate('');
       setMemberStopFrom('');
@@ -925,6 +930,7 @@ export default function GroupFundDetail() {
       id: nanoid(),
       name: trimmedName,
       mobileNumber: memberMobile.trim() || undefined,
+      remarks: memberRemarks.trim() || undefined,
       expectedAmount,
       startDate: normalizedStartDate,
       stopFrom: memberStopFrom || undefined,
@@ -944,6 +950,7 @@ export default function GroupFundDetail() {
       setShowMemberModal(false);
       setMemberName('');
       setMemberMobile('');
+      setMemberRemarks('');
       setMemberExpected('');
       setMemberStartDate('');
       setMemberStopFrom('');
@@ -1023,12 +1030,12 @@ export default function GroupFundDetail() {
   };
 
   const handleDownloadMemberTemplate = () => {
-    const url = URL.createObjectURL(createGroupFundMemberTemplate());
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = 'Kharcha-Group-Fund-Members-Template.xlsx';
-    anchor.click();
-    URL.revokeObjectURL(url);
+    void downloadBlobFile(createGroupFundMemberTemplate(), 'Kharcha-Group-Fund-Members-Template.xlsx')
+      .then(saved => { if (saved) toast.success(t('gfTemplateSaved' as any)); })
+      .catch(error => {
+        console.error('Failed to download member template:', error);
+        toast.error(t('gfTemplateFailed' as any));
+      });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1050,6 +1057,7 @@ export default function GroupFundDetail() {
         name: row.name.trim(),
         mobileNumber: row.mobileNumber ? formatPhoneNumber(row.mobileNumber) : undefined,
         expectedAmount: row.expectedAmount,
+        remarks: 'remarks' in row && row.remarks ? String(row.remarks) : undefined,
         startDate: latestFund.isRecurring ? new Date().toISOString().slice(0, 10) : undefined,
         isActive: true,
         createdAt: Date.now(),
@@ -1261,9 +1269,9 @@ export default function GroupFundDetail() {
                               const defaultExpected = fund.isRecurring && fund.amountType === 'Default Amount'
                                 ? calculateExpectedAmountForPeriod(fund, m, selectedPeriod)
                                 : undefined;
-                              const defaultCollectionAmount = defaultExpected !== undefined && Number.isFinite(defaultExpected) && defaultExpected > 0
-                                ? String(defaultExpected)
-                                : '';
+                              const prefillCandidates = [defaultExpected, m.expectedAmount, fund.defaultContributionAmount];
+                              const prefill = prefillCandidates.find(value => value !== undefined && Number.isFinite(value) && value > 0);
+                              const defaultCollectionAmount = prefill !== undefined ? String(prefill) : '';
                               setCollectionAmount(defaultCollectionAmount);
                               setUpiInputAmount(defaultCollectionAmount);
                               setCollectionRemark('');
@@ -1501,6 +1509,12 @@ export default function GroupFundDetail() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-kharcha-line font-black rounded-xl bg-white text-kharcha-navy flex-1 sm:flex-none shadow-sm">
+                  <Upload size={16} className="mr-1" /> {t('gfUploadExcel' as any)}
+                </Button>
+                <Button onClick={handleDownloadMemberTemplate} type="button" variant="outline" className="border-kharcha-line font-black rounded-xl bg-white text-kharcha-green flex-1 sm:flex-none shadow-sm">
+                  <FileText size={16} className="mr-1" /> {t('gfDownloadTemplate' as any)}
+                </Button>
               </div>
             </div>
             <p className="text-xs font-medium text-kharcha-navy/80 px-1">{t('gfTemplateHint' as any)}</p>
@@ -1590,6 +1604,7 @@ export default function GroupFundDetail() {
                             setEditingMember(m);
                             setMemberName(m.name);
                             setMemberMobile(m.mobileNumber || '');
+                            setMemberRemarks(m.remarks || '');
                             setMemberExpected(fund.isRecurring && fund.amountType === 'Default Amount' ? '' : (m.expectedAmount !== undefined ? String(m.expectedAmount) : ''));
                             setMemberStartDate(fund.isRecurring ? getMemberStartDateValue(fund, m) : '');
                             setMemberStopFrom(m.stopFrom || '');
@@ -2184,6 +2199,10 @@ export default function GroupFundDetail() {
                 className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
                 maxLength={10}
               />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-black text-kharcha-navy">{t('gfRemarks' as any)}</Label>
+              <Input value={memberRemarks} onChange={e => setMemberRemarks(e.target.value)} maxLength={160} placeholder={t('gfRemarksPlaceholder' as any)} />
             </div>
             <DialogFooter className="gap-2">
               <Button type="button" variant="outline" onClick={() => { setShowMemberModal(false); setEditingMember(undefined); }} className="border border-kharcha-line font-black rounded-lg bg-white text-kharcha-navy hover:bg-gray-100 shadow-sm">{t('auditCancel' as any)}</Button>

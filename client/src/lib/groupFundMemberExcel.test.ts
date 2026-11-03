@@ -90,3 +90,36 @@ describe('Group Fund member Excel import', () => {
     expect(source).toContain('accept=".xlsx,.csv,.txt"');
   });
 });
+
+describe('Group Fund Android fixes', () => {
+  const root = resolve(__dirname, '../../..');
+  const read = (path: string) => readFileSync(resolve(root, path), 'utf8');
+
+  it('reads an optional Remarks column', async () => {
+    const file = workbook('<row r="1"><c r="A1" t="inlineStr"><is><t>Name</t></is></c><c r="B1" t="inlineStr"><is><t>Remarks</t></is></c></row><row r="2"><c r="A2" t="inlineStr"><is><t>Anu</t></is></c><c r="B2" t="inlineStr"><is><t>Joined late</t></is></c></row>');
+    expect((await parseGroupFundMemberXlsxDetailed(file)).rows[0]).toMatchObject({ name: 'Anu', remarks: 'Joined late' });
+  });
+
+  it('saves the template through the native KharchaFiles bridge on Android', async () => {
+    const { downloadBlobFile } = await import('./fileDownload');
+    const calls: string[][] = [];
+    (window as any).KharchaFiles = { saveBase64File: (n: string, m: string, b: string) => { calls.push([n, m, b]); return true; } };
+    await expect(downloadBlobFile(createGroupFundMemberTemplate(), 'template.xlsx')).resolves.toBe(true);
+    expect(calls[0][0]).toBe('template.xlsx');
+    expect(atob(calls[0][2]).startsWith('PK')).toBe(true);
+    delete (window as any).KharchaFiles;
+    expect(read('android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java')).toContain('new FileBridge(), "KharchaFiles"');
+  });
+
+  it('hides the Android 12+ system splash so only the branded splash shows', () => {
+    const theme = read('android-app/app/src/main/res/values-v31/splash_theme.xml');
+    expect(theme).toContain('windowSplashScreenAnimatedIcon">@drawable/splash_transparent_icon');
+  });
+
+  it('prefills Collect with the fund default amount and shows visible Excel buttons', () => {
+    const page = read('client/src/pages/GroupFundDetail.tsx');
+    expect(page).toContain('[defaultExpected, m.expectedAmount, fund.defaultContributionAmount]');
+    expect(page.match(/t\('gfDownloadTemplate' as any\)/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(page).toContain('<td class="remarks">');
+  });
+});
