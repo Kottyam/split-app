@@ -1,3 +1,10 @@
+import FundBudgetCard from '@/components/FundBudgetCard';
+import { normalizeBudget, computeBudgetStatus } from '@/groupFund/budget';
+import { showFieldError } from '@/lib/formValidation';
+import { generateFundShareLink } from '@/share/fundShare';
+import { shareLink, copyToClipboard } from '@/lib/shareLink';
+import { contributionMatchesPeriod, ONE_TIME_PERIOD } from '@/groupFund/collection';
+import { toLocalDateKey } from '@/lib/localDate';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { getGroupFundById, mergeContributionHistory, saveGroupFund } from '@/groupFund/storage';
@@ -5,7 +12,6 @@ import { calculateExpectedAmount, calculateExpectedAmountForPeriod, calculateMem
 import type { CollectionPeriodMode } from '@/groupFund/calculations';
 import { canCloseCollectionPeriod, closePeriod, getActivePeriodContributions, getAmountAfterCredit, getCreditAfterPayment, getMemberCreditBalance, getMemberPaymentRequestAmount, getPeriodCollectedAmount, getPeriodCollectionStatus, getSavedCollectionAmount, reopenPeriod } from '@/groupFund/collection';
 import type { GroupFund, GroupFundMember, Contribution, ContributionStatus, GroupFundExpense } from '@/groupFund/types';
-import { KHARCHA_LOGO_LOCKUP } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,12 +19,13 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Users, Wallet, QrCode, CheckCircle2, History, Trash2, Edit, Search, Upload, UserPlus, Phone, Check, MessageSquare, FileText, RotateCcw, Receipt, AlertCircle, Loader2, Share2, Settings } from 'lucide-react';
+import { ArrowLeft, Landmark, Users, Wallet, QrCode, CheckCircle2, History, Trash2, Edit, Search, Upload, UserPlus, Phone, Check, MessageSquare, FileText, RotateCcw, Receipt, AlertCircle, Loader2, Share2, Settings, Link2 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { toast } from 'sonner';
 import { pickMultipleContacts, formatPhoneNumber } from '@/lib/contacts';
 import { appendUniqueMembers, parseMemberImportText } from '@/lib/memberImport';
-import { createGroupFundMemberTemplate, parseGroupFundMemberXlsx } from '@/lib/groupFundMemberExcel';
+import { createGroupFundMemberTemplate, isXlsxFile, parseGroupFundMemberXlsxDetailed } from '@/lib/groupFundMemberExcel';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { generateGroupFundWhatsAppPaymentUrl, generateGroupFundWhatsAppReminderUrl, generateGroupFundWhatsAppThankYouUrl, generateGroupFundThankYouMessage, generateWhatsAppMessageUrl, normalizeWhatsAppNumber } from '@/groupFund/payment';
 import { getBulkMessageCandidates, getBulkMessageDuplicateNumberIds, getBulkMessageKind, getBulkMessageMissingNumberIds, getBulkMessageRecipients, getNextBulkMessageRecipientId, isBulkMessageQueueComplete, toggleBulkMessageMember } from '@/groupFund/bulkMessaging';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -27,7 +34,8 @@ import EditSyncShareDialog from '@/components/EditSyncShareDialog';
 import EditSyncBackBar from '@/components/EditSyncBackBar';
 import EditSyncReviewBar from '@/components/EditSyncReviewBar';
 import AppSectionHeader from '@/components/AppSectionHeader';
-import { PDF_LAYOUT_CSS } from '@/lib/pdfLayout';
+import { PDF_LAYOUT_CSS, KHARCHA_PDF_WORDMARK_HTML } from '@/lib/pdfLayout';
+import { downloadBlobFile } from '@/lib/fileDownload';
 
 function groupFundOptionLabel(t: (key: any, variables?: any) => string, value?: string) {
   const keys: Record<string, string> = { Food: 'auditFoodSnacks', Other: 'auditOther', Equipment: 'auditEquipment', Maintenance: 'auditMaintenance', Utility: 'auditUtility', Celebration: 'auditEventCelebration', Office: 'auditOffice', Club: 'auditClub', Outing: 'auditOuting', Welfare: 'auditWelfare', 'Common Collection': 'auditCommonCollection', Birthday: 'auditBirthday', Sports: 'auditSports', 'Custom Purpose': 'auditCustomPurpose', Daily: 'auditDaily', Weekly: 'auditWeekly', Monthly: 'auditMonthly', Fixed: 'auditFixed', Variable: 'auditVariable', Default: 'auditDefaultAmount', 'Default Amount': 'auditDefaultAmount', 'Variable Amount': 'auditVariableAmount' };
@@ -92,6 +100,7 @@ export default function GroupFundDetail() {
 
   const generatePeriods = () => {
     const list: string[] = [];
+    if (fund && !fund.isRecurring) return [ONE_TIME_PERIOD];
     const now = new Date();
     const recurringAnchor = fund?.isRecurring ? new Date(getFundCollectionStartTime(fund)) : now;
     const freq = fund?.recurringFrequency;
@@ -132,14 +141,14 @@ export default function GroupFundDetail() {
   };
   const collectionPeriods = useMemo(generatePeriods, [fund?.id, fund?.isRecurring, fund?.collectionStartDate, fund?.recurringFrequency, fund?.weeklyStartDay, fund?.fortnightlyCycleBoundary, fund?.customInterval, fund?.customIntervalUnit]);
   const [selectedPeriod, setSelectedPeriod] = useState<string>(() => collectionPeriods[2] || collectionPeriods[0]);
-  const [collectionDate, setCollectionDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [collectionDate, setCollectionDate] = useState(() => toLocalDateKey(new Date()));
   const [collectionPeriodMode, setCollectionPeriodMode] = useState<CollectionPeriodMode>(fund?.collectionTiming === 'previous' ? 'past' : fund?.collectionTiming === 'advance' ? 'future' : (fund?.collectionPeriodMode ?? 'future'));
   useEffect(() => {
     if (!selectedPeriod) setSelectedPeriod(collectionPeriods[2] || collectionPeriods[0]);
   }, [collectionPeriods, selectedPeriod]);
   useEffect(() => {
     if (!fund) return;
-    setCollectionDate(new Date().toISOString().slice(0, 10));
+    setCollectionDate(toLocalDateKey(new Date()));
     setCollectionPeriodMode(fund.collectionTiming === 'previous' ? 'past' : fund.collectionTiming === 'advance' ? 'future' : (fund.collectionPeriodMode ?? 'future'));
   }, [fund?.id]);
   useEffect(() => {
@@ -209,11 +218,12 @@ export default function GroupFundDetail() {
   const [memberName, setMemberName] = useState('');
   const [memberMobile, setMemberMobile] = useState('');
   const [memberExpected, setMemberExpected] = useState('');
+  const [memberRemarks, setMemberRemarks] = useState('');
   const [memberStartDate, setMemberStartDate] = useState('');
   const [memberStopFrom, setMemberStopFrom] = useState('');
   const [memberStopUntil, setMemberStopUntil] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [collectionStartDate, setCollectionStartDate] = useState(fund?.collectionStartDate ?? new Date(fund?.createdAt ?? Date.now()).toISOString().slice(0, 10));
+  const [collectionStartDate, setCollectionStartDate] = useState(fund?.collectionStartDate ?? toLocalDateKey(new Date(fund?.createdAt ?? Date.now())));
 
   useEffect(() => {
     if (!fund || !fund.isRecurring || fund.amountType !== 'Default Amount' || !memberStartDate) return;
@@ -226,7 +236,7 @@ export default function GroupFundDetail() {
       createdAt: Date.now(),
       startDate: memberStartDate,
     };
-    const configuredCollectionReference = collectionStartDate || fund.collectionStartDate || collectionDate || new Date().toISOString().slice(0, 10);
+    const configuredCollectionReference = collectionStartDate || fund.collectionStartDate || collectionDate || toLocalDateKey(new Date());
     const parsedCollectionDate = new Date(`${configuredCollectionReference}T00:00:00`);
     const expected = calculateMemberAddExpectedAmountForConfiguredPeriod(
       { ...fund, collectionPeriodMode },
@@ -239,12 +249,13 @@ export default function GroupFundDetail() {
 
   const [showQrDialog, setShowQrDialog] = useState(false);
   const [upiId, setUpiId] = useState(fund?.paymentConfig?.upiId ?? '');
+  const [budgetInput, setBudgetInput] = useState(fund?.budgetAmount ? String(fund.budgetAmount) : '');
 
   if (!fund) {
     return (
       <div className="min-h-screen bg-kharcha-cream p-6 text-center">
         <h1 className="text-xl font-black text-kharcha-navy">Group Fund not found</h1>
-        <Button onClick={() => navigate('/group-funds')} className="mt-4 bg-kharcha-navy text-white font-bold border border-[#d7e4dc]">Back to Funds</Button>
+        <Button onClick={() => navigate('/group-funds')} className="mt-4 bg-kharcha-navy text-white font-bold border border-kharcha-line">Back to Funds</Button>
       </div>
     );
   }
@@ -268,7 +279,7 @@ export default function GroupFundDetail() {
     };
   };
 
-  const periodContributions = fund.contributions.filter((c: Contribution) => c.status !== 'Cancelled' && (!c.note || c.note.includes(selectedPeriod)));
+  const periodContributions = fund.contributions.filter((c: Contribution) => c.status !== 'Cancelled' && contributionMatchesPeriod(c.note, selectedPeriod));
   const totalCollected = periodContributions.reduce((s: number, c: Contribution) => s + c.amount, 0) + (selectedPeriod === collectionPeriods[0] ? (fund.startingBalance ?? 0) : 0);
   // Dashboard totals are lifetime totals, matching the Group Funds list. Period totals remain scoped to selectedPeriod for collection/report workflows.
   const lifetimeTotalCollected = fund.contributions
@@ -285,6 +296,12 @@ export default function GroupFundDetail() {
 
   const activeExpenses = (fund.expenses || []).filter((e: GroupFundExpense) => e.status !== 'cancelled');
   const totalExpenses = activeExpenses.reduce((s: number, e: GroupFundExpense) => s + e.amount, 0);
+  const handleShareViewLink = async () => {
+    const url = generateFundShareLink(fund);
+    if (await shareLink(fund.name, t('auditShareViewLink' as any), url)) return;
+    if (await copyToClipboard(url)) toast.success(t('linkCopied'));
+    else toast.error(t('failedCopy'));
+  };
   const remainingBalance = totalCollected - totalExpenses;
 
   const handleSaveMemberAmount = () => {
@@ -612,7 +629,7 @@ export default function GroupFundDetail() {
       toast.error(t('auditMonthClosed' as any, { period: selectedPeriod }));
       return;
     }
-    const matching = fund.contributions.filter((c: Contribution) => c.memberId === memberId && c.status !== 'Cancelled' && (!c.note || c.note.includes(selectedPeriod)));
+    const matching = fund.contributions.filter((c: Contribution) => c.memberId === memberId && c.status !== 'Cancelled' && contributionMatchesPeriod(c.note, selectedPeriod));
     if (matching.length === 0) {
       toast.info(t('auditNoActiveCollection' as any));
       return;
@@ -629,12 +646,12 @@ export default function GroupFundDetail() {
   const handleSaveExpense = (e: React.FormEvent) => {
     e.preventDefault();
     if (!expenseTitle.trim()) {
-      toast.error(t('auditExpenseTitleRequiredMessage' as any));
+      showFieldError('fund-expense-title', t('auditExpenseTitleRequiredMessage' as any));
       return;
     }
     const amt = parseFloat(expenseAmount);
     if (isNaN(amt) || amt <= 0) {
-      toast.error(t('auditInvalidAmount' as any));
+      showFieldError('fund-expense-amount', t('auditErrExpenseAmount' as any));
       return;
     }
 
@@ -755,7 +772,6 @@ export default function GroupFundDetail() {
 
   const handleGeneratePdfReport = (action: 'view' | 'print' | 'save' | 'share' = 'view') => {
     const reportTitle = `${fund.name} - ${selectedPeriod}`;
-    const reportLogoUrl = new URL(KHARCHA_LOGO_LOCKUP, window.location.origin).href;
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -765,38 +781,43 @@ export default function GroupFundDetail() {
         </head>
         <body>
           <div class="report">
-            <div class="report-header">
-              <img class="report-logo" src="${escapePdfHtml(reportLogoUrl)}" alt="Kharcha" />
+            <div class="report-header stacked">
+              ${KHARCHA_PDF_WORDMARK_HTML}
               <div class="report-heading">
                 <h1>${escapePdfHtml(fund.name)}</h1>
                 <p>${escapePdfHtml(t('auditPurposeReport' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.purpose))} (${escapePdfHtml(groupFundOptionLabel(t, fund.contributionType))}) ${fund.isRecurring ? `| ${escapePdfHtml(t('auditFrequencyShort' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.recurringFrequency))}` : ''} | ${escapePdfHtml(t('auditPeriodLabel' as any))}: ${escapePdfHtml(selectedPeriod)} | ${escapePdfHtml(t('auditGeneratedOn' as any))}: ${escapePdfHtml(new Date().toLocaleDateString())}</p>
               </div>
             </div>
-          
-          <div class="summary">
-            <strong>${t('auditTotalCollected' as any)}:</strong> ₹${totalCollected.toLocaleString('en-IN')} | 
-            <strong>${t('auditTotalExpenses' as any)}:</strong> ₹${totalExpenses.toLocaleString('en-IN')} | 
-            <strong>${t('auditRemainingBalance' as any)}:</strong> ₹${remainingBalance.toLocaleString('en-IN')}
+
+          <div class="summary cards-4">
+            <div class="metric" style="--card-accent:#038f27">${escapePdfHtml(t('auditTotalCollected' as any))}<strong>₹${totalCollected.toLocaleString('en-IN')}</strong></div>
+            <div class="metric" style="--card-accent:#fd6d00">${escapePdfHtml(t('auditTotalExpenses' as any))}<strong>₹${totalExpenses.toLocaleString('en-IN')}</strong></div>
+            <div class="metric" style="--card-accent:#023b81">${escapePdfHtml(t('auditRemainingBalance' as any))}<strong>₹${remainingBalance.toLocaleString('en-IN')}</strong></div>
+            <div class="metric" style="--card-accent:#16834b">${escapePdfHtml(t('auditMembers' as any))}<strong>${fund.members.length}</strong><small>${escapePdfHtml(t('auditCollectedStatus' as any))}: ${fund.members.filter((m: GroupFundMember) => getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) === 'Collected').length} · ${escapePdfHtml(t('auditPending' as any))}: ${fund.members.filter((m: GroupFundMember) => getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) !== 'Collected').length}</small></div>
           </div>
+          ${(() => { const b = computeBudgetStatus(fund.budgetAmount, totalCollected, totalExpenses); if (!b) return ''; const st = b.state === 'over' ? `${t('auditBudgetOver' as any)} ₹${b.overBy.toLocaleString('en-IN')}` : b.state === 'collection-short' ? `${t('auditBudgetCollectionShort' as any)} ₹${b.collectionShortBy.toLocaleString('en-IN')}` : t('auditBudgetWithin' as any); const col = b.state === 'over' ? '#dc2626' : b.state === 'collection-short' ? '#b45309' : '#16834b'; return `<div class="summary cards-4 budget-row"><div class="metric" style="--card-accent:#023b81">${escapePdfHtml(t('auditBudget' as any))}<strong>₹${b.budget.toLocaleString('en-IN')}</strong></div><div class="metric" style="--card-accent:${col}">${escapePdfHtml(t('auditBudgetRemaining' as any))}<strong>₹${b.remaining.toLocaleString('en-IN')}</strong><small style="color:${col}">${escapePdfHtml(st)}</small></div><div class="metric" style="--card-accent:#038f27">${escapePdfHtml(t('auditTotalCollected' as any))}<strong>${b.collectedPct}%</strong><small>of budget</small></div><div class="metric" style="--card-accent:#fd6d00">${escapePdfHtml(t('auditTotalExpenses' as any))}<strong>${b.spentPct}%</strong><small>of budget</small></div></div>`; })()}
 
           <h3>${t('auditCollectionSummaryReport' as any)}</h3>
           <table>
             <thead>
               <tr>
-                <th colspan="1" style="width: 28%;">${t('auditMemberName' as any)}</th>
-                <th colspan="1" style="width: 19%;">${t('auditMobile' as any)}</th>
-                <th colspan="1" style="width: 15%;">${t('auditAmountPaid' as any)}</th>
-                <th colspan="1" style="width: 16%;">${t('auditPaymentDate' as any)}</th>
-                <th colspan="1" style="width: 10%;">${t('auditMethod' as any)}</th>
-                <th colspan="1" style="width: 12%;">${t('auditStatus' as any)}</th>
+                <th colspan="1" style="width: 21%;">${t('auditMemberName' as any)}</th>
+                <th colspan="1" style="width: 15%;">${t('auditMobile' as any)}</th>
+                <th colspan="1" style="width: 12%;">${t('auditAmountPaid' as any)}</th>
+                <th colspan="1" style="width: 13%;">${t('auditPaymentDate' as any)}</th>
+                <th colspan="1" style="width: 9%;">${t('auditMethod' as any)}</th>
+                <th colspan="1" style="width: 11%;">${t('auditStatus' as any)}</th>
+                <th colspan="1" style="width: 19%;">${t('gfRemarks' as any)}</th>
               </tr>
             </thead>
             <tbody>
               ${fund.members.map((m: GroupFundMember) => {
-                const mc = fund.contributions.filter((c: Contribution) => c.memberId === m.id && c.status !== 'Cancelled' && (!c.note || c.note.includes(selectedPeriod)));
+                const mc = fund.contributions.filter((c: Contribution) => c.memberId === m.id && c.status !== 'Cancelled' && contributionMatchesPeriod(c.note, selectedPeriod));
                 const paid = mc.reduce((s: number, c: Contribution) => s + c.amount, 0);
                 const dateStr = mc.length > 0 ? new Date(mc[mc.length - 1].date).toLocaleDateString() : '-';
                 const methodStr = mc.length > 0 ? groupFundOptionLabel(t, mc[mc.length - 1].method) : '-';
+                const collectionRemarks = mc.map((c: Contribution) => (c.note ?? '').split(' — ').slice(1).join(' — ').trim()).filter(Boolean);
+                const remarksStr = [m.remarks?.trim(), ...collectionRemarks].filter(Boolean).join('; ');
                 const statusStr = getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) === 'Collected' ? t('auditCollectedStatus' as any) : t('auditPending' as any);
                 return `
                   <tr>
@@ -806,6 +827,7 @@ export default function GroupFundDetail() {
                     <td class="date">${escapePdfHtml(dateStr)}</td>
                     <td class="method">${escapePdfHtml(methodStr)}</td>
                     <td class="status">${escapePdfHtml(statusStr)}</td>
+                    <td class="remarks">${escapePdfHtml(remarksStr || '-')}</td>
                   </tr>
                 `;
               }).join('')}
@@ -884,12 +906,12 @@ export default function GroupFundDetail() {
     const latestFund = getGroupFundById(params.id) ?? fund;
     const trimmedName = memberName.trim();
     if (!trimmedName) {
-      toast.error(t('fillRequired'));
+      showFieldError('fund-member-name', t('auditErrMemberName' as any));
       return;
     }
     const expectedAmount = memberExpected.trim() ? parseFloat(memberExpected) : undefined;
     if (expectedAmount !== undefined && (!Number.isFinite(expectedAmount) || expectedAmount < 0)) {
-      toast.error(t('auditInvalidAmount' as any));
+      showFieldError('fund-member-expected', t('auditErrExpectedAmount' as any));
       return;
     }
 
@@ -904,7 +926,7 @@ export default function GroupFundDetail() {
         return;
       }
       const members = latestFund.members.map(item => item.id === editingMember.id
-        ? { ...item, name: trimmedName, mobileNumber: memberMobile.trim() || undefined, expectedAmount, startDate: normalizedStartDate, stopFrom: memberStopFrom || undefined, stopUntil: memberStopUntil || undefined }
+        ? { ...item, name: trimmedName, mobileNumber: memberMobile.trim() || undefined, remarks: memberRemarks.trim() || undefined, expectedAmount, startDate: normalizedStartDate, stopFrom: memberStopFrom || undefined, stopUntil: memberStopUntil || undefined }
         : item);
       const next = appendActivity({ ...latestFund, members }, `${t('edit')} ${trimmedName}`);
       refresh(next);
@@ -912,6 +934,7 @@ export default function GroupFundDetail() {
       setEditingMember(undefined);
       setMemberName('');
       setMemberMobile('');
+      setMemberRemarks('');
       setMemberExpected('');
       setMemberStartDate('');
       setMemberStopFrom('');
@@ -924,6 +947,7 @@ export default function GroupFundDetail() {
       id: nanoid(),
       name: trimmedName,
       mobileNumber: memberMobile.trim() || undefined,
+      remarks: memberRemarks.trim() || undefined,
       expectedAmount,
       startDate: normalizedStartDate,
       stopFrom: memberStopFrom || undefined,
@@ -943,6 +967,7 @@ export default function GroupFundDetail() {
       setShowMemberModal(false);
       setMemberName('');
       setMemberMobile('');
+      setMemberRemarks('');
       setMemberExpected('');
       setMemberStartDate('');
       setMemberStopFrom('');
@@ -970,7 +995,7 @@ export default function GroupFundDetail() {
             id: nanoid(),
             name: contact.name!.trim(),
             mobileNumber: contact.tel ? formatPhoneNumber(contact.tel) : undefined,
-            startDate: latestFund.isRecurring ? new Date().toISOString().slice(0, 10) : undefined,
+            startDate: latestFund.isRecurring ? toLocalDateKey(new Date()) : undefined,
             isActive: true,
             createdAt: Date.now(),
           }));
@@ -979,17 +1004,17 @@ export default function GroupFundDetail() {
         // a contact has no usable phone number.
         const seenPhones = new Set(
           latestFund.members
-            .map(member => (member.mobileNumber ?? '').replace(/\\D/g, '').slice(-10))
+            .map(member => (member.mobileNumber ?? '').replace(/\D/g, '').slice(-10))
             .filter(Boolean),
         );
         const seenNamesWithoutPhone = new Set(
           latestFund.members
-            .filter(member => !(member.mobileNumber ?? '').replace(/\\D/g, '').slice(-10))
+            .filter(member => !(member.mobileNumber ?? '').replace(/\D/g, '').slice(-10))
             .map(member => member.name.trim().toLocaleLowerCase()),
         );
         const added: GroupFundMember[] = [];
         for (const member of incomingMembers) {
-          const phone = (member.mobileNumber ?? '').replace(/\\D/g, '').slice(-10);
+          const phone = (member.mobileNumber ?? '').replace(/\D/g, '').slice(-10);
           const nameKey = member.name.trim().toLocaleLowerCase();
           if (phone) {
             if (seenPhones.has(phone)) continue;
@@ -1000,6 +1025,7 @@ export default function GroupFundDetail() {
           }
           added.push(member);
         }
+        const skippedCount = contacts.length - added.length;
         if (added.length > 0) {
           const next = appendActivity({
             ...latestFund,
@@ -1007,6 +1033,7 @@ export default function GroupFundDetail() {
           }, t('auditMembersAdded' as any, { count: added.length }));
           refresh(next);
           toast.success(t('auditMembersAdded' as any, { count: added.length }));
+          if (skippedCount > 0) toast.info(t('gfContactsSkipped' as any, { count: skippedCount }));
         } else {
           toast.info(t('auditNoNewContacts' as any));
         }
@@ -1020,12 +1047,12 @@ export default function GroupFundDetail() {
   };
 
   const handleDownloadMemberTemplate = () => {
-    const url = URL.createObjectURL(createGroupFundMemberTemplate());
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = 'Kharcha-Group-Fund-Members-Template.xlsx';
-    anchor.click();
-    URL.revokeObjectURL(url);
+    void downloadBlobFile(createGroupFundMemberTemplate(), 'Kharcha-Group-Fund-Members-Template.xlsx')
+      .then(saved => { if (saved) toast.success(t('gfTemplateSaved' as any)); })
+      .catch(error => {
+        console.error('Failed to download member template:', error);
+        toast.error(t('gfTemplateFailed' as any));
+      });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1033,26 +1060,38 @@ export default function GroupFundDetail() {
     if (!file) return;
     try {
       const latestFund = getGroupFundById(params.id) ?? fund;
-      const isExcel = /\\.xlsx?$/i.test(file.name) || file.type.includes('spreadsheet');
-      const rows = isExcel
-        ? await parseGroupFundMemberXlsx(file)
-        : parseMemberImportText(await file.text()).map(row => ({ ...row, expectedAmount: undefined }));
+      if (/\.xls$/i.test(file.name)) {
+        toast.error(t('gfXlsNotSupported' as any));
+        return;
+      }
+      const isExcel = file.type.includes('spreadsheet') || await isXlsxFile(file);
+      const parsed = isExcel
+        ? await parseGroupFundMemberXlsxDetailed(file)
+        : { rows: parseMemberImportText(await file.text()).map(row => ({ ...row, expectedAmount: undefined as number | undefined })), skipped: [] as { row: number }[] };
+      const rows = parsed.rows;
       const incomingMembers: GroupFundMember[] = rows.map(row => ({
         id: nanoid(),
         name: row.name.trim(),
         mobileNumber: row.mobileNumber ? formatPhoneNumber(row.mobileNumber) : undefined,
         expectedAmount: row.expectedAmount,
-        startDate: latestFund.isRecurring ? new Date().toISOString().slice(0, 10) : undefined,
+        remarks: 'remarks' in row && row.remarks ? String(row.remarks) : undefined,
+        startDate: latestFund.isRecurring ? toLocalDateKey(new Date()) : undefined,
         isActive: true,
         createdAt: Date.now(),
       }));
       const { members, added } = appendUniqueMembers(latestFund.members, incomingMembers);
+      const skippedRows = parsed.skipped.map(item => item.row);
+      const duplicateCount = incomingMembers.length - added.length;
+      const skippedCount = skippedRows.length + duplicateCount;
       if (added.length > 0) {
         const next = appendActivity({ ...latestFund, members }, t('auditImportedMembersFromFile' as any, { count: added.length }));
         refresh(next);
-        toast.success(t('auditImportedMembersFromFile' as any, { count: added.length }));
+        toast.success(t('gfImportSummary' as any, { added: added.length, skipped: skippedCount }));
       } else {
         toast.info(t('auditNoValidMembersInFile' as any));
+      }
+      if (skippedRows.length > 0) {
+        toast.info(t('gfImportSkippedRows' as any, { rows: skippedRows.slice(0, 10).join(', ') }));
       }
     } catch (error) {
       console.error('Failed to import member file:', error);
@@ -1064,8 +1103,13 @@ export default function GroupFundDetail() {
 
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
+    if (budgetInput.trim() && !normalizeBudget(budgetInput)) {
+      showFieldError('fund-budget', t('auditErrBudget' as any));
+      return;
+    }
     const next = appendActivity({
       ...fund,
+      budgetAmount: normalizeBudget(budgetInput),
       collectionStartDate: fund.isRecurring ? collectionStartDate || undefined : undefined,
       collectionPeriodMode: fund.isRecurring && fund.recurringFrequency !== 'Daily' ? collectionPeriodMode : undefined,
       collectionTiming: fund.isRecurring ? (collectionPeriodMode === 'past' ? 'previous' : 'advance') : undefined,
@@ -1085,23 +1129,22 @@ export default function GroupFundDetail() {
       {/* Header */}
       <AppSectionHeader
         title={fund.name}
+        subtitle={fund.isRecurring ? t('recurringCollection' as any) : t('pbOneTime' as any)}
+        icon={<Landmark size={24} />}
+        accent="green"
         onBack={() => navigate('/group-funds')}
         backLabel={t('auditBackToKharcha' as any)}
-        actions={<><Button variant="default" size="sm" onClick={() => setShowEditSync(true)} className="w-full rounded-xl bg-[#16834b] px-3 text-sm font-black text-white shadow-sm hover:bg-[#11663b]"><Share2 size={16} className="mr-1.5" /> {t('sharedHomeShare')}</Button><Button variant="outline" size="sm" onClick={() => setShowQrDialog(true)} className="w-full border border-[#d7e4dc] bg-white text-kharcha-navy hover:bg-gray-100 font-black shadow-sm"><QrCode size={16} className="mr-1" /> {t('auditQrCode' as any)}</Button></>}
+        actions={<><Button variant="fund" onClick={() => setShowEditSync(true)} className="w-full min-h-12 text-base"><Share2 size={16} className="mr-1.5" /> {t('sharedHomeShare')}</Button><Button variant="soft" onClick={handleShareViewLink} className="w-full min-h-11"><Link2 size={16} className="mr-1" /> {t('auditShareViewLink' as any)}</Button><Button variant="soft" onClick={() => setShowQrDialog(true)} className="w-full min-h-11"><QrCode size={16} className="mr-1" /> {t('auditQrCode' as any)}</Button></>}
       >
-        <div className="mx-auto mt-3 max-w-5xl">
-          <span className="inline-flex rounded-full bg-[#dff1e5] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#16834b]">
-            {fund.isRecurring ? t('recurringCollection' as any) : t('pbOneTime' as any)}
-          </span>
-        </div>
-        <div className="mx-auto mt-3 grid max-w-5xl grid-cols-2 gap-2 text-xs font-black sm:grid-cols-4">
+        <div className="mx-auto mt-3 grid max-w-5xl grid-cols-3 gap-2 text-xs font-black sm:grid-cols-6">
           {[
-            { id: 'overview', label: t('auditDashboardTab' as any), icon: Wallet },
-            { id: 'collection', label: t('auditCollectionSummary' as any), icon: CheckCircle2 },
+            // Dashboard order: Overview → Collect → Members → Expenses → Reports → Settings (labels/order only).
+            { id: 'overview', label: t('sharedHomeOverview' as any), icon: Wallet },
+            { id: 'collection', label: t('auditFundTabCollect' as any), icon: CheckCircle2 },
             { id: 'members', label: t('auditMembers' as any), icon: Users },
             { id: 'expenses', label: t('auditExpensesTab' as any), icon: Receipt },
-            { id: 'settings', label: t('auditSaveSettings' as any), icon: Settings },
             { id: 'reports', label: t('sharedHomeReports' as any), icon: FileText },
+            { id: 'settings', label: t('auditSettings' as any), icon: Settings },
           ].map(tab => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -1110,13 +1153,13 @@ export default function GroupFundDetail() {
                 type="button"
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex min-h-10 items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-center transition-all shadow-sm ${
+                className={`flex min-h-11 items-center justify-center gap-1.5 rounded-2xl border px-2 py-2 text-center transition-all active:scale-[0.97] ${
                   active
-                    ? 'border-[#16834b] bg-[#16834b] text-white font-black'
-                    : 'border-[#d7e4dc] bg-white text-kharcha-navy font-bold hover:bg-gray-100'
+                    ? 'border-[#038f27] bg-[#038f27] text-white font-black shadow-[0_6px_14px_rgba(3,143,39,0.30)]'
+                    : 'border-[#e3ebf3] bg-[#f3f7fc] text-[#023b81] font-bold hover:bg-[#e6f6ea]'
                 }`}
               >
-                <Icon size={14} className={active ? 'text-white' : 'text-kharcha-navy'} /> <span>{tab.label}</span>
+                <Icon size={16} className={active ? 'text-white' : 'text-[#038f27]'} /> <span>{tab.label}</span>
               </button>
             );
           })}
@@ -1132,18 +1175,18 @@ export default function GroupFundDetail() {
         {activeTab === 'collection' && (
           <div className="space-y-4">
             {/* Top Bar with Auto-Generated Period Selector, WhatsApp Reminders, PDF Report & Bulk QR */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white border border-[#d7e4dc] p-4 rounded-2xl shadow-sm">
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 overflow-hidden bg-white border border-[#e3ebf3] p-4 pl-5 rounded-[22px] shadow-[0_10px_28px_rgba(2,59,129,0.08)]"><span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-[#038f27]" />
               <div>
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)} ({selectedPeriod})</p>
-                <h2 className="text-2xl font-black text-[#16834b] sm:text-3xl">₹{totalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
-                {isSelectedPeriodClosed && <p className="mt-1 text-xs font-black text-[#16834b]">{t('auditMonthClosed' as any, { period: selectedPeriod })}</p>}
+                <h2 className="text-2xl font-black text-kharcha-green sm:text-3xl">₹{totalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
+                {isSelectedPeriodClosed && <p className="mt-1 text-xs font-black text-kharcha-green">{t('auditMonthClosed' as any, { period: selectedPeriod })}</p>}
               </div>
               <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                  <SelectTrigger className="w-[180px] border border-[#d7e4dc] rounded-xl font-black bg-white text-kharcha-navy shadow-sm">
+                  <SelectTrigger className="w-[180px] border border-kharcha-line rounded-xl font-black bg-white text-kharcha-navy shadow-sm">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-[#d7e4dc] font-bold text-kharcha-navy">
+                  <SelectContent className="bg-white border border-kharcha-line font-bold text-kharcha-navy">
                     {collectionPeriods.map(p => (
                       <SelectItem key={p} value={p}>{p}</SelectItem>
                     ))}
@@ -1155,17 +1198,17 @@ export default function GroupFundDetail() {
                   variant="outline"
                   disabled={!isSelectedPeriodClosed && !allCollectionMembersCollected}
                   title={!isSelectedPeriodClosed && !allCollectionMembersCollected ? t('auditCloseCollectionNeedsAll' as any) : undefined}
-                  className={`border border-[#d7e4dc] font-black rounded-xl shadow-sm ${isSelectedPeriodClosed ? 'bg-green-100 text-[#16834b] hover:bg-green-200' : 'bg-white text-kharcha-navy hover:bg-green-50'} disabled:cursor-not-allowed disabled:opacity-50`}
+                  className={`border border-kharcha-line font-black rounded-xl shadow-sm ${isSelectedPeriodClosed ? 'bg-green-100 text-kharcha-green hover:bg-green-200' : 'bg-white text-kharcha-navy hover:bg-green-50'} disabled:cursor-not-allowed disabled:opacity-50`}
                 >
-                  {isSelectedPeriodClosed ? <RotateCcw size={16} className="mr-1" /> : <CheckCircle2 size={16} className="mr-1 text-[#16834b]" />}
+                  {isSelectedPeriodClosed ? <RotateCcw size={16} className="mr-1" /> : <CheckCircle2 size={16} className="mr-1 text-kharcha-green" />}
                   {t(isSelectedPeriodClosed ? 'auditUndoCloseCollection' : 'auditCloseCollection' as any)}
                 </Button>
 
-                <Button onClick={handleOpenBulkMessageDialog} disabled={isSelectedPeriodClosed} variant="outline" className="border border-[#d7e4dc] bg-white text-kharcha-navy font-black rounded-xl shadow-sm hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50">
-                  <MessageSquare size={16} className="mr-1 text-[#16834b]" /> {t('auditSendBulkMessage' as any)}
+                <Button onClick={handleOpenBulkMessageDialog} disabled={isSelectedPeriodClosed} variant="outline" className="border border-kharcha-line bg-white text-kharcha-navy font-black rounded-xl shadow-sm hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50">
+                  <MessageSquare size={16} className="mr-1 text-kharcha-green" /> {t('auditSendBulkMessage' as any)}
                 </Button>
 
-                <Button onClick={handleOpenBulkCollection} disabled={isSelectedPeriodClosed} className="bg-[#e87817] text-white border border-[#d7e4dc] font-black rounded-xl shadow-sm hover:bg-[#d06713] disabled:cursor-not-allowed disabled:opacity-50">
+                <Button onClick={handleOpenBulkCollection} disabled={isSelectedPeriodClosed} variant="trip" className="disabled:cursor-not-allowed disabled:opacity-50">
                   <QrCode size={16} className="mr-1" /> {t('auditBulkQr' as any)}
                 </Button>
               </div>
@@ -1178,7 +1221,7 @@ export default function GroupFundDetail() {
                 placeholder={`🔍 ${t('auditSearchMember' as any)}`}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10 border border-[#d7e4dc] rounded-xl bg-white font-bold text-kharcha-navy placeholder:text-gray-500 shadow-sm"
+                className="pl-10 border border-kharcha-line rounded-xl bg-white font-bold text-kharcha-navy placeholder:text-gray-500 shadow-sm"
               />
             </div>
 
@@ -1186,9 +1229,9 @@ export default function GroupFundDetail() {
             <div className="space-y-2">
               <h3 className="font-black text-kharcha-navy text-sm uppercase tracking-wide">{t('auditMembersIndividualCollection' as any)} ({selectedPeriod})</h3>
               {filteredMembers.length === 0 ? (
-                <Card className="rounded-2xl border border-[#d7e4dc] p-8 text-center bg-white shadow-sm">
+                <Card className="rounded-2xl border border-kharcha-line p-8 text-center bg-white shadow-sm">
                   <p className="text-kharcha-navy font-bold mb-3">{t('auditNoMembersAdded' as any)}</p>
-                  <Button onClick={() => setActiveTab('members')} className="bg-black text-white font-black rounded-xl border border-[#d7e4dc] shadow-sm">{t('auditAddMembers' as any)}</Button>
+                  <Button onClick={() => setActiveTab('members')} className="bg-black text-white font-black rounded-xl border border-kharcha-line shadow-sm">{t('auditAddMembers' as any)}</Button>
                 </Card>
               ) : (
                 filteredMembers.map((m: GroupFundMember) => {
@@ -1201,17 +1244,17 @@ export default function GroupFundDetail() {
                   return (
                     <Card
                       key={m.id}
-                      className="rounded-xl border border-[#d7e4dc] bg-white p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm"
+                      className="rounded-xl border border-kharcha-line bg-white p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm"
                     >
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-black text-kharcha-navy text-base">{m.name}</h4>
-                          <span className={`text-[11px] font-black uppercase px-2.5 py-0.5 rounded-full border border-[#d7e4dc] ${isCollected ? 'bg-green-100 text-[#16834b]' : 'bg-orange-100 text-[#e87817]'}`}>
+                          <span className={`text-[11px] font-black uppercase px-2.5 py-0.5 rounded-full border border-kharcha-line ${isCollected ? 'bg-green-100 text-kharcha-green' : 'bg-orange-100 text-[#e87817]'}`}>
                             {isCollected ? `✓ ${t('auditCollected' as any)}` : t('auditPending' as any)}
                           </span>
                         </div>
                         <p className="text-xs text-kharcha-navy font-medium mt-0.5">
-                          {isCollected ? <><span>{t('auditPaid' as any)}:</span> <span className="font-black text-[#16834b]">₹{paid.toLocaleString('en-IN')}</span></> : <><span>Expected Amount:</span> <span className="font-black text-[#e87817]">₹{expected.toLocaleString('en-IN')}</span></>}
+                          {isCollected ? <><span>{t('auditPaid' as any)}:</span> <span className="font-black text-kharcha-green">₹{paid.toLocaleString('en-IN')}</span></> : <><span>Expected Amount:</span> <span className="font-black text-[#e87817]">₹{expected.toLocaleString('en-IN')}</span></>}
                           {lastPayment && isCollected && <span className="text-gray-600 ml-1">({t('auditPaymentMethodOnDate' as any, { method: groupFundOptionLabel(t, lastPayment.method), date: new Date(lastPayment.date).toLocaleDateString() })})</span>}
                         </p>
                       </div>
@@ -1221,10 +1264,10 @@ export default function GroupFundDetail() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleSendIndividualCollectionMessage(m, isCollected, paid)}
-                          className="border border-[#d7e4dc] bg-white text-kharcha-navy font-black h-10 px-3 text-xs rounded-xl shadow-sm hover:bg-green-50"
+                          className="border border-kharcha-line bg-white text-kharcha-navy font-black h-10 px-3 text-xs rounded-xl shadow-sm hover:bg-green-50"
                           title={isCollected ? 'Open WhatsApp thank-you again' : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}
                         >
-                          <MessageSquare size={14} className="mr-1 text-[#16834b]" /> {isCollected ? (thankYouOpenedByMember[m.id] ? 'Opened ✓' : 'Thank You') : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}
+                          <MessageSquare size={14} className="mr-1 text-kharcha-green" /> {isCollected ? (thankYouOpenedByMember[m.id] ? 'Opened ✓' : 'Thank You') : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}
                         </Button>
 
                         {isCollected ? (
@@ -1232,7 +1275,7 @@ export default function GroupFundDetail() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleUndoCollection(m.id)}
-                            className="border border-[#d7e4dc] bg-white text-red-600 font-black h-10 px-3 text-xs rounded-xl shadow-sm hover:bg-red-50"
+                            className="border border-kharcha-line bg-white text-red-600 font-black h-10 px-3 text-xs rounded-xl shadow-sm hover:bg-red-50"
                             title={t('auditUndoRecollect' as any)}
                           >
                             <RotateCcw size={14} className="mr-1" /> {t('auditUndoRecollect' as any)}
@@ -1247,15 +1290,15 @@ export default function GroupFundDetail() {
                               const defaultExpected = fund.isRecurring && fund.amountType === 'Default Amount'
                                 ? calculateExpectedAmountForPeriod(fund, m, selectedPeriod)
                                 : undefined;
-                              const defaultCollectionAmount = defaultExpected !== undefined && Number.isFinite(defaultExpected) && defaultExpected > 0
-                                ? String(defaultExpected)
-                                : '';
+                              const prefillCandidates = [defaultExpected, m.expectedAmount, fund.defaultContributionAmount];
+                              const prefill = prefillCandidates.find(value => value !== undefined && Number.isFinite(value) && value > 0);
+                              const defaultCollectionAmount = prefill !== undefined ? String(prefill) : '';
                               setCollectionAmount(defaultCollectionAmount);
                               setUpiInputAmount(defaultCollectionAmount);
                               setCollectionRemark('');
                               setSavedAmountInput(getSavedCollectionAmount(m)?.toString() ?? '');
                             }}
-                            className="bg-[#16834b] text-white font-black h-10 px-4 text-xs rounded-xl hover:bg-green-700 border border-[#d7e4dc] shadow-sm"
+                            className="bg-[#16834b] text-white font-black h-10 px-4 text-xs rounded-xl hover:bg-green-700 border border-kharcha-line shadow-sm"
                           >
                             {t('auditCollectAmountButton' as any)}
                           </Button>
@@ -1272,12 +1315,12 @@ export default function GroupFundDetail() {
         {/* EXPENSES TAB */}
         {activeTab === 'expenses' && (
           <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white border border-[#d7e4dc] p-4 rounded-2xl shadow-sm">
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 overflow-hidden bg-white border border-[#e3ebf3] p-4 pl-5 rounded-[22px] shadow-[0_10px_28px_rgba(2,59,129,0.08)]"><span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-[#038f27]" />
               <div>
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalFundExpensesLabel' as any)}</p>
                 <h2 className="text-2xl font-black text-red-600 sm:text-3xl">₹{totalExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
               </div>
-              <Button onClick={() => setShowExpenseModal(true)} className="bg-black text-white border border-[#d7e4dc] font-black rounded-xl shadow-sm hover:bg-gray-800">
+              <Button onClick={() => setShowExpenseModal(true)} className="bg-black text-white border border-kharcha-line font-black rounded-xl shadow-sm hover:bg-gray-800">
                 <Receipt size={16} className="mr-1" /> {t('auditAddExpense' as any)}
               </Button>
             </div>
@@ -1285,17 +1328,17 @@ export default function GroupFundDetail() {
             <div className="space-y-2">
               <h3 className="font-black text-kharcha-navy text-sm uppercase tracking-wide">{t('auditExpenseLedgerLabel' as any)}</h3>
               {activeExpenses.length === 0 ? (
-                <Card className="rounded-2xl border border-[#d7e4dc] p-8 text-center bg-white shadow-sm">
+                <Card className="rounded-2xl border border-kharcha-line p-8 text-center bg-white shadow-sm">
                   <p className="text-kharcha-navy font-bold mb-3">{t('auditNoFundExpensesYet' as any)}</p>
-                  <Button onClick={() => setShowExpenseModal(true)} className="bg-black text-white font-black rounded-xl border border-[#d7e4dc] shadow-sm">{t('auditRecordFirstFundExpense' as any)}</Button>
+                  <Button onClick={() => setShowExpenseModal(true)} className="bg-black text-white font-black rounded-xl border border-kharcha-line shadow-sm">{t('auditRecordFirstFundExpense' as any)}</Button>
                 </Card>
               ) : (
                 activeExpenses.map((exp: GroupFundExpense) => (
-                  <Card key={exp.id} className="rounded-xl border border-[#d7e4dc] bg-white p-4 flex justify-between items-center shadow-sm">
+                  <Card key={exp.id} className="rounded-xl border border-kharcha-line bg-white p-4 flex justify-between items-center shadow-sm">
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-black text-kharcha-navy text-base">{exp.name}</h4>
-                        <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded-full border border-[#d7e4dc] bg-amber-100 text-amber-800">
+                        <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded-full border border-kharcha-line bg-amber-100 text-amber-800">
                           {exp.category}
                         </span>
                       </div>
@@ -1335,15 +1378,15 @@ export default function GroupFundDetail() {
         {activeTab === 'overview' && (
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-3">
-              <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-5 shadow-sm">
+              <Card className="rounded-2xl border border-kharcha-line bg-white p-5 shadow-sm">
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)}</p>
-                <h3 className="text-2xl font-black text-[#16834b] mt-1">₹{lifetimeTotalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
+                <h3 className="text-2xl font-black text-kharcha-green mt-1">₹{lifetimeTotalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
               </Card>
-              <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-5 shadow-sm">
+              <Card className="rounded-2xl border border-kharcha-line bg-white p-5 shadow-sm">
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalExpenses' as any)}</p>
                 <h3 className="text-2xl font-black text-red-600 mt-1">₹{totalExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
               </Card>
-              <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-5 shadow-sm">
+              <Card className="rounded-2xl border border-kharcha-line bg-white p-5 shadow-sm">
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditRemainingBalance' as any)}</p>
                 <h3 className={`text-2xl font-black mt-1 ${(lifetimeTotalCollected - totalExpenses) >= 0 ? 'text-[#16834b]' : 'text-red-600'}`}>
                   ₹{(lifetimeTotalCollected - totalExpenses).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -1351,7 +1394,9 @@ export default function GroupFundDetail() {
               </Card>
             </div>
 
-            <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-4 shadow-sm">
+            <FundBudgetCard budget={fund.budgetAmount} collected={lifetimeTotalCollected} expenses={totalExpenses} />
+
+            <Card className="rounded-2xl border border-kharcha-line bg-white p-4 shadow-sm">
               <h3 className="font-black text-kharcha-navy flex items-center gap-2"><History size={18} /> {t('auditFundActivity' as any)}</h3>
               <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
                 {(fund.activity || []).length > 0 ? (
@@ -1371,7 +1416,7 @@ export default function GroupFundDetail() {
 
         {activeTab === 'settings' && (
           <div className="space-y-4">
-            <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-6 shadow-sm">
+            <Card className="rounded-2xl border border-kharcha-line bg-white p-6 shadow-sm">
               <h2 className="text-lg font-black text-kharcha-navy mb-4">{t('auditFundUpiSettingsTitle' as any)}</h2>
               <form onSubmit={handleSaveSettings} className="space-y-4">
                 {fund.isRecurring && (
@@ -1382,7 +1427,7 @@ export default function GroupFundDetail() {
                       type="date"
                       value={collectionStartDate}
                       onChange={e => setCollectionStartDate(e.target.value)}
-                      className="border border-[#d7e4dc] rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
+                      className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
                     />
                     <p className="mt-1 text-xs text-gray-600">{t('auditCollectionStartDateHelp' as any)}</p>
                     {fund.recurringFrequency !== 'Daily' && (
@@ -1390,7 +1435,7 @@ export default function GroupFundDetail() {
                         <Label className="font-black text-kharcha-navy">{t('auditCollectionTiming' as any)}</Label>
                         <div className="mt-1 grid min-w-0 grid-cols-2 gap-2">
                           {(['past', 'future'] as const).map(mode => (
-                            <button key={mode} type="button" onClick={() => setCollectionPeriodMode(mode)} className={`min-w-0 break-words rounded-xl border border-[#d7e4dc] px-2 py-2 text-sm font-black leading-tight shadow-sm ${collectionPeriodMode === mode ? 'bg-[#16834b] text-white' : 'bg-white text-kharcha-navy hover:bg-green-50'}`}>
+                            <button key={mode} type="button" onClick={() => setCollectionPeriodMode(mode)} className={`min-w-0 break-words rounded-xl border border-kharcha-line px-2 py-2 text-sm font-black leading-tight shadow-sm ${collectionPeriodMode === mode ? 'bg-[#16834b] text-white' : 'bg-white text-kharcha-navy hover:bg-green-50'}`}>
                               {mode === 'past' ? t('auditPreviousPeriod' as any) : t('auditCollectInAdvance' as any)}
                             </button>
                           ))}
@@ -1400,16 +1445,21 @@ export default function GroupFundDetail() {
                   </div>
                 )}
                 <div>
+                  <Label htmlFor="fund-budget" className="font-black text-kharcha-navy">{t('auditBudgetOptional' as any)} (₹)</Label>
+                  <Input id="fund-budget" type="number" inputMode="decimal" min="0" placeholder="10000" value={budgetInput} onChange={e => setBudgetInput(e.target.value)} className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm" />
+                  <p className="mt-1 text-xs text-gray-600">{t('auditBudgetHelp' as any)}</p>
+                </div>
+                <div>
                   <Label htmlFor="fund-upi" className="font-black text-kharcha-navy">{t('auditFundUpiSettingsLabel' as any)}</Label>
                   <Input
                     id="fund-upi"
                     placeholder={t('auditFundUpiPlaceholder' as any)}
                     value={upiId}
                     onChange={e => setUpiId(e.target.value)}
-                    className="border border-[#d7e4dc] rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
+                    className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
                   />
                 </div>
-                <Button type="submit" className="bg-black text-white font-black rounded-xl border border-[#d7e4dc] shadow-sm hover:bg-gray-800">{t('auditSaveSettings' as any)}</Button>
+                <Button type="submit" className="bg-black text-white font-black rounded-xl border border-kharcha-line shadow-sm hover:bg-gray-800">{t('auditSaveSettings' as any)}</Button>
               </form>
             </Card>
           </div>
@@ -1417,32 +1467,32 @@ export default function GroupFundDetail() {
 
         {activeTab === 'reports' && (
           <div className="space-y-4">
-            <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-5 shadow-sm">
+            <Card className="rounded-2xl border border-kharcha-line bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-lg font-black text-kharcha-navy">{t('sharedHomeReports' as any)}</h2>
                   <p className="text-sm font-medium text-gray-600">{t('auditPeriodLabel' as any)}: {selectedPeriod}</p>
                 </div>
-                <span className="rounded-full bg-[#dff1e5] px-2.5 py-1 text-xs font-black text-[#16834b]">{fund.isRecurring ? t('recurringCollection' as any) : t('pbOneTime' as any)}</span>
+                <span className="rounded-full bg-[#dff1e5] px-2.5 py-1 text-xs font-black text-kharcha-green">{fund.isRecurring ? t('recurringCollection' as any) : t('pbOneTime' as any)}</span>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <Button type="button" onClick={() => handleGeneratePdfReport('view')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
-                  <FileText size={16} className="mr-1 text-[#16834b]" /> {t('auditPdfReport' as any)}
+                <Button type="button" onClick={() => handleGeneratePdfReport('view')} variant="outline" className="min-h-10 rounded-xl border border-kharcha-line bg-white font-black text-kharcha-navy hover:bg-gray-100">
+                  <FileText size={16} className="mr-1 text-kharcha-green" /> {t('auditPdfReport' as any)}
                 </Button>
-                <Button type="button" onClick={() => handleGeneratePdfReport('print')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
+                <Button type="button" onClick={() => handleGeneratePdfReport('print')} variant="outline" className="min-h-10 rounded-xl border border-kharcha-line bg-white font-black text-kharcha-navy hover:bg-gray-100">
                   {t('auditPdfPrint' as any)}
                 </Button>
-                <Button type="button" onClick={() => handleGeneratePdfReport('save')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
+                <Button type="button" onClick={() => handleGeneratePdfReport('save')} variant="outline" className="min-h-10 rounded-xl border border-kharcha-line bg-white font-black text-kharcha-navy hover:bg-gray-100">
                   {t('auditPdfSave' as any)}
                 </Button>
-                <Button type="button" onClick={() => handleGeneratePdfReport('share')} variant="outline" className="min-h-10 rounded-xl border border-[#d7e4dc] bg-white font-black text-kharcha-navy hover:bg-gray-100">
+                <Button type="button" onClick={() => handleGeneratePdfReport('share')} variant="outline" className="min-h-10 rounded-xl border border-kharcha-line bg-white font-black text-kharcha-navy hover:bg-gray-100">
                   {t('sharedHomeShare' as any)}
                 </Button>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl border border-[#d7e4dc] bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)}</p><p className="mt-1 text-lg font-black text-[#16834b]">₹{totalCollected.toLocaleString('en-IN')}</p></div>
-                <div className="rounded-xl border border-[#d7e4dc] bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalExpenses' as any)}</p><p className="mt-1 text-lg font-black text-red-600">₹{totalExpenses.toLocaleString('en-IN')}</p></div>
-                <div className="rounded-xl border border-[#d7e4dc] bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditRemainingBalance' as any)}</p><p className={`mt-1 text-lg font-black ${remainingBalance >= 0 ? 'text-[#16834b]' : 'text-red-600'}`}>₹{remainingBalance.toLocaleString('en-IN')}</p></div>
+                <div className="rounded-xl border border-kharcha-line bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)}</p><p className="mt-1 text-lg font-black text-kharcha-green">₹{totalCollected.toLocaleString('en-IN')}</p></div>
+                <div className="rounded-xl border border-kharcha-line bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalExpenses' as any)}</p><p className="mt-1 text-lg font-black text-red-600">₹{totalExpenses.toLocaleString('en-IN')}</p></div>
+                <div className="rounded-xl border border-kharcha-line bg-white p-3"><p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditRemainingBalance' as any)}</p><p className={`mt-1 text-lg font-black ${remainingBalance >= 0 ? 'text-[#16834b]' : 'text-red-600'}`}>₹{remainingBalance.toLocaleString('en-IN')}</p></div>
               </div>
             </Card>
           </div>
@@ -1451,7 +1501,7 @@ export default function GroupFundDetail() {
         {activeTab === 'members' && (
           <div className="space-y-4">
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white border border-[#d7e4dc] p-4 rounded-2xl shadow-sm">
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 overflow-hidden bg-white border border-[#e3ebf3] p-4 pl-5 rounded-[22px] shadow-[0_10px_28px_rgba(2,59,129,0.08)]"><span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-[#038f27]" />
               <div>
                 <h2 className="text-lg font-black text-kharcha-navy">{t('auditFundMembersTitle' as any, { count: fund.members.length })}</h2>
                 <p className="text-xs text-kharcha-navy font-medium">{t('auditFundMembersDescription' as any)}</p>
@@ -1461,34 +1511,56 @@ export default function GroupFundDetail() {
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileUpload}
-                  accept=".xlsx, .xls, .csv, .txt"
+                  accept=".xlsx,.csv,.txt"
                   className="hidden"
                 />
-                <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border border-[#d7e4dc] font-black rounded-xl bg-white text-kharcha-navy hover:bg-gray-100 flex-1 sm:flex-none shadow-sm">
-                  <Upload size={16} className="mr-1" /> {t('auditImportFromLocal' as any)}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button disabled={isImportingContacts} className="bg-kharcha-green text-white font-black rounded-xl flex-1 sm:flex-none shadow-sm hover:opacity-90">
+                      {isImportingContacts ? <Loader2 size={16} className="mr-1 animate-spin" /> : <UserPlus size={16} className="mr-1" />}
+                      {isImportingContacts ? t('picking') : t('gfAddMembers' as any)}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 rounded-xl">
+                    <DropdownMenuItem onSelect={() => { void handlePickContacts(); }} className="font-bold text-kharcha-navy">
+                      <Phone size={16} className="mr-2" /> {t('gfAddFromContacts' as any)}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => { setEditingMember(undefined); setShowMemberModal(true); }} className="font-bold text-kharcha-navy">
+                      <UserPlus size={16} className="mr-2" /> {t('gfAddManually' as any)}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => fileInputRef.current?.click()} className="font-bold text-kharcha-navy">
+                      <Upload size={16} className="mr-2" /> {t('gfUploadExcel' as any)}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={handleDownloadMemberTemplate} className="font-bold text-kharcha-green">
+                      <FileText size={16} className="mr-2" /> {t('gfDownloadTemplate' as any)}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-kharcha-line font-black rounded-xl bg-white text-kharcha-navy flex-1 sm:flex-none shadow-sm">
+                  <Upload size={16} className="mr-1" /> {t('gfUploadExcel' as any)}
                 </Button>
-                <Button onClick={handleDownloadMemberTemplate} type="button" variant="outline" className="border border-[#d7e4dc] font-black rounded-xl bg-white text-[#16834b] hover:bg-green-50 flex-1 sm:flex-none shadow-sm">
-                  <FileText size={16} className="mr-1" /> Download Excel Template
-                </Button>
-                <Button onClick={handlePickContacts} disabled={isImportingContacts} variant="outline" className="border border-[#d7e4dc] font-black rounded-xl bg-white text-kharcha-navy hover:bg-gray-100 disabled:cursor-wait disabled:opacity-70 flex-1 sm:flex-none shadow-sm">
-                  {isImportingContacts ? <Loader2 size={16} className="mr-1 animate-spin" /> : <Phone size={16} className="mr-1" />}
-                  {isImportingContacts ? t('picking') : t('auditImportContacts' as any)}
-                </Button>
-                <Button onClick={() => { setEditingMember(undefined); setShowMemberModal(true); }} className="bg-black text-white border border-[#d7e4dc] font-black rounded-xl flex-1 sm:flex-none shadow-sm hover:bg-gray-800">
-                  <UserPlus size={16} className="mr-1" /> {t('auditAddManually' as any)}
+                <Button onClick={handleDownloadMemberTemplate} type="button" variant="outline" className="border-kharcha-line font-black rounded-xl bg-white text-kharcha-green flex-1 sm:flex-none shadow-sm">
+                  <FileText size={16} className="mr-1" /> {t('gfDownloadTemplate' as any)}
                 </Button>
               </div>
             </div>
+            <p className="text-xs font-medium text-kharcha-navy/80 px-1">{t('gfTemplateHint' as any)}</p>
 
             <div className="grid gap-3 sm:grid-cols-2">
               {fund.members.length === 0 ? (
-                <Card className="col-span-full rounded-2xl border border-[#d7e4dc] p-8 text-center bg-white shadow-sm">
+                <Card className="col-span-full rounded-2xl border border-kharcha-line p-8 text-center bg-white shadow-sm">
                   <p className="text-kharcha-navy font-bold mb-3">{t('auditNoMembersFundYet' as any)}</p>
-                  <div className="flex justify-center gap-2">
-                    <Button onClick={() => { setEditingMember(undefined); setShowMemberModal(true); }} className="bg-black text-white font-black rounded-xl border border-[#d7e4dc] shadow-sm">{t('auditAddManually' as any)}</Button>
-                    <Button onClick={handlePickContacts} disabled={isImportingContacts} variant="outline" className="border border-[#d7e4dc] font-black rounded-xl bg-white text-kharcha-navy hover:bg-gray-100 disabled:cursor-wait disabled:opacity-70 shadow-sm">
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Button onClick={handlePickContacts} disabled={isImportingContacts} className="bg-kharcha-green text-white font-black rounded-xl shadow-sm hover:opacity-90 disabled:cursor-wait disabled:opacity-70">
                       {isImportingContacts ? <Loader2 size={16} className="mr-1 animate-spin" /> : <Phone size={16} className="mr-1" />}
-                      {isImportingContacts ? t('picking') : t('auditImportContacts' as any)}
+                      {isImportingContacts ? t('picking') : t('gfAddFromContacts' as any)}
+                    </Button>
+                    <Button onClick={() => { setEditingMember(undefined); setShowMemberModal(true); }} variant="outline" className="border-kharcha-green font-black rounded-xl bg-white text-kharcha-navy shadow-sm">
+                      <UserPlus size={16} className="mr-1" /> {t('gfAddManually' as any)}
+                    </Button>
+                    <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-kharcha-green font-black rounded-xl bg-white text-kharcha-navy shadow-sm">
+                      <Upload size={16} className="mr-1" /> {t('gfUploadExcel' as any)}
                     </Button>
                   </div>
                 </Card>
@@ -1496,7 +1568,7 @@ export default function GroupFundDetail() {
                 fund.members.map((m: GroupFundMember) => {
                   const paid = fund.contributions.filter((c: Contribution) => c.memberId === m.id && c.status !== 'Cancelled').reduce((s: number, c: Contribution) => s + c.amount, 0);
                   const memberJoinDate = new Date(`${getMemberStartDateValue(fund, m)}T00:00:00`);
-                  const configuredCollectionReference = collectionStartDate || fund.collectionStartDate || collectionDate || new Date().toISOString().slice(0, 10);
+                  const configuredCollectionReference = collectionStartDate || fund.collectionStartDate || collectionDate || toLocalDateKey(new Date());
                   const memberCollectionDate = new Date(`${configuredCollectionReference}T00:00:00`);
                   const configuredExpected = fund.isRecurring && fund.amountType === 'Default Amount' && !Number.isNaN(memberJoinDate.getTime())
                     ? calculateMemberAddExpectedAmountForConfiguredPeriod(
@@ -1512,21 +1584,21 @@ export default function GroupFundDetail() {
                   return (
                     <Card
                       key={m.id}
-                      className="rounded-2xl border border-[#d7e4dc] bg-white p-4 flex justify-between items-start shadow-sm"
+                      className="rounded-2xl border border-kharcha-line bg-white p-4 flex justify-between items-start shadow-sm"
                     >
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-black text-kharcha-navy text-lg">{m.name}</h3>
                           {fund.isRecurring && (
-                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-[#d7e4dc] ${m.recurringActive !== false ? 'bg-green-100 text-[#16834b]' : 'bg-red-100 text-red-600'}`}>
+                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-kharcha-line ${m.recurringActive !== false ? 'bg-green-100 text-kharcha-green' : 'bg-red-100 text-red-600'}`}>
                               {m.recurringActive !== false ? t('auditRecurringActive' as any) : t('auditRecurringStopped' as any)}
                             </span>
                           )}
                         </div>
                         {m.mobileNumber && <p className="text-xs text-kharcha-navy font-medium">{t('auditMobileLabel' as any)}: {m.mobileNumber}</p>}
                         {fund.isRecurring && <p className="text-xs text-kharcha-navy font-medium">{t('auditMemberStartDate' as any)}: {getMemberStartDateValue(fund, m)}</p>}
-                        <p className="mt-2 text-sm font-black text-[#16834b]">{t('auditExpectedContribution' as any)}: ₹{expected.toLocaleString('en-IN')}</p>
-                        <p className="text-xs font-black text-[#16834b]">{t('auditTotalPaid' as any)}: ₹{paid.toLocaleString('en-IN')}</p>
+                        <p className="mt-2 text-sm font-black text-kharcha-green">{t('auditExpectedContribution' as any)}: ₹{expected.toLocaleString('en-IN')}</p>
+                        <p className="text-xs font-black text-kharcha-green">{t('auditTotalPaid' as any)}: ₹{paid.toLocaleString('en-IN')}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {fund.isRecurring && (
@@ -1543,8 +1615,8 @@ export default function GroupFundDetail() {
                               refresh(next);
                               toast.success(`${t('auditRecurringCollection' as any)} ${nextActive ? t('auditResumeRecurring' as any).toLowerCase() : t('auditStopRecurring' as any).toLowerCase()} for ${m.name}`);
                             }}
-                            className={`border border-[#d7e4dc] text-xs font-black h-8 px-2.5 rounded-lg shadow-sm ${
-                              m.recurringActive !== false ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-[#16834b] hover:bg-green-100'
+                            className={`border border-kharcha-line text-xs font-black h-8 px-2.5 rounded-lg shadow-sm ${
+                              m.recurringActive !== false ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-kharcha-green hover:bg-green-100'
                             }`}
                           >
                             {m.recurringActive !== false ? t('auditStopRecurring' as any) : t('auditResumeRecurring' as any)}
@@ -1560,6 +1632,7 @@ export default function GroupFundDetail() {
                             setEditingMember(m);
                             setMemberName(m.name);
                             setMemberMobile(m.mobileNumber || '');
+                            setMemberRemarks(m.remarks || '');
                             setMemberExpected(fund.isRecurring && fund.amountType === 'Default Amount' ? '' : (m.expectedAmount !== undefined ? String(m.expectedAmount) : ''));
                             setMemberStartDate(fund.isRecurring ? getMemberStartDateValue(fund, m) : '');
                             setMemberStopFrom(m.stopFrom || '');
@@ -1602,9 +1675,9 @@ export default function GroupFundDetail() {
 
       {/* RECURRING COLLECTION REMINDER POPUP MODAL */}
       <Dialog open={showRecurringReminderModal} onOpenChange={setShowRecurringReminderModal}>
-        <DialogContent className={`border border-[#d7e4dc] rounded-2xl max-w-sm text-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] ${reminderInfo.isUrgent ? 'bg-red-50' : 'bg-white'}`}>
+        <DialogContent className={`border border-kharcha-line rounded-2xl max-w-sm text-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] ${reminderInfo.isUrgent ? 'bg-red-50' : 'bg-white'}`}>
           <DialogHeader className="items-center">
-            <div className={`w-12 h-12 rounded-full border border-[#d7e4dc] flex items-center justify-center mb-2 shadow-sm ${reminderInfo.isUrgent ? 'bg-red-600 text-white' : 'bg-[#16834b] text-white'}`}>
+            <div className={`w-12 h-12 rounded-full border border-kharcha-line flex items-center justify-center mb-2 shadow-sm ${reminderInfo.isUrgent ? 'bg-red-600 text-white' : 'bg-[#16834b] text-white'}`}>
               <AlertCircle size={24} />
             </div>
             <DialogTitle className={`font-black text-xl ${reminderInfo.isUrgent ? 'text-red-700' : 'text-kharcha-navy'}`}>
@@ -1615,22 +1688,22 @@ export default function GroupFundDetail() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="p-3 bg-white border border-[#d7e4dc] rounded-xl my-3 shadow-sm">
+          <div className="p-3 bg-white border border-kharcha-line rounded-xl my-3 shadow-sm">
             <p className="text-xs font-black uppercase text-gray-500">{t('auditFundNameShort' as any)}</p>
             <p className="font-black text-kharcha-navy text-base">{fund.name}</p>
             <p className="text-xs font-black uppercase text-gray-500 mt-2">{t('auditFrequencyShort' as any)}</p>
-            <p className="font-black text-[#16834b] text-sm">{groupFundOptionLabel(t, fund.recurringFrequency)}</p>
+            <p className="font-black text-kharcha-green text-sm">{groupFundOptionLabel(t, fund.recurringFrequency)}</p>
           </div>
 
           <DialogFooter className="flex-col gap-2 sm:flex-col">
             {reminderInfo.isUrgent && (
-              <div className="w-full bg-red-600 text-white font-black py-2.5 px-3 rounded-xl border border-[#d7e4dc] text-xs uppercase tracking-wide shadow-sm">
+              <div className="w-full bg-red-600 text-white font-black py-2.5 px-3 rounded-xl border border-kharcha-line text-xs uppercase tracking-wide shadow-sm">
                 {t('auditInformUrgently' as any)}
               </div>
             )}
             <Button
               onClick={() => setShowRecurringReminderModal(false)}
-              className="w-full bg-black text-white font-black rounded-xl border border-[#d7e4dc] shadow-sm hover:bg-gray-800 py-3"
+              className="w-full bg-black text-white font-black rounded-xl border border-kharcha-line shadow-sm hover:bg-gray-800 py-3"
             >
               OK, Got It
             </Button>
@@ -1640,7 +1713,7 @@ export default function GroupFundDetail() {
 
       {/* INDIVIDUAL COLLECT AMOUNT MODAL */}
       <Dialog open={!!selectedMemberForCollection} onOpenChange={(open) => !open && setSelectedMemberForCollection(undefined)}>
-        <DialogContent className="bg-white border border-[#d7e4dc] rounded-2xl max-w-sm shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+        <DialogContent className="bg-white border border-kharcha-line rounded-2xl max-w-sm shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           {selectedMemberForCollection && (
             <>
               <DialogHeader>
@@ -1650,7 +1723,7 @@ export default function GroupFundDetail() {
               </DialogHeader>
 
               <div className="space-y-4 my-2">
-                <div className="rounded-xl border border-[#d7e4dc] bg-green-50 p-3 shadow-sm">
+                <div className="rounded-xl border border-kharcha-line bg-green-50 p-3 shadow-sm">
                   <Label className="font-black text-kharcha-navy">Save Amount</Label>
                   <div className="mt-2 flex gap-2">
                     <Input
@@ -1660,12 +1733,12 @@ export default function GroupFundDetail() {
                       placeholder={t('auditSavedAmountPlaceholder' as any)}
                       value={savedAmountInput}
                       onChange={e => setSavedAmountInput(e.target.value)}
-                      className="border border-[#d7e4dc] rounded-lg font-black text-kharcha-navy bg-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+                      className="border border-kharcha-line rounded-lg font-black text-kharcha-navy bg-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
                     />
                     <Button
                       type="button"
                       onClick={handleSaveMemberAmount}
-                      className="shrink-0 bg-black text-white border border-[#d7e4dc] font-black rounded-lg shadow-sm hover:bg-gray-800"
+                      className="shrink-0 bg-black text-white border border-kharcha-line font-black rounded-lg shadow-sm hover:bg-gray-800"
                     >
                       {t('auditDone' as any)}
                     </Button>
@@ -1676,7 +1749,7 @@ export default function GroupFundDetail() {
                   <Button
                     type="button"
                     onClick={() => setCollectionMethod('UPI')}
-                    className={`border border-[#d7e4dc] font-black py-3 rounded-xl transition-all shadow-sm ${
+                    className={`border border-kharcha-line font-black py-3 rounded-xl transition-all shadow-sm ${
                       collectionMethod === 'UPI'
                         ? 'bg-[#16834b] text-white scale-[1.02] shadow-sm'
                         : 'bg-white text-kharcha-navy hover:bg-gray-100'
@@ -1687,7 +1760,7 @@ export default function GroupFundDetail() {
                   <Button
                     type="button"
                     onClick={() => setCollectionMethod('Cash')}
-                    className={`border border-[#d7e4dc] font-black py-3 rounded-xl transition-all shadow-sm ${
+                    className={`border border-kharcha-line font-black py-3 rounded-xl transition-all shadow-sm ${
                       collectionMethod === 'Cash'
                         ? 'bg-[#16834b] text-white scale-[1.02] shadow-sm'
                         : 'bg-white text-kharcha-navy hover:bg-gray-100'
@@ -1707,19 +1780,19 @@ export default function GroupFundDetail() {
                       placeholder={`${t('auditAmount' as any)} (e.g. 500)`}
                       value={collectionAmount}
                       onChange={e => setCollectionAmount(e.target.value)}
-                      className="border border-[#d7e4dc] rounded-lg font-black text-xl text-kharcha-navy bg-white shadow-sm"
+                      className="border border-kharcha-line rounded-lg font-black text-xl text-kharcha-navy bg-white shadow-sm"
                       autoFocus
                     />
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="p-3 bg-gray-50 border border-[#d7e4dc] rounded-xl text-center shadow-sm">
+                    <div className="p-3 bg-gray-50 border border-kharcha-line rounded-xl text-center shadow-sm">
                       <p className="text-xs font-black text-kharcha-navy mb-1">{t('auditConfiguredUpiQr' as any)}</p>
                       {fund.paymentConfig?.upiId ? (
                         <img
                           src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`upi://pay?pa=${fund.paymentConfig.upiId}&pn=${encodeURIComponent(fund.name)}&am=${upiInputAmount}&tn=${encodeURIComponent(`Collection - ${selectedMemberForCollection.name}`)}`)}`}
                           alt={t('auditUpiQrAlt' as any, { name: fund.name })}
-                          className="w-32 h-32 mx-auto border border-[#d7e4dc] bg-white p-1 rounded-lg"
+                          className="w-32 h-32 mx-auto border border-kharcha-line bg-white p-1 rounded-lg"
                         />
                       ) : (
                         <p className="text-xs text-red-600 font-bold py-4">{t('auditNoUpiConfiguredSettings' as any)}</p>
@@ -1734,7 +1807,7 @@ export default function GroupFundDetail() {
                         placeholder={`${t('auditAmount' as any)} (e.g. 500)`}
                         value={upiInputAmount}
                         onChange={e => setUpiInputAmount(e.target.value)}
-                        className="border border-[#d7e4dc] rounded-lg font-black text-xl text-kharcha-navy bg-white shadow-sm"
+                        className="border border-kharcha-line rounded-lg font-black text-xl text-kharcha-navy bg-white shadow-sm"
                         autoFocus
                       />
                     </div>
@@ -1752,15 +1825,15 @@ export default function GroupFundDetail() {
                   variant="outline"
                   onClick={isSelectedPeriodClosed ? handleUndoCloseSelectedCollection : handleCloseSelectedCollection}
                   disabled={!isSelectedPeriodClosed && !allCollectionMembersCollected}
-                  className={`border border-[#d7e4dc] font-black rounded-xl ${isSelectedPeriodClosed ? 'bg-green-100 text-[#16834b]' : 'bg-white text-kharcha-navy'} disabled:cursor-not-allowed disabled:opacity-50`}
+                  className={`border border-kharcha-line font-black rounded-xl ${isSelectedPeriodClosed ? 'bg-green-100 text-kharcha-green' : 'bg-white text-kharcha-navy'} disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   {t(isSelectedPeriodClosed ? 'auditUndoCloseCollection' : 'auditCloseCollection' as any)}
                 </Button>
-                <Button variant="outline" onClick={() => setSelectedMemberForCollection(undefined)} className="border border-[#d7e4dc] font-black rounded-xl flex-1 bg-white text-kharcha-navy hover:bg-gray-100 shadow-sm">{t('auditCancel' as any)}</Button>
+                <Button variant="outline" onClick={() => setSelectedMemberForCollection(undefined)} className="border border-kharcha-line font-black rounded-xl flex-1 bg-white text-kharcha-navy hover:bg-gray-100 shadow-sm">{t('auditCancel' as any)}</Button>
                 {collectionMethod === 'Cash' ? (
-                  <Button onClick={handleCashCollectionDone} className="bg-[#16834b] text-white font-black rounded-xl flex-1 hover:bg-green-700 border border-[#d7e4dc] shadow-sm">{t('auditDone' as any)}</Button>
+                  <Button onClick={handleCashCollectionDone} className="bg-[#16834b] text-white font-black rounded-xl flex-1 hover:bg-green-700 border border-kharcha-line shadow-sm">{t('auditDone' as any)}</Button>
                 ) : (
-                  <Button onClick={handleUpiCollectionDone} className="bg-[#16834b] text-white font-black rounded-xl flex-1 hover:bg-green-700 border border-[#d7e4dc] shadow-sm">{t('auditDone' as any)}</Button>
+                  <Button onClick={handleUpiCollectionDone} className="bg-[#16834b] text-white font-black rounded-xl flex-1 hover:bg-green-700 border border-kharcha-line shadow-sm">{t('auditDone' as any)}</Button>
                 )}
               </DialogFooter>
             </>
@@ -1770,29 +1843,30 @@ export default function GroupFundDetail() {
 
       {/* RECORD EXPENSE MODAL */}
       <Dialog open={showExpenseModal} onOpenChange={setShowExpenseModal}>
-        <DialogContent className="bg-white border border-[#d7e4dc] rounded-2xl max-w-lg max-h-[90vh] overflow-y-auto shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+        <DialogContent className="bg-white border border-kharcha-line rounded-2xl max-w-lg max-h-[90vh] overflow-y-auto shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           <DialogHeader>
             <DialogTitle className="font-black text-xl text-kharcha-navy">{t('auditRecordFundExpense' as any)}</DialogTitle>
             <DialogDescription className="text-kharcha-navy font-bold">{t('auditRecordFundExpenseDescription' as any)}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSaveExpense} className="space-y-4">
+          <form onSubmit={handleSaveExpense} noValidate className="space-y-4">
             <div>
               <Label className="font-black text-kharcha-navy">{t('auditExpenseTitleRequired' as any)}</Label>
               <Input
                 placeholder={t('auditExpenseTitlePlaceholder' as any)}
+                id="fund-expense-title"
                 value={expenseTitle}
                 onChange={e => setExpenseTitle(e.target.value)}
-                className="border border-[#d7e4dc] rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
+                className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
                 required
               />
             </div>
             <div>
               <Label className="font-black text-kharcha-navy">{t('auditCategory' as any)}</Label>
               <Select value={expenseCategory} onValueChange={setExpenseCategory}>
-                <SelectTrigger className="border border-[#d7e4dc] rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm">
+                <SelectTrigger className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-[#d7e4dc] font-bold text-kharcha-navy">
+                <SelectContent className="bg-white border border-kharcha-line font-bold text-kharcha-navy">
                   <SelectItem value="Food">{t('auditFoodSnacks' as any)}</SelectItem>
                   <SelectItem value="Equipment">{t('auditEquipment' as any)}</SelectItem>
                   <SelectItem value="Maintenance">{t('auditMaintenance' as any)}</SelectItem>
@@ -1808,9 +1882,10 @@ export default function GroupFundDetail() {
                 type="number"
                 step="any"
                 placeholder="1500"
+                id="fund-expense-amount"
                 value={expenseAmount}
                 onChange={e => setExpenseAmount(e.target.value)}
-                className="border border-[#d7e4dc] rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
+                className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
                 required
               />
             </div>
@@ -1820,12 +1895,12 @@ export default function GroupFundDetail() {
                 placeholder={t('auditExpenseNotePlaceholder' as any)}
                 value={expenseNote}
                 onChange={e => setExpenseNote(e.target.value)}
-                className="border border-[#d7e4dc] rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
+                className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
               />
             </div>
             <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={() => setShowExpenseModal(false)} className="border border-[#d7e4dc] font-black rounded-lg bg-white text-kharcha-navy hover:bg-gray-100 shadow-sm">{t('auditCancel' as any)}</Button>
-              <Button type="submit" className="bg-black text-white font-black rounded-lg border border-[#d7e4dc] shadow-sm hover:bg-gray-800">{t('auditSaveExpense' as any)}</Button>
+              <Button type="button" variant="outline" onClick={() => setShowExpenseModal(false)} className="border border-kharcha-line font-black rounded-lg bg-white text-kharcha-navy hover:bg-gray-100 shadow-sm">{t('auditCancel' as any)}</Button>
+              <Button type="submit" className="bg-black text-white font-black rounded-lg border border-kharcha-line shadow-sm hover:bg-gray-800">{t('auditSaveExpense' as any)}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1843,7 +1918,7 @@ export default function GroupFundDetail() {
           }
         }}
       >
-        <DialogContent className="bg-white border border-[#d7e4dc] rounded-2xl w-[calc(100%-1rem)] max-w-lg max-h-[90vh] min-w-0 overflow-x-hidden flex flex-col shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+        <DialogContent className="bg-white border border-kharcha-line rounded-2xl w-[calc(100%-1rem)] max-w-lg max-h-[90vh] min-w-0 overflow-x-hidden flex flex-col shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           <DialogHeader className="shrink-0">
             <DialogTitle className="font-black text-xl text-kharcha-navy">{t('auditSendBulkMessage' as any)}</DialogTitle>
             <DialogDescription className="text-kharcha-navy font-medium">{t('auditBulkMessageQueueHelp' as any)}</DialogDescription>
@@ -1851,12 +1926,12 @@ export default function GroupFundDetail() {
 
           {bulkMessageQueue.length === 0 ? (
             <>
-              <div className="border border-[#d7e4dc] rounded-xl p-3 bg-gray-50 space-y-2">
+              <div className="border border-kharcha-line rounded-xl p-3 bg-gray-50 space-y-2">
                 <p className="text-sm font-black text-kharcha-navy">Write Message</p>
-                <textarea value={bulkMessageText} onChange={event => setBulkMessageText(event.target.value)} placeholder="Write the WhatsApp message…" rows={3} className="w-full resize-none rounded-xl border border-[#d7e4dc] bg-white p-3 text-sm font-medium text-kharcha-navy outline-none focus:ring-2 focus:ring-[#16834b]" />
+                <textarea value={bulkMessageText} onChange={event => setBulkMessageText(event.target.value)} placeholder="Write the WhatsApp message…" rows={3} className="w-full resize-none rounded-xl border border-kharcha-line bg-white p-3 text-sm font-medium text-kharcha-navy outline-none focus:ring-2 focus:ring-[#16834b]" />
               </div>
 
-              <div className="flex min-w-0 flex-col gap-3 border border-[#d7e4dc] rounded-xl p-3 bg-gray-50 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 flex-col gap-3 border border-kharcha-line rounded-xl p-3 bg-gray-50 sm:flex-row sm:items-center sm:justify-between">
                 <p className="min-w-0 text-sm font-black text-kharcha-navy sm:flex-1">{t('auditSelectMembersForBulkMessage' as any)}</p>
                 <div className="flex w-full min-w-0 flex-wrap gap-2 sm:w-auto sm:shrink-0">
                   <Button
@@ -1864,7 +1939,7 @@ export default function GroupFundDetail() {
                     size="sm"
                     variant="outline"
                     onClick={() => setBulkMessageSelectedIds(getBulkMessageMembers().map(member => member.id))}
-                    className="min-w-0 flex-1 border border-[#d7e4dc] bg-white px-2 text-center text-kharcha-navy font-black rounded-lg whitespace-normal break-words sm:flex-none"
+                    className="min-w-0 flex-1 border border-kharcha-line bg-white px-2 text-center text-kharcha-navy font-black rounded-lg whitespace-normal break-words sm:flex-none"
                   >
                     {t('selectAll' as any)}
                   </Button>
@@ -1873,7 +1948,7 @@ export default function GroupFundDetail() {
                     size="sm"
                     variant="outline"
                     onClick={() => setBulkMessageSelectedIds([])}
-                    className="min-w-0 flex-1 border border-[#d7e4dc] bg-white px-2 text-center text-kharcha-navy font-black rounded-lg whitespace-normal break-words sm:flex-none"
+                    className="min-w-0 flex-1 border border-kharcha-line bg-white px-2 text-center text-kharcha-navy font-black rounded-lg whitespace-normal break-words sm:flex-none"
                   >
                     {t('clearAll' as any)}
                   </Button>
@@ -1890,7 +1965,7 @@ export default function GroupFundDetail() {
                     return (
                       <label
                         key={member.id}
-                        className={`flex items-center gap-3 border border-[#d7e4dc] rounded-xl p-3 ${hasPhone ? 'bg-white cursor-pointer' : 'bg-gray-100 opacity-60 cursor-not-allowed'}`}
+                        className={`flex items-center gap-3 border border-kharcha-line rounded-xl p-3 ${hasPhone ? 'bg-white cursor-pointer' : 'bg-gray-100 opacity-60 cursor-not-allowed'}`}
                       >
                         <Checkbox
                           checked={checked}
@@ -1898,7 +1973,7 @@ export default function GroupFundDetail() {
                           onCheckedChange={(value) => {
                             setBulkMessageSelectedIds(current => toggleBulkMessageMember(current, member.id, Boolean(value)));
                           }}
-                          className="border border-[#d7e4dc] data-[state=checked]:bg-[#16834b] data-[state=checked]:text-white"
+                          className="border border-kharcha-line data-[state=checked]:bg-[#16834b] data-[state=checked]:text-white"
                         />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-black text-kharcha-navy">{member.name}</span>
@@ -1916,7 +1991,7 @@ export default function GroupFundDetail() {
                   type="button"
                   onClick={handleSendBulkToAll}
                   disabled={getBulkMessageMembers().length === 0}
-                  className="w-full min-w-0 bg-[#16834b] text-white border border-[#d7e4dc] font-black rounded-xl shadow-sm disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
+                  className="w-full min-w-0 bg-[#16834b] text-white border border-kharcha-line font-black rounded-xl shadow-sm disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
                 >
                   <MessageSquare size={16} className="mr-1" /> {t('auditSendToAll' as any)}
                 </Button>
@@ -1925,7 +2000,7 @@ export default function GroupFundDetail() {
                   onClick={handleSendBulkSelection}
                   disabled={bulkMessageSelectedIds.length === 0}
                   variant="outline"
-                  className="w-full min-w-0 border border-[#d7e4dc] bg-white text-kharcha-navy font-black rounded-xl whitespace-normal break-words disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
+                  className="w-full min-w-0 border border-kharcha-line bg-white text-kharcha-navy font-black rounded-xl whitespace-normal break-words disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
                 >
                   {t('auditSendSelection' as any, { count: bulkMessageSelectedIds.length })}
                 </Button>
@@ -1933,7 +2008,7 @@ export default function GroupFundDetail() {
                   type="button"
                   onClick={() => setShowBulkMessageModal(false)}
                   variant="outline"
-                  className="w-full border border-[#d7e4dc] bg-white text-kharcha-navy font-black rounded-xl"
+                  className="w-full border border-kharcha-line bg-white text-kharcha-navy font-black rounded-xl"
                 >
                   {t('auditClose' as any)}
                 </Button>
@@ -1942,13 +2017,13 @@ export default function GroupFundDetail() {
           ) : (
             <>
               <div className="border border-[#16834b] bg-green-50 rounded-xl p-4 text-center">
-                <p className="text-xs font-black uppercase tracking-wide text-[#16834b]">{t('auditBulkMessageProgress' as any, { current: Math.min(bulkMessageQueueIndex + 1, bulkMessageQueue.length), total: bulkMessageQueue.length })}</p>
+                <p className="text-xs font-black uppercase tracking-wide text-kharcha-green">{t('auditBulkMessageProgress' as any, { current: Math.min(bulkMessageQueueIndex + 1, bulkMessageQueue.length), total: bulkMessageQueue.length })}</p>
                 {bulkMessageQueueIndex < bulkMessageQueue.length ? (
                   <p className="mt-2 text-lg font-black text-kharcha-navy">
                     {fund.members.find(member => member.id === bulkMessageQueue[bulkMessageQueueIndex])?.name}
                   </p>
                 ) : (
-                  <p className="mt-2 text-lg font-black text-[#16834b]">{t('auditBulkMessageComplete' as any)}</p>
+                  <p className="mt-2 text-lg font-black text-kharcha-green">{t('auditBulkMessageComplete' as any)}</p>
                 )}
                 <p className="mt-1 text-sm font-bold text-kharcha-navy">{t('auditBulkMessageOpened' as any, { count: bulkMessageOpenedCount })}</p>
               </div>
@@ -1957,7 +2032,7 @@ export default function GroupFundDetail() {
                   type="button"
                   onClick={handleOpenNextBulkMessage}
                   disabled={bulkMessageQueueIndex >= bulkMessageQueue.length}
-                  className="w-full min-w-0 bg-[#16834b] text-white border border-[#d7e4dc] font-black rounded-xl shadow-sm disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
+                  className="w-full min-w-0 bg-[#16834b] text-white border border-kharcha-line font-black rounded-xl shadow-sm disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
                 >
                   <MessageSquare size={16} className="mr-1" /> {t('auditOpenNextMessage' as any)}
                 </Button>
@@ -1965,7 +2040,7 @@ export default function GroupFundDetail() {
                   type="button"
                   onClick={() => setShowBulkMessageModal(false)}
                   variant="outline"
-                  className="w-full min-w-0 border border-[#d7e4dc] bg-white text-kharcha-navy font-black rounded-xl sm:flex-1"
+                  className="w-full min-w-0 border border-kharcha-line bg-white text-kharcha-navy font-black rounded-xl sm:flex-1"
                 >
                   {t('auditClose' as any)}
                 </Button>
@@ -1977,29 +2052,29 @@ export default function GroupFundDetail() {
 
       {/* BULK QR CODE MODE MODAL */}
       <Dialog open={showBulkQrModal} onOpenChange={setShowBulkQrModal}>
-        <DialogContent className="bg-white border border-[#d7e4dc] rounded-2xl max-w-lg max-h-[90vh] flex flex-col shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+        <DialogContent className="bg-white border border-kharcha-line rounded-2xl max-w-lg max-h-[90vh] flex flex-col shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           <DialogHeader className="shrink-0">
             <DialogTitle className="font-black text-xl text-kharcha-navy">{t('auditBulkCollection' as any, { period: selectedPeriod })}</DialogTitle>
             <DialogDescription className="text-kharcha-navy font-medium">{t('auditBulkCollectionDescription' as any)}</DialogDescription>
           </DialogHeader>
 
           {/* Sticky QR View at top */}
-          <div className="shrink-0 p-3 bg-gray-50 border border-[#d7e4dc] rounded-xl my-2 flex items-center gap-4 shadow-sm">
+          <div className="shrink-0 p-3 bg-gray-50 border border-kharcha-line rounded-xl my-2 flex items-center gap-4 shadow-sm">
             <div className="shrink-0">
               {fund.paymentConfig?.upiId ? (
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(`upi://pay?pa=${fund.paymentConfig.upiId}&pn=${encodeURIComponent(fund.name)}`)}`}
                   alt={t('auditQrCode' as any)}
-                  className="w-24 h-24 border border-[#d7e4dc] bg-white p-1 rounded-lg"
+                  className="w-24 h-24 border border-kharcha-line bg-white p-1 rounded-lg"
                 />
               ) : (
-                <div className="w-24 h-24 border border-[#d7e4dc] flex items-center justify-center text-xs text-center text-kharcha-navy font-bold bg-white p-1 rounded-lg">{t('auditNoUpiId' as any)}</div>
+                <div className="w-24 h-24 border border-kharcha-line flex items-center justify-center text-xs text-center text-kharcha-navy font-bold bg-white p-1 rounded-lg">{t('auditNoUpiId' as any)}</div>
               )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditScanAnyUpi' as any)}</p>
               <p className="font-black text-kharcha-navy text-sm truncate">{fund.paymentConfig?.upiId || t('auditNoUpiConfigured' as any)}</p>
-              <p className="text-xs text-[#16834b] font-black mt-1">{t('auditPeriodLabel' as any)}: {selectedPeriod}</p>
+              <p className="text-xs text-kharcha-green font-black mt-1">{t('auditPeriodLabel' as any)}: {selectedPeriod}</p>
             </div>
           </div>
 
@@ -2017,14 +2092,14 @@ export default function GroupFundDetail() {
                 const currentVal = bulkAmounts[m.id] ?? '';
 
                 return (
-                  <div key={m.id} className="flex items-center justify-between gap-2 border border-[#d7e4dc] bg-white p-2.5 rounded-xl shadow-sm">
+                  <div key={m.id} className="flex items-center justify-between gap-2 border border-kharcha-line bg-white p-2.5 rounded-xl shadow-sm">
                     <div className="min-w-0 flex-1">
                       <p className="font-black text-kharcha-navy text-sm truncate">{m.name}</p>
                       <p className="text-[11px] text-kharcha-navy font-bold">{t('auditExpectedOptional' as any, { amount: expected > 0 ? `₹${expected}` : t('auditOptionalLabel' as any) })}</p>
                     </div>
 
                     {isCollected ? (
-                      <span className="text-xs font-black text-[#16834b] bg-green-50 px-3 py-1 rounded-lg border border-[#d7e4dc]">
+                      <span className="text-xs font-black text-kharcha-green bg-green-50 px-3 py-1 rounded-lg border border-kharcha-line">
                         ✓ Collected (₹{paid})
                       </span>
                     ) : (
@@ -2037,7 +2112,7 @@ export default function GroupFundDetail() {
                             placeholder={t('auditAmountPlaceholder' as any)}
                             value={currentVal}
                             onChange={e => setBulkAmounts({ ...bulkAmounts, [m.id]: e.target.value })}
-                            className="w-28 h-9 border border-[#d7e4dc] rounded-lg text-sm font-black text-kharcha-navy bg-white text-center"
+                            className="w-28 h-9 border border-kharcha-line rounded-lg text-sm font-black text-kharcha-navy bg-white text-center"
                           />
                           <Input
                             value={bulkRemarks[m.id] ?? ''}
@@ -2057,7 +2132,7 @@ export default function GroupFundDetail() {
                         <Button
                           size="sm"
                           onClick={() => handleBulkMemberCollect(m)}
-                          className="h-9 w-9 p-0 bg-[#16834b] text-white rounded-lg hover:bg-green-700 border border-[#d7e4dc] shadow-sm"
+                          className="h-9 w-9 p-0 bg-[#16834b] text-white rounded-lg hover:bg-green-700 border border-kharcha-line shadow-sm"
                           title={t('auditMarkCollectedTitle' as any)}
                         >
                           <Check size={16} />
@@ -2075,11 +2150,11 @@ export default function GroupFundDetail() {
               onClick={isSelectedPeriodClosed ? handleUndoCloseSelectedCollection : handleCloseSelectedCollection}
               disabled={!isSelectedPeriodClosed && !allCollectionMembersCollected}
               variant="outline"
-              className={`flex-1 border border-[#d7e4dc] font-black rounded-xl ${isSelectedPeriodClosed ? 'bg-green-100 text-[#16834b]' : 'bg-white text-kharcha-navy'} disabled:cursor-not-allowed disabled:opacity-50`}
+              className={`flex-1 border border-kharcha-line font-black rounded-xl ${isSelectedPeriodClosed ? 'bg-green-100 text-kharcha-green' : 'bg-white text-kharcha-navy'} disabled:cursor-not-allowed disabled:opacity-50`}
             >
               {t(isSelectedPeriodClosed ? 'auditUndoCloseCollection' : 'auditCloseCollection' as any)}
             </Button>
-            <Button onClick={() => setShowBulkQrModal(false)} className="flex-1 bg-black text-white font-black rounded-xl py-3 border border-[#d7e4dc] shadow-sm hover:bg-gray-800">{t('auditCloseBulkMode' as any)}</Button>
+            <Button onClick={() => setShowBulkQrModal(false)} className="flex-1 bg-black text-white font-black rounded-xl py-3 border border-kharcha-line shadow-sm hover:bg-gray-800">{t('auditCloseBulkMode' as any)}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2087,19 +2162,20 @@ export default function GroupFundDetail() {
       {/* Manual Add Member Dialog */}
       <Dialog open={showMemberModal} onOpenChange={(open) => { setShowMemberModal(open); if (!open) setEditingMember(undefined); }}>
 
-        <DialogContent className="bg-white border border-[#d7e4dc] rounded-2xl max-w-lg max-h-[90vh] overflow-y-auto shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+        <DialogContent className="bg-white border border-kharcha-line rounded-2xl max-w-lg max-h-[90vh] overflow-y-auto shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           <DialogHeader>
             <DialogTitle className="font-black text-xl text-kharcha-navy">{editingMember ? t('edit') : t('auditAddMemberManually' as any)}</DialogTitle>
             <DialogDescription className="text-kharcha-navy font-bold">{editingMember ? editingMember.name : t('auditAddParticipant' as any)}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSaveMember} className="space-y-4">
+          <form onSubmit={handleSaveMember} noValidate className="space-y-4">
             <div>
               <Label className="font-black text-kharcha-navy">{t('auditMemberNameRequired' as any)}</Label>
               <Input
                 placeholder={t('auditMemberName' as any)}
+                id="fund-member-name"
                 value={memberName}
                 onChange={e => setMemberName(e.target.value)}
-                className="border border-[#d7e4dc] rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
+                className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
                 required
               />
             </div>
@@ -2108,9 +2184,10 @@ export default function GroupFundDetail() {
               <Input
                 type="number"
                 placeholder={fund.isRecurring && fund.amountType === 'Default Amount' ? String(fund.defaultContributionAmount ?? 0) : '500'}
+                id="fund-member-expected"
                 value={memberExpected}
                 onChange={e => setMemberExpected(e.target.value)}
-                className="border border-[#d7e4dc] rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
+                className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
               />
             </div>
             {fund.isRecurring && (
@@ -2120,14 +2197,14 @@ export default function GroupFundDetail() {
                   type="date"
                   value={memberStartDate}
                   onChange={e => setMemberStartDate(e.target.value)}
-                  className="border border-[#d7e4dc] rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
+                  className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
                   required
                 />
                 <p className="mt-1 text-xs text-gray-600">{t('auditMemberStartDateHelp' as any)}</p>
               </div>
             )}
             {fund.isRecurring && (
-              <div className="rounded-xl border border-[#d7e4dc] bg-white p-3">
+              <div className="rounded-xl border border-kharcha-line bg-white p-3">
                 <div className="flex items-center justify-between gap-2">
                   <Label className="font-black text-kharcha-navy">{t('auditStatusStopped' as any)}</Label>
                   <span className="text-xs font-bold text-gray-500">{t('auditStatusActive' as any)} {(!memberStopFrom || !memberStopUntil) ? '•' : ''}</span>
@@ -2135,11 +2212,11 @@ export default function GroupFundDetail() {
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   <div>
                     <Label className="text-xs font-bold text-kharcha-navy">{t('pbPauseFrom' as any)}</Label>
-                    <Input type="date" value={memberStopFrom} onChange={e => setMemberStopFrom(e.target.value)} className="mt-1 rounded-lg border border-[#d7e4dc] bg-white text-kharcha-navy" />
+                    <Input type="date" value={memberStopFrom} onChange={e => setMemberStopFrom(e.target.value)} className="mt-1 rounded-lg border border-kharcha-line bg-white text-kharcha-navy" />
                   </div>
                   <div>
                     <Label className="text-xs font-bold text-kharcha-navy">{t('pbPauseTo' as any)}</Label>
-                    <Input type="date" value={memberStopUntil} onChange={e => setMemberStopUntil(e.target.value)} className="mt-1 rounded-lg border border-[#d7e4dc] bg-white text-kharcha-navy" />
+                    <Input type="date" value={memberStopUntil} onChange={e => setMemberStopUntil(e.target.value)} className="mt-1 rounded-lg border border-kharcha-line bg-white text-kharcha-navy" />
                   </div>
                 </div>
               </div>
@@ -2151,14 +2228,18 @@ export default function GroupFundDetail() {
                 placeholder={t('auditMobilePlaceholder' as any)}
                 value={memberMobile}
                 onChange={e => setMemberMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                className="border border-[#d7e4dc] rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
+                className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
                 maxLength={10}
               />
             </div>
+            <div className="space-y-2">
+              <Label className="font-black text-kharcha-navy">{t('gfRemarks' as any)}</Label>
+              <Input value={memberRemarks} onChange={e => setMemberRemarks(e.target.value)} maxLength={160} placeholder={t('gfRemarksPlaceholder' as any)} />
+            </div>
             <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={() => { setShowMemberModal(false); setEditingMember(undefined); }} className="border border-[#d7e4dc] font-black rounded-lg bg-white text-kharcha-navy hover:bg-gray-100 shadow-sm">{t('auditCancel' as any)}</Button>
-              <Button type="submit" disabled={isSavingMember} className="bg-black text-white font-black rounded-lg border border-[#d7e4dc] shadow-sm hover:bg-gray-800 disabled:cursor-wait disabled:opacity-70">{isSavingMember && <Loader2 size={16} className="mr-1 animate-spin" />}{editingMember ? t('edit') : t('auditSaveMember' as any)}</Button>
-              <Button type="submit" disabled={isSavingMember} className="bg-[#16834b] text-white font-black rounded-lg border border-[#d7e4dc] shadow-sm hover:bg-[#11663b] disabled:cursor-wait disabled:opacity-70">{t('auditDone' as any)}</Button>
+              <Button type="button" variant="outline" onClick={() => { setShowMemberModal(false); setEditingMember(undefined); }} className="border border-kharcha-line font-black rounded-lg bg-white text-kharcha-navy hover:bg-gray-100 shadow-sm">{t('auditCancel' as any)}</Button>
+              <Button type="submit" disabled={isSavingMember} className="bg-black text-white font-black rounded-lg border border-kharcha-line shadow-sm hover:bg-gray-800 disabled:cursor-wait disabled:opacity-70">{isSavingMember && <Loader2 size={16} className="mr-1 animate-spin" />}{editingMember ? t('edit') : t('auditSaveMember' as any)}</Button>
+              <Button type="submit" disabled={isSavingMember} className="bg-[#16834b] text-white font-black rounded-lg border border-kharcha-line shadow-sm hover:bg-[#11663b] disabled:cursor-wait disabled:opacity-70">{t('auditDone' as any)}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -2166,18 +2247,18 @@ export default function GroupFundDetail() {
 
       {/* QR Code Dialog */}
       <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>
-        <DialogContent className="bg-white border border-[#d7e4dc] rounded-2xl max-w-sm text-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+        <DialogContent className="bg-white border border-kharcha-line rounded-2xl max-w-sm text-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           <DialogHeader>
             <DialogTitle className="font-black text-xl text-kharcha-navy">{t('auditFundUpiQr' as any)}</DialogTitle>
             <DialogDescription className="text-kharcha-navy font-bold">{t('auditScanToContribute' as any, { name: fund.name })}</DialogDescription>
           </DialogHeader>
-          <div className="p-4 bg-gray-50 border border-[#d7e4dc] rounded-xl my-3 flex flex-col items-center justify-center shadow-sm">
+          <div className="p-4 bg-gray-50 border border-kharcha-line rounded-xl my-3 flex flex-col items-center justify-center shadow-sm">
             {fund.paymentConfig?.upiId ? (
               <>
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=${fund.paymentConfig.upiId}&pn=${encodeURIComponent(fund.name)}`)}`}
                   alt={t('auditUpiQrAlt' as any, { name: fund.name })}
-                  className="w-48 h-48 border border-[#d7e4dc] bg-white p-2 rounded-lg"
+                  className="w-48 h-48 border border-kharcha-line bg-white p-2 rounded-lg"
                 />
                 <p className="mt-3 font-black text-kharcha-navy">{fund.paymentConfig.upiId}</p>
               </>
@@ -2186,7 +2267,7 @@ export default function GroupFundDetail() {
             )}
           </div>
           <DialogFooter>
-            <Button onClick={() => setShowQrDialog(false)} className="w-full bg-black text-white font-black rounded-xl border border-[#d7e4dc] shadow-sm hover:bg-gray-800">{t('auditClose' as any)}</Button>
+            <Button onClick={() => setShowQrDialog(false)} className="w-full bg-black text-white font-black rounded-xl border border-kharcha-line shadow-sm hover:bg-gray-800">{t('auditClose' as any)}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

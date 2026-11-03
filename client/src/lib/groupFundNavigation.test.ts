@@ -25,8 +25,8 @@ describe('Group Fund UI navigation contract', () => {
       "id: 'collection'",
       "id: 'members'",
       "id: 'expenses'",
-      "id: 'settings'",
       "id: 'reports'",
+      "id: 'settings'",
     ];
     let previousIndex = -1;
     for (const marker of order) {
@@ -34,7 +34,9 @@ describe('Group Fund UI navigation contract', () => {
       expect(index).toBeGreaterThan(previousIndex);
       previousIndex = index;
     }
-    expect(detailSource).toContain('grid-cols-2 gap-2');
+    expect(detailSource).toContain('grid-cols-3 gap-2');
+    expect(detailSource).toContain("t('auditFundTabCollect' as any)");
+    expect(detailSource).not.toContain("label: t('auditCollectionSummary' as any)");
     expect(detailSource).not.toContain('overflow-x-auto pb-1 text-xs font-black');
   });
 

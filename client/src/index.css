@@ -305,15 +305,15 @@ html.android-shell .android-trip-tabs [role="tab"] {
 /* Keep the active Trip tab readable even when the shared Tabs component's
    semantic active colors resolve to a light background in the Android shell. */
 .android-trip-tabs [role="tab"][data-state="active"] {
-  background-color: #d9f1e2 !important;
-  border-color: #16834b !important;
-  color: #18324b !important;
+  background-color: #fd6d00 !important;
+  border-color: #fd6d00 !important;
+  color: #ffffff !important;
   text-shadow: none !important;
 }
 
 .android-trip-tabs [role="tab"][data-state="inactive"] {
   background-color: #ffffff !important;
-  color: #18324b !important;
+  color: #023b81 !important;
 }
 
 html.android-shell .android-budget-header {
@@ -468,6 +468,82 @@ body {
   }
 }
 
+
+/* Unified app-wide visual system (UI only). Normalises legacy "Memphis" styling
+   across Trip, Group Fund, Shared Home and other pages: soft card shadows,
+   1px brand-tinted borders, one radius scale, calmer weights, and brand colours
+   instead of stray blues. */
+#root [class*="shadow-[6px_6px_0px"],
+#root [class*="shadow-[3px_3px_0px"],
+#root [class*="shadow-[1px_1px_0px"],
+#root [class*="shadow-[0_2px_0_0_rgba(0,0,0"] {
+  box-shadow: 0 4px 16px rgba(24, 50, 75, 0.07) !important;
+}
+
+#root .border-2 {
+  border-width: 1px;
+}
+
+#root .rounded-none {
+  border-radius: 0.75rem;
+}
+
+#root .font-black {
+  font-weight: 800;
+}
+
+#root [data-slot="card"] {
+  border-color: var(--kharcha-line);
+  border-radius: var(--kharcha-radius);
+  box-shadow: 0 4px 16px rgba(24, 50, 75, 0.06);
+}
+
+#root [data-slot="card-title"] {
+  color: var(--kharcha-navy);
+  letter-spacing: -0.01em;
+}
+
+#root [data-slot="button"] {
+  border-radius: 0.75rem;
+  font-weight: 700;
+}
+
+#root .bg-blue-600,
+#root .bg-blue-700 {
+  background-color: var(--kharcha-green) !important;
+  color: #ffffff;
+}
+
+#root .bg-blue-50 {
+  background-color: var(--kharcha-green-soft) !important;
+}
+
+#root .border-dashed {
+  border-color: var(--kharcha-line);
+  border-radius: var(--kharcha-radius);
+  background-color: #fbfdfc;
+}
+
+#root .uppercase {
+  letter-spacing: 0.04em;
+}
+
+#root [data-slot="badge"] {
+  border-radius: 999px;
+}
+
+#root [data-slot="dialog-content"],
+#root [data-slot="sheet-content"] {
+  border-color: var(--kharcha-line);
+  box-shadow: 0 20px 60px rgba(24, 50, 75, 0.16);
+}
+
+#root [data-slot="dialog-title"] {
+  color: var(--kharcha-navy);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
 @media (max-width: 640px) {
   #root main {
     padding-left: var(--kharcha-page-gutter);
@@ -556,6 +632,14 @@ body {
     border-color: #16834b;
   }
 
+  .border-kharcha-line {
+    border-color: var(--kharcha-line);
+  }
+
+  .text-kharcha-green {
+    color: var(--kharcha-green);
+  }
+
   .drop-shadow-lg {
     filter: drop-shadow(3px 3px 0px rgba(0, 0, 0, 0.2));
   }
@@ -605,3 +689,27 @@ body {
     }
   }
 }
+/* Inner-page brand polish (UI only): bolder primary buttons and dialog headers matching the landing page. */
+#root [data-slot="button"]:not([data-variant]) {
+  transition: transform 120ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+#root [data-slot="dialog-content"] {
+  border-radius: 1.5rem;
+  border-top: 5px solid #023b81;
+}
+#root [data-slot="dialog-title"] {
+  color: #023b81;
+}
+#root [data-slot="dialog-footer"] [data-slot="button"] {
+  min-height: 2.75rem;
+  border-radius: 1rem;
+}
+
+/* Form validation: highlighted field that needs fixing. */
+[data-field-error="true"] {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25) !important;
+  background-color: #fff5f5 !important;
+  animation: kharcha-field-shake 0.32s ease-in-out 1;
+}
+@keyframes kharcha-field-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }

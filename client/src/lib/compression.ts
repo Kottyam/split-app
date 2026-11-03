@@ -161,3 +161,65 @@ export function restoreMinimalTripData(minimal: any, trip: any) {
     updatedAt: Date.now(),
   };
 }
+
+const MINUTE = 60000;
+const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
+
+/**
+ * Version 3 array payload used by short /s/t links:
+ * [3, name, description, startMinute, endOffsetMinutes, members, budget, expenses]
+ * Dates are stored in minutes relative to the trip start; equal splits are
+ * stored as member index lists (or 1 for everyone) instead of amounts.
+ */
+export function createCompactTripDataV3(trip: any) {
+  const members = Array.isArray(trip.members) ? trip.members : [];
+  const memberIndex = new Map<string, number>(members.map((member: any, index: number) => [member.id, index]));
+  const start = Math.floor((Number(trip.startDate) || 0) / MINUTE);
+  const end = Math.floor((Number(trip.endDate) || 0) / MINUTE);
+  const expenses = (Array.isArray(trip.expenses) ? trip.expenses : []).map((expense: any) => {
+    const entries = Object.entries(expense.splits || {})
+      .map(([memberId, amount]) => [memberIndex.get(memberId), round2(amount as number)] as [number | undefined, number])
+      .filter((entry): entry is [number, number] => entry[0] !== undefined);
+    const amount = round2(expense.amount);
+    const equal = entries.length > 0 && entries.every(([, value]) => Math.abs(value - amount / entries.length) < 0.02);
+    const splits = equal
+      ? (entries.length === members.length ? 1 : entries.map(([index]) => index))
+      : entries;
+    const payer = memberIndex.get(expense.paidBy);
+    return [expense.description || '', amount, expense.category || 'other', payer === undefined ? -1 : payer, Math.floor((Number(expense.date) || 0) / MINUTE) - start, splits];
+  });
+  const member = (m: any) => {
+    const row = [m.name || '', m.mobileNumber || '', m.upiId || ''];
+    while (row.length > 1 && !row[row.length - 1]) row.pop();
+    return row.length === 1 ? row[0] : row;
+  };
+  return [3, trip.name || '', trip.description || '', start, end ? end - start : 0, members.map(member), trip.budget ? [round2(trip.budget.amount), trip.budget.warningThreshold ?? 0.8] : 0, expenses];
+}
+
+export function restoreCompactTripDataV3(raw: any[], tripId: string) {
+  const [, name, description, start, endOffset, rawMembers, budget, rawExpenses] = raw;
+  const now = Date.now();
+  const members = (Array.isArray(rawMembers) ? rawMembers : []).map((m: any, index: number) => {
+    const row = Array.isArray(m) ? m : [m];
+    return { id: `shared-member-${index}`, name: String(row[0] || ''), mobileNumber: row[1] || undefined, upiId: row[2] || undefined, joinedAt: now };
+  });
+  const expenses = (Array.isArray(rawExpenses) ? rawExpenses : []).map((e: any[], index: number) => {
+    const amount = Number(e[1]) || 0;
+    const splits: Record<string, number> = {};
+    const s = e[5];
+    const equalIndexes = s === 1 ? members.map((_m: any, i: number) => i) : Array.isArray(s) && s.every((x: any) => typeof x === 'number') ? s : null;
+    if (equalIndexes) {
+      const valid = equalIndexes.filter((i: number) => members[i]);
+      for (const i of valid) splits[members[i].id] = valid.length ? amount / valid.length : 0;
+    } else if (Array.isArray(s)) {
+      for (const [i, value] of s) if (members[i]) splits[members[i].id] = Number(value) || 0;
+    }
+    return { id: `shared-expense-${index}`, tripId, description: String(e[0] || ''), amount, category: e[2] || 'other', paidBy: members[e[3]]?.id || '', date: ((Number(start) || 0) + (Number(e[4]) || 0)) * MINUTE, splits, status: 'active', createdAt: now };
+  });
+  return {
+    id: tripId, name: name || 'Shared Trip', description: description || '', members, expenses,
+    startDate: (Number(start) || 0) * MINUTE, endDate: endOffset ? ((Number(start) || 0) + Number(endOffset)) * MINUTE : 0,
+    budget: Array.isArray(budget) ? { amount: Number(budget[0]) || 0, warningThreshold: Number(budget[1]) || 0.8, createdAt: now, updatedAt: now } : undefined,
+    createdAt: now, updatedAt: now,
+  };
+}

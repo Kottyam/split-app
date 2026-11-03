@@ -5,8 +5,26 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fffaf3",
-  "theme_color": "#e87817",
+  "theme_color": "#023b81",
   "icons": [
+    {
+      "src": "/icons/kharcha-pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/kharcha-pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/kharcha-pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "./icons/kharcha-logo-mark.png",
       "sizes": "any",
@@ -19,5 +37,7 @@
     "finance",
     "travel",
     "productivity"
-  ]
+  ],
+  "id": "/",
+  "scope": "/"
 }

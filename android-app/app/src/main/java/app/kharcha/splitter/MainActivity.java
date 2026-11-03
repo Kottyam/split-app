@@ -210,6 +210,7 @@ public class MainActivity extends FragmentActivity {
         webView.addJavascriptInterface(new SecurityBridge(), "KharchaSecurity");
         webView.addJavascriptInterface(new ShareBridge(), "KharchaShare");
         webView.addJavascriptInterface(new PdfBridge(), "KharchaPdf");
+        webView.addJavascriptInterface(new FileBridge(), "KharchaFiles");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
@@ -300,6 +301,54 @@ public class MainActivity extends FragmentActivity {
         public boolean shareText(String title, String text, String url) {
             return MainActivity.this.shareText(title, text, url);
         }
+    }
+
+    private final class FileBridge {
+        @JavascriptInterface
+        public boolean saveBase64File(String fileName, String mimeType, String base64) {
+            try {
+                byte[] bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
+                String safeName = (fileName == null || fileName.trim().isEmpty()) ? "Kharcha-file" : fileName.replaceAll("[\\\\/:*?\"<>|]", "-");
+                String mime = (mimeType == null || mimeType.isEmpty()) ? "application/octet-stream" : mimeType;
+                writeBytesToDownloads(safeName, mime, bytes);
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Saved to Downloads: " + safeName, Toast.LENGTH_SHORT).show());
+                return true;
+            } catch (Exception error) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Could not save the file to Downloads", Toast.LENGTH_LONG).show());
+                return false;
+            }
+        }
+    }
+
+    private void writeBytesToDownloads(String fileName, String mimeType, byte[] bytes) throws IOException {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+            values.put(MediaStore.Downloads.MIME_TYPE, mimeType);
+            values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+            values.put(MediaStore.Downloads.IS_PENDING, 1);
+            Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) throw new IOException("Could not create the Downloads file");
+            try (OutputStream output = getContentResolver().openOutputStream(uri)) {
+                if (output == null) throw new IOException("Could not open the Downloads file");
+                output.write(bytes);
+            } catch (IOException error) {
+                getContentResolver().delete(uri, null, null);
+                throw error;
+            }
+            ContentValues completed = new ContentValues();
+            completed.put(MediaStore.Downloads.IS_PENDING, 0);
+            getContentResolver().update(uri, completed, null, null);
+            return;
+        }
+        File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        if (!downloads.exists() && !downloads.mkdirs()) throw new IOException("Could not create the Downloads folder");
+        File outputFile = new File(downloads, fileName);
+        if (outputFile.exists()) outputFile = new File(downloads, System.currentTimeMillis() + "-" + fileName);
+        try (OutputStream output = new FileOutputStream(outputFile)) {
+            output.write(bytes);
+        }
+        MediaScannerConnection.scanFile(this, new String[] { outputFile.getAbsolutePath() }, new String[] { mimeType }, null);
     }
 
     private final class PdfBridge {
@@ -571,6 +620,22 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    @SuppressWarnings("deprecation")
+    private int reportContentHeightPx(WebView reportView) {
+        float zoom = reportView.getScale();
+        if (zoom <= 0f) zoom = getResources().getDisplayMetrics().density;
+        return (int) Math.ceil(reportView.getContentHeight() * zoom);
+    }
+
+    /** Only pages that contain report content; ignores a sliver of trailing padding. */
+    static int pdfPageCount(int contentHeightPx, int pageHeightPx) {
+        if (contentHeightPx <= 0 || pageHeightPx <= 0) return 1;
+        int pages = contentHeightPx / pageHeightPx;
+        int remainder = contentHeightPx % pageHeightPx;
+        if (remainder > Math.max(8, pageHeightPx / 50)) pages++;
+        return Math.max(1, pages);
+    }
+
     private void renderReportPdf(OutputStream output, WebView reportView) throws IOException {
         PdfDocument document = new PdfDocument();
         try {
@@ -581,9 +646,12 @@ public class MainActivity extends FragmentActivity {
             reportView.measure(
                     View.MeasureSpec.makeMeasureSpec(viewWidth, View.MeasureSpec.EXACTLY),
                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-            int density = Math.max(1, Math.round(getResources().getDisplayMetrics().density));
-            int contentHeight = Math.round(reportView.getContentHeight() * density);
-            int viewHeight = Math.max(Math.max(reportView.getMeasuredHeight(), contentHeight), dp(1));
+            // getContentHeight() is in CSS pixels; convert it with the WebView's real
+            // zoom scale. Multiplying by the rounded display density (and taking the
+            // UNSPECIFIED measured height) overestimated the height and produced
+            // several trailing blank PDF pages.
+            int contentHeight = reportContentHeightPx(reportView);
+            int viewHeight = Math.max(contentHeight, dp(1));
             reportView.layout(0, 0, viewWidth, viewHeight);
 
             final int pageWidth = 595;
@@ -594,7 +662,9 @@ public class MainActivity extends FragmentActivity {
             final int printableHeight = pageHeight - (pageMargin * 2);
             final int contentHeightPerPage = Math.max(1, (int) (printableHeight / scale));
             int pageNumber = 1;
-            for (int top = 0; top < viewHeight; top += contentHeightPerPage) {
+            int pageCount = pdfPageCount(viewHeight, contentHeightPerPage);
+            for (int index = 0; index < pageCount; index++) {
+                int top = index * contentHeightPerPage;
                 PdfDocument.Page page = document.startPage(new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber++).create());
                 Canvas canvas = page.getCanvas();
                 canvas.save();

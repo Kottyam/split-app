@@ -1,4 +1,8 @@
+import { toLocalDateKey } from '@/lib/localDate';
 import type { GroupFund, GroupFundMember } from './types';
+
+/** Single period used by one-time (non-recurring) funds, so collections never "expire" when the day changes. */
+export const ONE_TIME_PERIOD = 'One-time collection';
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
@@ -52,9 +56,10 @@ export type CollectionPeriodMode = 'past' | 'future';
 /** Resolve a collection date to the exact cycle represented by the app’s existing period labels. */
 export function resolveCollectionPeriod(fund: GroupFund, collectionDate: Date, mode: CollectionPeriodMode = 'future'): string {
   const date = new Date(collectionDate.getFullYear(), collectionDate.getMonth(), collectionDate.getDate());
-  if (!fund.isRecurring) {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
+  // One-time funds have a single collection period. Previously this returned the
+  // collection *date*, so every new day became a new, empty "period" and earlier
+  // collections disappeared from the totals.
+  if (!fund.isRecurring) return ONE_TIME_PERIOD;
   if (fund.recurringFrequency === 'Daily') {
     const day = mode === 'past' ? new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1) : date;
     return day.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -285,7 +290,7 @@ export function calculateExpectedAmount(fund: GroupFund, member: GroupFundMember
 /** Calculate the member-add Expected Amount for a specific cycle from the fund Default Amount. */
 export function calculateMemberAddExpectedAmount(fund: GroupFund, member: GroupFundMember, joinDate: Date, period?: string): number {
   if (fund.amountType === 'Variable Amount') return member.expectedAmount ?? 0;
-  const draftMember = { ...member, expectedAmount: undefined, startDate: joinDate.toISOString().slice(0, 10) };
+  const draftMember = { ...member, expectedAmount: undefined, startDate: toLocalDateKey(joinDate) };
   return period
     ? calculateExpectedAmountForPeriod(fund, draftMember, period, false)
     : calculateExpectedAmount(fund, draftMember, joinDate);
@@ -305,7 +310,7 @@ export function calculateMemberAddExpectedAmountForConfiguredPeriod(fund: GroupF
     return fund.defaultContributionAmount ?? 0;
   }
   if (mode === 'past' && fund.isRecurring && fund.amountType === 'Default Amount') {
-    const draftMember = { ...member, expectedAmount: undefined, startDate: joinDate.toISOString().slice(0, 10) };
+    const draftMember = { ...member, expectedAmount: undefined, startDate: toLocalDateKey(joinDate) };
     return calculateExpectedAmountForPeriod(fund, draftMember, period, true);
   }
   return calculateMemberAddExpectedAmount(fund, member, joinDate, period);
@@ -322,5 +327,5 @@ export function calculateExpectedAmountForPeriod(fund: GroupFund, member: GroupF
 /** Human-readable local date value for the member form. */
 export function getMemberStartDateValue(fund: GroupFund, member?: GroupFundMember): string {
   if (member?.startDate) return member.startDate;
-  return new Date(member?.dateJoined ?? member?.createdAt ?? fund.createdAt).toISOString().slice(0, 10);
+  return toLocalDateKey(new Date(member?.dateJoined ?? member?.createdAt ?? fund.createdAt));
 }

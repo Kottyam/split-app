@@ -1,4 +1,7 @@
+import { showFieldError } from '@/lib/formValidation';
+import { toLocalDateKey } from '@/lib/localDate';
 import { useState, useMemo } from 'react';
+import { getCustomSplitStatus, formatSplitAmount } from '@/lib/customSplit';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Dialog,
@@ -45,7 +48,7 @@ export default function AddExpenseDialog({
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('food');
   const [paidBy, setPaidBy] = useState(trip.members[0]?.id || '');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(toLocalDateKey(new Date()));
   const [splitType, setSplitType] = useState<'equal-all' | 'equal-selected' | 'custom'>('equal-all');
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set(trip.members.map(m => m.id))
@@ -58,6 +61,7 @@ export default function AddExpenseDialog({
     }
   };
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
+  const [splitError, setSplitError] = useState('');
   const { addExpense } = useTrips();
   const { t } = useLanguage();
 
@@ -76,16 +80,11 @@ export default function AddExpenseDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const activeMembers = splitType === 'equal-all' ? new Set(trip.members.map(member => member.id)) : selectedMembers;
-    if (!description.trim() || !amount.trim() || !paidBy || activeMembers.size === 0) {
-      toast.error(t('fillRequired'));
-      return;
-    }
-
+    if (!description.trim()) { showFieldError('description', t('auditErrExpenseDescription' as any)); return; }
     const expenseAmount = parseFloat(amount);
-    if (!Number.isFinite(expenseAmount) || expenseAmount <= 0) {
-      toast.error(t('fillRequired'));
-      return;
-    }
+    if (!amount.trim() || !Number.isFinite(expenseAmount) || expenseAmount <= 0) { showFieldError('amount', t('auditErrExpenseAmount' as any)); return; }
+    if (!paidBy) { showFieldError('expense-paid-by', t('auditErrPaidBy' as any)); return; }
+    if (activeMembers.size === 0) { showFieldError('expense-split-members', t('auditErrSplitMembers' as any)); return; }
     let splits: Record<string, number> = {};
 
     if (splitType === 'equal-all' || splitType === 'equal-selected') {
@@ -107,10 +106,14 @@ export default function AddExpenseDialog({
         totalCustom += customAmount;
       });
 
-      if (Math.abs(totalCustom - expenseAmount) > 0.01) {
-        toast.error(t('customSplitError', { amount: expenseAmount }));
+      const splitStatus = getCustomSplitStatus(expenseAmount, Array.from(selectedMembers).map(id => customSplits[id]));
+      if (!splitStatus.matches) {
+        const message = t('tripSplitMismatch' as any, { split: formatSplitAmount(splitStatus.splitTotal), total: formatSplitAmount(splitStatus.expenseTotal), diff: formatSplitAmount(splitStatus.difference) });
+        setSplitError(message);
+        toast.error(message);
         return;
       }
+      setSplitError('');
     }
 
     addExpense(
@@ -130,7 +133,7 @@ export default function AddExpenseDialog({
     setAmount('');
     setCategory('food');
     setPaidBy(trip.members[0]?.id || '');
-    setDate(new Date().toISOString().split('T')[0]);
+    setDate(toLocalDateKey(new Date()));
     setSplitType('equal-all');
     setSelectedMembers(new Set(trip.members.map(m => m.id)));
     setCustomSplits({});
@@ -160,7 +163,7 @@ export default function AddExpenseDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div>
             <Label htmlFor="description" className="font-bold text-black">
               {t('description')}
@@ -222,7 +225,7 @@ export default function AddExpenseDialog({
                 {t('paidBy')}
               </Label>
               <Select value={paidBy} onValueChange={setPaidBy}>
-                <SelectTrigger className="border-2 border-black rounded-lg mt-1">
+                <SelectTrigger id="expense-paid-by" className="border-2 border-black rounded-lg mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="border-2 border-black">
@@ -287,7 +290,7 @@ export default function AddExpenseDialog({
             <Label className="font-bold text-black mb-2 block">
               {splitType === 'equal-all' ? t('auditAllMembersIncluded' as any) : splitType === 'equal-selected' ? t('auditSelectPeople' as any) : t('auditCustomAmountsHint' as any)}
             </Label>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
+            <div id="expense-split-members" tabIndex={-1} className="space-y-2 max-h-40 overflow-y-auto rounded-lg">
               {trip.members.map(member => (
                 <div key={member.id} className="flex items-center gap-2">
                   <Checkbox
@@ -321,6 +324,17 @@ export default function AddExpenseDialog({
               ))}
             </div>
           </div>
+
+          {splitType === 'custom' && (() => {
+            const live = getCustomSplitStatus(parseFloat(amount), Array.from(selectedMembers).map(id => customSplits[id]));
+            const text = live.matches ? t('tripSplitMatched' as any) : live.difference > 0 ? t('tripSplitRemaining' as any, { amount: formatSplitAmount(live.difference) }) : t('tripSplitOver' as any, { amount: formatSplitAmount(live.difference) });
+            return (
+              <div data-testid="custom-split-status" role={splitError ? 'alert' : 'status'} className={`rounded-xl border px-3 py-2 text-sm font-bold ${live.matches ? 'border-[#16834b]/40 bg-[#e6f3e8] text-[#16834b]' : 'border-red-300 bg-red-50 text-red-700'}`}>
+                <p>{t('tripSplitTotals' as any, { split: formatSplitAmount(live.splitTotal), total: formatSplitAmount(live.expenseTotal) })} · {text}</p>
+                {splitError && !live.matches && <p className="mt-1 font-semibold">{splitError}</p>}
+              </div>
+            );
+          })()}
 
           <DialogFooter className="gap-2">
             <Button

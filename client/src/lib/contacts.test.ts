@@ -91,3 +91,33 @@ describe('contact picker integration', () => {
     });
   });
 });
+
+describe('contact picker slow multi-selection', () => {
+  const originalWindow = globalThis.window;
+  afterEach(() => {
+    vi.useRealTimers();
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow, writable: true });
+  });
+
+  it('keeps waiting while the user searches and selects contacts for several minutes', async () => {
+    vi.useFakeTimers();
+    const listeners = new Map<string, EventListener>();
+    const fakeWindow = {
+      KharchaContacts: { pickContacts: vi.fn() },
+      addEventListener: (type: string, listener: EventListener) => listeners.set(type, listener),
+      removeEventListener: (type: string) => listeners.delete(type),
+      setTimeout: (fn: () => void, ms: number) => setTimeout(fn, ms),
+      clearTimeout: (id: number) => clearTimeout(id),
+    } as unknown as Window;
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: fakeWindow, writable: true });
+
+    const pending = pickMultipleContacts();
+    // Previously a 30s timeout resolved [] here and the later selection was dropped.
+    await vi.advanceTimersByTimeAsync(3 * 60_000);
+    listeners.get('kharcha-contacts-selected')?.({
+      type: 'kharcha-contacts-selected',
+      detail: [{ name: 'Anu', tel: '9876543210' }, { name: 'Binu', tel: '9123456789' }, { name: 'Chitra', tel: '9000000001' }],
+    } as unknown as Event);
+    await expect(pending).resolves.toHaveLength(3);
+  });
+});

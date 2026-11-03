@@ -17,8 +17,8 @@ describe('Kharcha UI polish contracts', () => {
   it('uses lighter responsive branded surfaces on the main list pages', () => {
     for (const file of ['Home.tsx', 'Trips.tsx', 'SharedHomes.tsx', 'GroupFunds.tsx']) {
       const source = read(`client/src/pages/${file}`);
-      expect(source).toContain('rounded-3xl');
-      expect(source).toContain('shadow-sm');
+      expect(source).toMatch(/rounded-3xl|rounded-\[2[26]px\]/);
+      expect(source).toMatch(/shadow-sm|shadow-\[0_10px_28px/);
     }
   });
 

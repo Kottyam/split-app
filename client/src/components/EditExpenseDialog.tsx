@@ -1,3 +1,5 @@
+import { toLocalDateKey } from '@/lib/localDate';
+import { toast } from 'sonner';
 import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
@@ -21,6 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Trip, Expense, ExpenseCategory } from '@/types';
 import { useTrips } from '@/hooks/useTrips';
 import { getAllCategories, getCategoryInfo } from '@/lib/categories';
+import { getCustomSplitStatus, formatSplitAmount } from '@/lib/customSplit';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 function tripCategoryLabel(t: (key: any, variables?: any) => string, category: ExpenseCategory) {
@@ -51,6 +54,7 @@ export default function EditExpenseDialog({
   const [splitType, setSplitType] = useState<'equal-all' | 'equal-selected' | 'custom'>('equal-all');
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
+  const [splitError, setSplitError] = useState('');
 
   const handleSplitTypeChange = (nextType: 'equal-all' | 'equal-selected' | 'custom') => {
     setSplitType(nextType);
@@ -70,7 +74,7 @@ export default function EditExpenseDialog({
       setAmount(expense.amount.toString());
       setCategory(expense.category);
       setPaidBy(expense.paidBy);
-      setDate(new Date(expense.date).toISOString().split('T')[0]);
+      setDate(toLocalDateKey(new Date(expense.date)));
       setSelectedMembers(new Set(Object.keys(expense.splits)));
       
       // Determine split mode
@@ -137,10 +141,14 @@ export default function EditExpenseDialog({
         totalCustom += customAmount;
       });
 
-      if (Math.abs(totalCustom - expenseAmount) > 0.01) {
-        alert(t('auditCustomSplitRequired' as any, { amount: expenseAmount }));
+      const splitStatus = getCustomSplitStatus(expenseAmount, Array.from(selectedMembers).map(id => customSplits[id]));
+      if (!splitStatus.matches) {
+        const message = t('tripSplitMismatch' as any, { split: formatSplitAmount(splitStatus.splitTotal), total: formatSplitAmount(splitStatus.expenseTotal), diff: formatSplitAmount(splitStatus.difference) });
+        setSplitError(message);
+        toast.error(message);
         return;
       }
+      setSplitError('');
     }
 
     updateExpense(trip.id, expense.id, {
@@ -329,6 +337,17 @@ export default function EditExpenseDialog({
               ))}
             </div>
           </div>
+
+          {splitType === 'custom' && (() => {
+            const live = getCustomSplitStatus(parseFloat(amount), Array.from(selectedMembers).map(id => customSplits[id]));
+            const text = live.matches ? t('tripSplitMatched' as any) : live.difference > 0 ? t('tripSplitRemaining' as any, { amount: formatSplitAmount(live.difference) }) : t('tripSplitOver' as any, { amount: formatSplitAmount(live.difference) });
+            return (
+              <div data-testid="custom-split-status" role={splitError ? 'alert' : 'status'} className={`rounded-xl border px-3 py-2 text-sm font-bold ${live.matches ? 'border-[#16834b]/40 bg-[#e6f3e8] text-[#16834b]' : 'border-red-300 bg-red-50 text-red-700'}`}>
+                <p>{t('tripSplitTotals' as any, { split: formatSplitAmount(live.splitTotal), total: formatSplitAmount(live.expenseTotal) })} · {text}</p>
+                {splitError && !live.matches && <p className="mt-1 font-semibold">{splitError}</p>}
+              </div>
+            );
+          })()}
 
           <DialogFooter className="gap-2">
             <Button

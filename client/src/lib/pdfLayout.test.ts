@@ -24,10 +24,11 @@ describe('uniform PDF layout and direct save', () => {
       expect(source).toContain('PDF_LAYOUT_CSS');
       expect(source).toContain('class="report"');
     }
-    expect(trip).toContain('class=\"brand-name\">Kharcha</div>');
-    expect(trip).not.toContain('KHARCHA_LOGO_LOCKUP');
-    expect(sharedHome).toContain('KHARCHA_LOGO_LOCKUP');
-    expect(groupFund).toContain('KHARCHA_LOGO_LOCKUP');
+    // PDFs use the coloured text wordmark instead of the logo image.
+    for (const source of [trip, sharedHome, groupFund]) {
+      expect(source).toContain('KHARCHA_PDF_WORDMARK_HTML');
+      expect(source).not.toContain('KHARCHA_LOGO_LOCKUP');
+    }
   });
 
   it('saves directly to Downloads instead of delegating Save PDF to Print', () => {
@@ -40,5 +41,19 @@ describe('uniform PDF layout and direct save', () => {
     expect(mainActivity).toContain('MediaStore.Downloads.RELATIVE_PATH');
     expect(mainActivity).toContain('MediaStore.Downloads.IS_PENDING');
     expect(mainActivity).toContain('PDF saved to Downloads');
+  });
+});
+
+describe('PDF pages contain only content', () => {
+  const java = fs.readFileSync(path.resolve(root, 'android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java'), 'utf8');
+
+  it('sizes the native PDF by real content height instead of density-inflated height', () => {
+    expect(java).not.toContain('reportView.getContentHeight() * density');
+    expect(java).not.toContain('Math.max(reportView.getMeasuredHeight(), contentHeight)');
+    expect(java).toContain('int pageCount = pdfPageCount(viewHeight, contentHeightPerPage);');
+  });
+
+  it('keeps the report body auto-height so print does not add blank pages', () => {
+    expect(fs.readFileSync(path.resolve(root, 'client/src/lib/pdfLayout.ts'), 'utf8')).toContain('height: auto; min-height: 0;');
   });
 });

@@ -50,6 +50,8 @@ export interface GroupFundMember {
   startDate?: string;
   contributionRule?: string;
   expectedAmount?: number;
+  /** Free-text remarks shown in the Group Fund PDF. */
+  remarks?: string;
   /** Optional amount to prefill for the next collection; this is not a contribution record. */
   savedCollectionAmount?: number;
   /** Excess paid amount carried forward for this member. */
@@ -100,6 +102,8 @@ export interface GroupFund {
   customPurpose?: string;
   description?: string;
   targetAmount?: number;
+  /** Optional spending budget for the fund (absent on older funds). */
+  budgetAmount?: number;
   startingBalance?: number;
   contributionType: ContributionType;
   defaultContributionAmount: number;

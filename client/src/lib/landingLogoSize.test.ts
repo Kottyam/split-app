@@ -7,7 +7,7 @@ const read = (relativePath: string) => fs.readFileSync(path.resolve(process.cwd(
 describe('Landing logo size', () => {
   it('uses the larger Landing header lockup without changing the logo asset or actions', () => {
     const home = read('client/src/pages/Home.tsx');
-    expect(home).toContain('variant="landing" imageClassName="mix-blend-multiply" className="w-40 sm:w-52"');
+    expect(home).toContain('variant="landing" imageClassName="mix-blend-multiply" className="w-52 max-w-full sm:w-64"');
     expect(home).toContain("navigate('/search')");
     expect(home).toContain("navigate('/notifications')");
     expect(home).toContain('setShowSettings(true)');

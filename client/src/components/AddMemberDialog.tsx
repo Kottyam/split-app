@@ -1,3 +1,4 @@
+import { showFieldError } from '@/lib/formValidation';
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Loader2 } from 'lucide-react';
@@ -116,6 +117,7 @@ export default function AddMemberDialog({
       onOpenChange(false);
     } else {
       setIsSubmitting(false);
+      showFieldError('member-name', t('auditErrMemberName' as any));
     }
   };
 
@@ -192,7 +194,7 @@ export default function AddMemberDialog({
             </DialogFooter>
           </div>
         ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           {/* Add from Contacts Button */}
           <Button
             type="button"

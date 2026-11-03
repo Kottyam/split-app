@@ -10,7 +10,7 @@ describe('uniform section header coverage', () => {
     expect(source).toContain("<BrandLogo variant=\"landing\"");
     expect(source).toContain('sticky top-0 z-30');
     expect(source).toContain('flex flex-col gap-2');
-    expect(source).toContain('text-lg font-black text-kharcha-navy');
+    expect(source).toContain('text-xl font-black leading-tight');
   });
 
   it('uses the shared header across primary and routed sub-sections', () => {

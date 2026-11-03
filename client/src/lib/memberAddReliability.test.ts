@@ -38,8 +38,7 @@ describe('member-add reliability contracts', () => {
 
     expect(expensesTab).toContain('data-testid="trip-add-expense"');
     expect(expensesTab).toContain('disabled={trip.members.length === 0}');
-    expect(expensesTab).toContain('bg-[#18324b]');
-    expect(expensesTab).toContain('disabled:bg-[#18324b]');
+    expect(expensesTab).toContain('variant="brand"');
     expect(expensesTab).toContain("trip.members.length === 0");
     expect(expensesTab).toContain("t('pleaseAddMembers')");
     expect(expensesTab).toContain('data-testid="trip-add-members-from-expense"');
@@ -50,7 +49,7 @@ describe('member-add reliability contracts', () => {
     const tabOrder = [...source.matchAll(/<TabsTrigger value="([^"]+)"/g)].map(match => match[1]);
     expect(tabOrder.slice(0, 5)).toEqual(['dashboard', 'members', 'expenses', 'settle', 'reports']);
     expect(membersTab).toContain('data-testid="trip-add-members"');
-    expect(membersTab).toContain('bg-[#18324b]');
+    expect(membersTab).toMatch(/bg-\[#18324b\]|variant="brand"/);
     expect(membersTab).not.toContain('data-testid="trip-add-from-contacts"');
     expect(membersTab).not.toContain('data-testid="trip-add-manually"');
     const memberDialog = read('client/src/components/AddMemberDialog.tsx');

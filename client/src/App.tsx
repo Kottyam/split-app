@@ -1,4 +1,6 @@
 import React, { useEffect } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import InstallPromptDialog from "@/components/InstallPromptDialog";
 import { Switch, Route, useLocation } from "wouter";
 import Home from "./pages/Home";
 import Trips from "./pages/Trips";
@@ -11,6 +13,7 @@ import Notifications from "./pages/Notifications";
 import More from "./pages/More";
 import TripDetail from "./pages/TripDetail";
 import SharedView from "./pages/SharedView";
+import ShortShareView from "./pages/ShortShareView";
 import SharedHomeRedesign from "./pages/SharedHomeRedesign";
 import SharedHomeDetail from "./pages/SharedHomeDetail";
 import SharedHomeSharedView from "./pages/SharedHomeSharedView";
@@ -44,6 +47,7 @@ function Router() {
       <Route path={/^\/shared-home-share\/.+$/} component={SharedHomeSharedView} />
       <Route path={/^\/shared-home-payment\/.+$/} component={SharedHomePaymentRequest} />
       <Route path={/^\/share\/.+$/} component={SharedView} />
+      <Route path={/^\/s\/[tf].+$/} component={ShortShareView} />
       <Route path={/^\/edit-sync\/.+$/} component={EditSyncRecipient} />
       <Route path={/^\/sync-review\/.+$/} component={SyncReview} />
       <Route path="/sync-updates" component={SyncUpdates} />
@@ -64,6 +68,7 @@ function AppShell() {
     <div className="kharcha-app-shell min-h-screen pb-20">
       <Router />
       <BottomNav />
+      <InstallPromptDialog />
     </div>
   );
 }
@@ -73,6 +78,7 @@ export default function App() {
     <LanguageProvider>
       <DeleteConfirmationProvider>
         <AppShell />
+        <Toaster position="top-center" richColors closeButton />
       </DeleteConfirmationProvider>
     </LanguageProvider>
   );

@@ -19,6 +19,11 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        // Kharcha brand variants: rounded, shadowed, with a press effect.
+        trip: "rounded-2xl bg-[#fd6d00] font-black text-white shadow-[0_8px_18px_rgba(253,109,0,0.30)] hover:bg-[#e55f00] active:scale-[0.97]",
+        fund: "rounded-2xl bg-[#038f27] font-black text-white shadow-[0_8px_18px_rgba(3,143,39,0.28)] hover:bg-[#027a21] active:scale-[0.97]",
+        brand: "rounded-2xl bg-[#023b81] font-black text-white shadow-[0_8px_18px_rgba(2,59,129,0.28)] hover:bg-[#012f68] active:scale-[0.97]",
+        soft: "rounded-2xl border border-[#e3ebf3] bg-white font-bold text-[#023b81] shadow-[0_4px_12px_rgba(2,59,129,0.08)] hover:bg-[#f3f7fc] active:scale-[0.97]",
       },
       size: {
         default: "h-10 px-4 py-2 has-[>svg]:px-3",

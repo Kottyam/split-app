@@ -1,7 +1,8 @@
 export const PDF_LAYOUT_CSS = `
   @page { size: A4 portrait; margin: 12mm; }
   * { box-sizing: border-box; }
-  html, body { width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: hidden; }
+  html, body { width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: hidden; height: auto; min-height: 0; }
+  .report > :last-child, body > :last-child { margin-bottom: 0 !important; page-break-after: auto; break-after: auto; }
   body {
     font-family: Arial, sans-serif;
     color: #18324b;
@@ -33,6 +34,21 @@ export const PDF_LAYOUT_CSS = `
   }
   .report-heading, header > div { min-width: 0; flex: 1; }
   .brand-name { color: #16834b; font-size: 25px; line-height: 1; font-weight: 800; letter-spacing: 1.5px; margin-bottom: 8px; }
+  .brand-wordmark { font-family: 'Poppins', 'Nunito', Arial, sans-serif; font-size: 30px; font-weight: 800; letter-spacing: 0.5px; line-height: 1; margin: 0 0 6px; }
+  .brand-block { flex: 0 0 auto; margin: 0 0 6px; }
+  .brand-block .brand-wordmark { margin: 0; }
+  .brand-tagline { font-family: 'Poppins', 'Nunito', Arial, sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-top: 3px; line-height: 1.1; }
+  .brand-tagline .wm-blue { color: #023b81; }
+  .brand-tagline .wm-green { color: #038f27; }
+  .brand-tagline .wm-orange { color: #fd6d00; }
+  .report-header.stacked { display: block; }
+  .summary.cards-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); background: #ffffff; border: none; padding: 0; }
+  .summary.cards-4 .metric { border-top: 4px solid var(--card-accent, #023b81); background: #f7faff; font-weight: 700; color: #5b6670; }
+  .summary.cards-4 .metric strong { color: #023b81; font-size: 15px; }
+  .summary.cards-4 .metric small { display: block; font-weight: 600; font-size: 9.5px; margin-top: 2px; color: #5b6670; }
+  .brand-wordmark .wm-blue { color: #023b81; }
+  .brand-wordmark .wm-green { color: #038f27; }
+  .brand-wordmark .wm-orange { color: #fd6d00; }
   .brand-name::after { content: ''; display: block; width: 54px; height: 4px; margin-top: 5px; border-radius: 4px; background: #e87817; }
   h1 { font-size: 22px; line-height: 1.15; font-weight: 700; margin: 0 0 4px; overflow-wrap: anywhere; }
   h2, h3 { color: #16834b; break-after: avoid; page-break-after: avoid; }
@@ -86,3 +102,7 @@ export const PDF_LAYOUT_CSS = `
   table.expenses th:nth-child(5), table.expenses td:nth-child(5) { width: 12%; }
   table.expenses th:nth-child(6), table.expenses td:nth-child(6) { width: 22%; }
 `;
+
+/** Text wordmark for PDFs, using the logo's colours (Khar = blue, ch = green, a = orange). */
+export const KHARCHA_PDF_TAGLINE = 'Split Smart Live Smart';
+export const KHARCHA_PDF_WORDMARK_HTML = '<div class="brand-block"><div class="brand-wordmark" aria-label="Kharcha"><span class="wm-blue">Khar</span><span class="wm-green">ch</span><span class="wm-orange">a</span></div><div class="brand-tagline"><span class="wm-blue">Split Smart</span> <span class="wm-green">Live</span> <span class="wm-orange">Smart</span></div></div>';
