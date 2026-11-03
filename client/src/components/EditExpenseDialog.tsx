@@ -1,3 +1,4 @@
+import { toLocalDateKey } from '@/lib/localDate';
 import { toast } from 'sonner';
 import { useState, useEffect, useMemo } from 'react';
 import {
@@ -73,7 +74,7 @@ export default function EditExpenseDialog({
       setAmount(expense.amount.toString());
       setCategory(expense.category);
       setPaidBy(expense.paidBy);
-      setDate(new Date(expense.date).toISOString().split('T')[0]);
+      setDate(toLocalDateKey(new Date(expense.date)));
       setSelectedMembers(new Set(Object.keys(expense.splits)));
       
       // Determine split mode

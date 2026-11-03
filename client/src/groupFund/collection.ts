@@ -1,5 +1,20 @@
-import { calculateExpectedAmount, calculateExpectedAmountForPeriod, isMemberApplicableToPeriod } from './calculations';
+import { ONE_TIME_PERIOD, calculateExpectedAmount, calculateExpectedAmountForPeriod, isMemberApplicableToPeriod } from './calculations';
 import type { Contribution, GroupFund, GroupFundMember } from './types';
+
+export { ONE_TIME_PERIOD };
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Does a contribution note belong to this period? Only the period part of the note
+ * (before the " — remark") is checked, and the label must not be followed by a digit,
+ * so "Week of Nov 3" does not also match "Week of Nov 30".
+ */
+export function contributionMatchesPeriod(note: string | undefined, period: string): boolean {
+  if (!note || !period || period === ONE_TIME_PERIOD) return true;
+  const head = note.split(' — ')[0];
+  return new RegExp(`(^|[^0-9A-Za-z])${escapeRegExp(period)}(?![0-9])`).test(head);
+}
 
 export function getActivePeriodContributions(
   contributions: Contribution[],
@@ -10,7 +25,7 @@ export function getActivePeriodContributions(
     contribution =>
       contribution.memberId === memberId &&
       contribution.status !== 'Cancelled' &&
-      (!contribution.note || contribution.note.includes(period)),
+      contributionMatchesPeriod(contribution.note, period),
   );
 }
 

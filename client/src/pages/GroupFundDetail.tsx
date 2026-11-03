@@ -1,3 +1,5 @@
+import { contributionMatchesPeriod, ONE_TIME_PERIOD } from '@/groupFund/collection';
+import { toLocalDateKey } from '@/lib/localDate';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { getGroupFundById, mergeContributionHistory, saveGroupFund } from '@/groupFund/storage';
@@ -93,6 +95,7 @@ export default function GroupFundDetail() {
 
   const generatePeriods = () => {
     const list: string[] = [];
+    if (fund && !fund.isRecurring) return [ONE_TIME_PERIOD];
     const now = new Date();
     const recurringAnchor = fund?.isRecurring ? new Date(getFundCollectionStartTime(fund)) : now;
     const freq = fund?.recurringFrequency;
@@ -133,14 +136,14 @@ export default function GroupFundDetail() {
   };
   const collectionPeriods = useMemo(generatePeriods, [fund?.id, fund?.isRecurring, fund?.collectionStartDate, fund?.recurringFrequency, fund?.weeklyStartDay, fund?.fortnightlyCycleBoundary, fund?.customInterval, fund?.customIntervalUnit]);
   const [selectedPeriod, setSelectedPeriod] = useState<string>(() => collectionPeriods[2] || collectionPeriods[0]);
-  const [collectionDate, setCollectionDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [collectionDate, setCollectionDate] = useState(() => toLocalDateKey(new Date()));
   const [collectionPeriodMode, setCollectionPeriodMode] = useState<CollectionPeriodMode>(fund?.collectionTiming === 'previous' ? 'past' : fund?.collectionTiming === 'advance' ? 'future' : (fund?.collectionPeriodMode ?? 'future'));
   useEffect(() => {
     if (!selectedPeriod) setSelectedPeriod(collectionPeriods[2] || collectionPeriods[0]);
   }, [collectionPeriods, selectedPeriod]);
   useEffect(() => {
     if (!fund) return;
-    setCollectionDate(new Date().toISOString().slice(0, 10));
+    setCollectionDate(toLocalDateKey(new Date()));
     setCollectionPeriodMode(fund.collectionTiming === 'previous' ? 'past' : fund.collectionTiming === 'advance' ? 'future' : (fund.collectionPeriodMode ?? 'future'));
   }, [fund?.id]);
   useEffect(() => {
@@ -215,7 +218,7 @@ export default function GroupFundDetail() {
   const [memberStopFrom, setMemberStopFrom] = useState('');
   const [memberStopUntil, setMemberStopUntil] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [collectionStartDate, setCollectionStartDate] = useState(fund?.collectionStartDate ?? new Date(fund?.createdAt ?? Date.now()).toISOString().slice(0, 10));
+  const [collectionStartDate, setCollectionStartDate] = useState(fund?.collectionStartDate ?? toLocalDateKey(new Date(fund?.createdAt ?? Date.now())));
 
   useEffect(() => {
     if (!fund || !fund.isRecurring || fund.amountType !== 'Default Amount' || !memberStartDate) return;
@@ -228,7 +231,7 @@ export default function GroupFundDetail() {
       createdAt: Date.now(),
       startDate: memberStartDate,
     };
-    const configuredCollectionReference = collectionStartDate || fund.collectionStartDate || collectionDate || new Date().toISOString().slice(0, 10);
+    const configuredCollectionReference = collectionStartDate || fund.collectionStartDate || collectionDate || toLocalDateKey(new Date());
     const parsedCollectionDate = new Date(`${configuredCollectionReference}T00:00:00`);
     const expected = calculateMemberAddExpectedAmountForConfiguredPeriod(
       { ...fund, collectionPeriodMode },
@@ -270,7 +273,7 @@ export default function GroupFundDetail() {
     };
   };
 
-  const periodContributions = fund.contributions.filter((c: Contribution) => c.status !== 'Cancelled' && (!c.note || c.note.includes(selectedPeriod)));
+  const periodContributions = fund.contributions.filter((c: Contribution) => c.status !== 'Cancelled' && contributionMatchesPeriod(c.note, selectedPeriod));
   const totalCollected = periodContributions.reduce((s: number, c: Contribution) => s + c.amount, 0) + (selectedPeriod === collectionPeriods[0] ? (fund.startingBalance ?? 0) : 0);
   // Dashboard totals are lifetime totals, matching the Group Funds list. Period totals remain scoped to selectedPeriod for collection/report workflows.
   const lifetimeTotalCollected = fund.contributions
@@ -614,7 +617,7 @@ export default function GroupFundDetail() {
       toast.error(t('auditMonthClosed' as any, { period: selectedPeriod }));
       return;
     }
-    const matching = fund.contributions.filter((c: Contribution) => c.memberId === memberId && c.status !== 'Cancelled' && (!c.note || c.note.includes(selectedPeriod)));
+    const matching = fund.contributions.filter((c: Contribution) => c.memberId === memberId && c.status !== 'Cancelled' && contributionMatchesPeriod(c.note, selectedPeriod));
     if (matching.length === 0) {
       toast.info(t('auditNoActiveCollection' as any));
       return;
@@ -795,7 +798,7 @@ export default function GroupFundDetail() {
             </thead>
             <tbody>
               ${fund.members.map((m: GroupFundMember) => {
-                const mc = fund.contributions.filter((c: Contribution) => c.memberId === m.id && c.status !== 'Cancelled' && (!c.note || c.note.includes(selectedPeriod)));
+                const mc = fund.contributions.filter((c: Contribution) => c.memberId === m.id && c.status !== 'Cancelled' && contributionMatchesPeriod(c.note, selectedPeriod));
                 const paid = mc.reduce((s: number, c: Contribution) => s + c.amount, 0);
                 const dateStr = mc.length > 0 ? new Date(mc[mc.length - 1].date).toLocaleDateString() : '-';
                 const methodStr = mc.length > 0 ? groupFundOptionLabel(t, mc[mc.length - 1].method) : '-';
@@ -978,7 +981,7 @@ export default function GroupFundDetail() {
             id: nanoid(),
             name: contact.name!.trim(),
             mobileNumber: contact.tel ? formatPhoneNumber(contact.tel) : undefined,
-            startDate: latestFund.isRecurring ? new Date().toISOString().slice(0, 10) : undefined,
+            startDate: latestFund.isRecurring ? toLocalDateKey(new Date()) : undefined,
             isActive: true,
             createdAt: Date.now(),
           }));
@@ -1058,7 +1061,7 @@ export default function GroupFundDetail() {
         mobileNumber: row.mobileNumber ? formatPhoneNumber(row.mobileNumber) : undefined,
         expectedAmount: row.expectedAmount,
         remarks: 'remarks' in row && row.remarks ? String(row.remarks) : undefined,
-        startDate: latestFund.isRecurring ? new Date().toISOString().slice(0, 10) : undefined,
+        startDate: latestFund.isRecurring ? toLocalDateKey(new Date()) : undefined,
         isActive: true,
         createdAt: Date.now(),
       }));
@@ -1540,7 +1543,7 @@ export default function GroupFundDetail() {
                 fund.members.map((m: GroupFundMember) => {
                   const paid = fund.contributions.filter((c: Contribution) => c.memberId === m.id && c.status !== 'Cancelled').reduce((s: number, c: Contribution) => s + c.amount, 0);
                   const memberJoinDate = new Date(`${getMemberStartDateValue(fund, m)}T00:00:00`);
-                  const configuredCollectionReference = collectionStartDate || fund.collectionStartDate || collectionDate || new Date().toISOString().slice(0, 10);
+                  const configuredCollectionReference = collectionStartDate || fund.collectionStartDate || collectionDate || toLocalDateKey(new Date());
                   const memberCollectionDate = new Date(`${configuredCollectionReference}T00:00:00`);
                   const configuredExpected = fund.isRecurring && fund.amountType === 'Default Amount' && !Number.isNaN(memberJoinDate.getTime())
                     ? calculateMemberAddExpectedAmountForConfiguredPeriod(

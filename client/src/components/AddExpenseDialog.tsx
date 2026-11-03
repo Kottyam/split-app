@@ -1,3 +1,4 @@
+import { toLocalDateKey } from '@/lib/localDate';
 import { useState, useMemo } from 'react';
 import { getCustomSplitStatus, formatSplitAmount } from '@/lib/customSplit';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -46,7 +47,7 @@ export default function AddExpenseDialog({
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('food');
   const [paidBy, setPaidBy] = useState(trip.members[0]?.id || '');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(toLocalDateKey(new Date()));
   const [splitType, setSplitType] = useState<'equal-all' | 'equal-selected' | 'custom'>('equal-all');
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set(trip.members.map(m => m.id))
@@ -136,7 +137,7 @@ export default function AddExpenseDialog({
     setAmount('');
     setCategory('food');
     setPaidBy(trip.members[0]?.id || '');
-    setDate(new Date().toISOString().split('T')[0]);
+    setDate(toLocalDateKey(new Date()));
     setSplitType('equal-all');
     setSelectedMembers(new Set(trip.members.map(m => m.id)));
     setCustomSplits({});

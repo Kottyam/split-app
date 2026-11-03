@@ -1,3 +1,4 @@
+import { toLocalDateKey } from '@/lib/localDate';
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { saveGroupFund } from '@/groupFund/storage';
@@ -39,7 +40,7 @@ export default function CreateGroupFund() {
   const [recurrenceNumberOfCycles, setRecurrenceNumberOfCycles] = useState('');
   const [gracePeriodDays, setGracePeriodDays] = useState<0 | 1 | 2 | 3 | 7>(0);
   const [missedCollectionRule, setMissedCollectionRule] = useState<MissedCollectionRule>('carry_forward');
-  const [collectionStartDate, setCollectionStartDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [collectionStartDate, setCollectionStartDate] = useState(() => toLocalDateKey(new Date()));
   const [collectionPeriodMode, setCollectionPeriodMode] = useState<'past' | 'future'>('future');
 
   const handleSubmit = (e: React.FormEvent) => {
