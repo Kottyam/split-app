@@ -16,10 +16,7 @@ describe('UPI helpers', () => {
   it('generates a standard UPI deep-link with recipient and amount', () => {
     const link = generateUpiDeepLink('riya@okhdfcbank', 1250, 'Riya', 'Goa Trip');
     expect(link).toContain('upi://pay?');
-    expect(link).toContain('pa=riya%40okhdfcbank');
-    expect(link).toContain('pn=Riya');
-    expect(link).toContain('am=1250.00');
-    expect(link).toContain('Trip+Settlement');
+    expect(link).toBe('upi://pay?pa=riya@okhdfcbank&pn=Riya&am=1250.00&cu=INR&tn=Trip%20Goa%20Trip');
   });
 
   it('includes who pays whom in the share message', () => {
@@ -42,10 +39,10 @@ describe('UPI helpers', () => {
     expect(isValidMobileNumber('12345')).toBe(false);
   });
 
-  it('falls back to a UPI-linked mobile payment address', () => {
-    expect(normalizePaymentAddress(undefined, '9876543210')).toBe('9876543210@upi');
-    const link = generateUpiDeepLink(undefined, 99, 'Riya', 'Goa Trip', '9876543210');
-    expect(link).toContain('pa=9876543210%40upi');
+  it('never invents a <number>@upi address from a phone number', () => {
+    expect(normalizePaymentAddress(undefined, '9876543210')).toBeUndefined();
+    expect(generateUpiDeepLink(undefined, 99, 'Riya', 'Goa Trip', '9876543210')).toBe('');
+    expect(isValidUpiId('9876543210')).toBe(false);
   });
 
   it('creates a share payload with payer, payee, and UPI link context', () => {
@@ -53,7 +50,7 @@ describe('UPI helpers', () => {
     expect(text).toContain('Who pays: Aarav');
     expect(text).toContain('Who receives: Riya');
     expect(text).toContain('upi://pay?');
-    expect(text).toContain('pa=riya%40okhdfcbank');
+    expect(text).toContain('pa=riya@okhdfcbank');
   });
 
   it('creates a readable mobile-only payment request when no UPI ID exists', () => {
@@ -61,7 +58,7 @@ describe('UPI helpers', () => {
     expect(text).toContain('Who pays: Aarav');
     expect(text).toContain('Who receives: Riya');
     expect(text).toContain('Payment contact: 9876543210');
-    expect(text).toContain('pa=9876543210%40upi');
+    expect(text).not.toContain('upi://pay');
   });
 
   it('creates a scanner-first UPI link without recipient or amount', () => {

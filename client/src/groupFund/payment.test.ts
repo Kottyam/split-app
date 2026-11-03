@@ -90,7 +90,7 @@ describe('Group Fund personalized payment requests', () => {
     expect(isValidGroupFundUpiId('not-a-upi-id')).toBe(false);
     expect(generateGroupFundUpiDeepLink({ fundName: 'House Fund', memberName: 'Asha', amount: 0, upiId: 'owner@okaxis' })).toBe('');
     const link = generateGroupFundUpiDeepLink({ fundName: 'House Fund', memberName: 'Asha', amount: 250, upiId: 'owner@okaxis' });
-    expect(link).toContain('pa=owner%40okaxis');
+    expect(link).toBe('upi://pay?pa=owner@okaxis&pn=House%20Fund&am=250.00&cu=INR&tn=House%20Fund%20Asha');
     expect(link).toContain('am=250.00');
     expect(link).toContain('cu=INR');
   });

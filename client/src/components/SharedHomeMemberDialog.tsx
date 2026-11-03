@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import UpiIdHint from '@/components/UpiIdHint';
 import { ContactRound, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -227,7 +228,8 @@ export default function SharedHomeMemberDialog({ open, onOpenChange, initial, on
           </Button>
           <div className="space-y-2"><Label htmlFor="home-member-name">{t('sharedHomeMemberName')} *</Label><Input id="home-member-name" value={name} onChange={event => setName(event.target.value)} /></div>
           <div className="space-y-2"><Label htmlFor="home-member-mobile">{t('sharedHomeMobile')}</Label><Input id="home-member-mobile" type="tel" value={mobileNumber} onChange={event => setMobileNumber(event.target.value)} placeholder={t('sharedHomeMobileOptional')} /></div>
-          <div className="space-y-2"><Label htmlFor="home-member-upi">{t('sharedHomeUpiId')}</Label><Input id="home-member-upi" value={upiId} onChange={event => setUpiId(event.target.value)} placeholder={t('sharedHomeUpiIdPlaceholder')} /></div>
+          <div className="space-y-2"><Label htmlFor="home-member-upi">{t('sharedHomeUpiId')}</Label><Input id="home-member-upi" value={upiId} onChange={event => setUpiId(event.target.value)} placeholder={t('sharedHomeUpiIdPlaceholder')} />
+<UpiIdHint value={upiId} /></div>
           <div className="space-y-2"><Label htmlFor="home-member-email">{t('sharedHomeEmail')}</Label><Input id="home-member-email" type="email" value={email} onChange={event => setEmail(event.target.value)} /></div>
           <div className="space-y-2"><Label htmlFor="home-member-avatar">{t('sharedHomeAvatar')}</Label><Input id="home-member-avatar" value={avatar} onChange={event => setAvatar(event.target.value)} placeholder={t('sharedHomeAvatarPlaceholder')} /></div>
           <div className="grid grid-cols-2 gap-3"><div className="space-y-2"><Label htmlFor="home-member-move-in">{t('sharedHomeMoveIn')}</Label><Input id="home-member-move-in" type="date" value={moveInDate} onChange={event => setMoveInDate(event.target.value)} /></div><div className="space-y-2"><Label htmlFor="home-member-move-out">{t('sharedHomeMoveOut')}</Label><Input id="home-member-move-out" type="date" value={moveOutDate} onChange={event => setMoveOutDate(event.target.value)} /></div></div><div className="space-y-2 rounded-xl bg-[#fffaf3] p-3"><p className="text-xs font-bold text-gray-600">{t('pbPause' as any)} ({t('sharedHomeOptional')})</p><div className="grid grid-cols-2 gap-3"><div className="space-y-1"><Label htmlFor="home-member-pause-from">{t('pbPauseFrom' as any)}</Label><Input id="home-member-pause-from" type="date" value={pauseFrom} onChange={event => setPauseFrom(event.target.value)} /></div><div className="space-y-1"><Label htmlFor="home-member-pause-to">{t('pbPauseTo' as any)}</Label><Input id="home-member-pause-to" type="date" value={pauseTo} onChange={event => setPauseTo(event.target.value)} /></div></div></div>

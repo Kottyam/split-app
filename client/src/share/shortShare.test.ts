@@ -55,7 +55,7 @@ describe('short share links', () => {
   });
 
   it('builds UPI pay links', () => {
-    expect(buildUpiPayLink('a@upi', 'Office Fund', 100)).toBe('upi://pay?pa=a%40upi&pn=Office%20Fund&cu=INR&am=100.00');
+    expect(buildUpiPayLink('a@upi', 'Office Fund', 100)).toBe('upi://pay?pa=a@upi&pn=Office%20Fund&am=100.00&cu=INR');
   });
 });
 

@@ -1,3 +1,4 @@
+import { buildUpiUri, checkUpiId } from '@/lib/upiLink';
 import { copyToClipboard, shareLink } from '@/lib/shareLink';
 
 export interface GroupFundPaymentRequest {
@@ -46,7 +47,7 @@ export function normalizeWhatsAppNumber(input?: string): string | undefined {
 /** Basic UPI VPA validation; never silently substitute a dummy payee address. */
 export function isValidGroupFundUpiId(value?: string): boolean {
   const upiId = (value ?? '').trim();
-  return /^[A-Za-z0-9._-]{2,256}@[A-Za-z0-9.-]{2,64}$/.test(upiId);
+  return checkUpiId(upiId).ok;
 }
 
 export function generateWhatsAppMessageUrl(mobileNumber: string | undefined, message: string): string | undefined {
@@ -57,14 +58,7 @@ export function generateWhatsAppMessageUrl(mobileNumber: string | undefined, mes
 
 export function generateGroupFundUpiDeepLink(req: GroupFundPaymentRequest): string {
   if (!isValidGroupFundUpiId(req.upiId) || !Number.isFinite(req.amount) || req.amount <= 0) return '';
-  const params = new URLSearchParams({
-    pa: req.upiId!.trim(),
-    pn: req.fundName.trim().slice(0, 50),
-    am: req.amount.toFixed(2),
-    cu: 'INR',
-    tn: (req.note || `Contribution to ${req.fundName} - ${req.memberName}`).slice(0, 80),
-  });
-  return `upi://pay?${params.toString()}`;
+  return buildUpiUri({ upiId: req.upiId!, payeeName: req.fundName, amount: req.amount, note: req.note || `${req.fundName} ${req.memberName}` });
 }
 
 export async function shareGroupFundPaymentRequest(req: GroupFundPaymentRequest): Promise<'shared' | 'copied' | 'failed'> {

@@ -1,3 +1,4 @@
+import { buildUpiUri } from '@/lib/upiLink';
 import { compressData, decompressData } from '@/lib/compression';
 import { copyToClipboard, shareLink } from '@/lib/shareLink';
 import { isValidUpiId } from '@/lib/upi';
@@ -48,13 +49,7 @@ export function normalizeSharedHomePaymentRequest(request: SharedHomePaymentRequ
 export function generateSharedHomeUpiDeepLink(request: SharedHomePaymentRequest): string | null {
   const normalized = normalizeSharedHomePaymentRequest(request);
   if (!isValidUpiId(normalized.upiId) || normalized.amount <= 0) return null;
-  const params = new URLSearchParams();
-  params.set('pa', normalized.upiId!);
-  params.set('pn', normalized.payeeName);
-  params.set('am', normalized.amount.toFixed(2));
-  params.set('cu', 'INR');
-  params.set('tn', `Shared Home Settlement - ${normalized.reason}`);
-  return `upi://pay?${params.toString()}`;
+  return buildUpiUri({ upiId: normalized.upiId!, payeeName: normalized.payeeName, amount: normalized.amount, note: `Shared Home ${normalized.reason}` }) || null;
 }
 
 const defaultPaymentRequestLabels: SharedHomePaymentRequestLabels = {

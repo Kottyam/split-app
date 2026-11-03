@@ -1,4 +1,5 @@
 import FundBudgetCard from '@/components/FundBudgetCard';
+import UpiIdHint from '@/components/UpiIdHint';
 import { normalizeBudget, computeBudgetStatus } from '@/groupFund/budget';
 import { showFieldError } from '@/lib/formValidation';
 import { generateFundShareLink } from '@/share/fundShare';
@@ -26,6 +27,7 @@ import { pickMultipleContacts, formatPhoneNumber } from '@/lib/contacts';
 import { appendUniqueMembers, parseMemberImportText } from '@/lib/memberImport';
 import { createGroupFundMemberTemplate, isXlsxFile, parseGroupFundMemberXlsxDetailed } from '@/lib/groupFundMemberExcel';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { buildUpiUri } from '@/lib/upiLink';
 import { generateGroupFundWhatsAppPaymentUrl, generateGroupFundWhatsAppReminderUrl, generateGroupFundWhatsAppThankYouUrl, generateGroupFundThankYouMessage, generateWhatsAppMessageUrl, normalizeWhatsAppNumber } from '@/groupFund/payment';
 import { getBulkMessageCandidates, getBulkMessageDuplicateNumberIds, getBulkMessageKind, getBulkMessageMissingNumberIds, getBulkMessageRecipients, getNextBulkMessageRecipientId, isBulkMessageQueueComplete, toggleBulkMessageMember } from '@/groupFund/bulkMessaging';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -1458,6 +1460,7 @@ export default function GroupFundDetail() {
                     onChange={e => setUpiId(e.target.value)}
                     className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
                   />
+<UpiIdHint value={upiId} />
                 </div>
                 <Button type="submit" className="bg-black text-white font-black rounded-xl border border-kharcha-line shadow-sm hover:bg-gray-800">{t('auditSaveSettings' as any)}</Button>
               </form>
@@ -1790,7 +1793,7 @@ export default function GroupFundDetail() {
                       <p className="text-xs font-black text-kharcha-navy mb-1">{t('auditConfiguredUpiQr' as any)}</p>
                       {fund.paymentConfig?.upiId ? (
                         <img
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`upi://pay?pa=${fund.paymentConfig.upiId}&pn=${encodeURIComponent(fund.name)}&am=${upiInputAmount}&tn=${encodeURIComponent(`Collection - ${selectedMemberForCollection.name}`)}`)}`}
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(buildUpiUri({ upiId: fund.paymentConfig.upiId, payeeName: fund.name, amount: Number(upiInputAmount), note: `Collection ${selectedMemberForCollection.name}` }))}`}
                           alt={t('auditUpiQrAlt' as any, { name: fund.name })}
                           className="w-32 h-32 mx-auto border border-kharcha-line bg-white p-1 rounded-lg"
                         />
@@ -2063,7 +2066,7 @@ export default function GroupFundDetail() {
             <div className="shrink-0">
               {fund.paymentConfig?.upiId ? (
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(`upi://pay?pa=${fund.paymentConfig.upiId}&pn=${encodeURIComponent(fund.name)}`)}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(buildUpiUri({ upiId: fund.paymentConfig.upiId, payeeName: fund.name }))}`}
                   alt={t('auditQrCode' as any)}
                   className="w-24 h-24 border border-kharcha-line bg-white p-1 rounded-lg"
                 />
@@ -2123,7 +2126,7 @@ export default function GroupFundDetail() {
                           />
                           {fund.paymentConfig?.upiId && currentVal.trim() && Number.isFinite(Number(currentVal)) && Number(currentVal) > 0 && (
                             <img
-                              src={`https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(`upi://pay?pa=${fund.paymentConfig.upiId}&pn=${encodeURIComponent(fund.name)}&am=${Number(currentVal).toFixed(2)}&tn=${encodeURIComponent(`Contribution - ${m.name}`) }`)}`}
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(buildUpiUri({ upiId: fund.paymentConfig.upiId, payeeName: fund.name, amount: Number(currentVal), note: `Contribution ${m.name}` }))}`}
                               alt={`UPI QR for ${m.name}, ₹${currentVal}`}
                               className="w-20 h-20 mx-auto rounded-md border bg-white p-1"
                             />
@@ -2256,7 +2259,7 @@ export default function GroupFundDetail() {
             {fund.paymentConfig?.upiId ? (
               <>
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=${fund.paymentConfig.upiId}&pn=${encodeURIComponent(fund.name)}`)}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(buildUpiUri({ upiId: fund.paymentConfig.upiId, payeeName: fund.name }))}`}
                   alt={t('auditUpiQrAlt' as any, { name: fund.name })}
                   className="w-48 h-48 border border-kharcha-line bg-white p-2 rounded-lg"
                 />
