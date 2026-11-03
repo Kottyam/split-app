@@ -102,6 +102,8 @@ export interface GroupFund {
   customPurpose?: string;
   description?: string;
   targetAmount?: number;
+  /** Optional spending budget for the fund (absent on older funds). */
+  budgetAmount?: number;
   startingBalance?: number;
   contributionType: ContributionType;
   defaultContributionAmount: number;

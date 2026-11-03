@@ -1,4 +1,6 @@
 import React, { useEffect } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import InstallPromptDialog from "@/components/InstallPromptDialog";
 import { Switch, Route, useLocation } from "wouter";
 import Home from "./pages/Home";
 import Trips from "./pages/Trips";
@@ -66,6 +68,7 @@ function AppShell() {
     <div className="kharcha-app-shell min-h-screen pb-20">
       <Router />
       <BottomNav />
+      <InstallPromptDialog />
     </div>
   );
 }
@@ -75,6 +78,7 @@ export default function App() {
     <LanguageProvider>
       <DeleteConfirmationProvider>
         <AppShell />
+        <Toaster position="top-center" richColors closeButton />
       </DeleteConfirmationProvider>
     </LanguageProvider>
   );

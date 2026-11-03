@@ -1,3 +1,4 @@
+import FundBudgetCard from '@/components/FundBudgetCard';
 import { useMemo } from 'react';
 import { Copy, Landmark, Receipt, Users, Wallet } from 'lucide-react';
 import { useLocation } from 'wouter';
@@ -56,6 +57,7 @@ export default function SharedFundView() {
       />
       <div className="space-y-4 p-4">
         {fund.description && <Card className="rounded-3xl bg-white p-4 text-sm text-gray-700 shadow-sm">{fund.description}</Card>}
+        <FundBudgetCard budget={fund.budgetAmount} collected={collected} expenses={spent} />
         <div className="grid grid-cols-3 gap-2">
           {stats.map(s => (
             <Card key={s.label} className="overflow-hidden rounded-2xl bg-white p-0 shadow-sm">

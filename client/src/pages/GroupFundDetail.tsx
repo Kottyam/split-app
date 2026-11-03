@@ -1,3 +1,6 @@
+import FundBudgetCard from '@/components/FundBudgetCard';
+import { normalizeBudget, computeBudgetStatus } from '@/groupFund/budget';
+import { showFieldError } from '@/lib/formValidation';
 import { generateFundShareLink } from '@/share/fundShare';
 import { shareLink, copyToClipboard } from '@/lib/shareLink';
 import { contributionMatchesPeriod, ONE_TIME_PERIOD } from '@/groupFund/collection';
@@ -246,6 +249,7 @@ export default function GroupFundDetail() {
 
   const [showQrDialog, setShowQrDialog] = useState(false);
   const [upiId, setUpiId] = useState(fund?.paymentConfig?.upiId ?? '');
+  const [budgetInput, setBudgetInput] = useState(fund?.budgetAmount ? String(fund.budgetAmount) : '');
 
   if (!fund) {
     return (
@@ -642,12 +646,12 @@ export default function GroupFundDetail() {
   const handleSaveExpense = (e: React.FormEvent) => {
     e.preventDefault();
     if (!expenseTitle.trim()) {
-      toast.error(t('auditExpenseTitleRequiredMessage' as any));
+      showFieldError('fund-expense-title', t('auditExpenseTitleRequiredMessage' as any));
       return;
     }
     const amt = parseFloat(expenseAmount);
     if (isNaN(amt) || amt <= 0) {
-      toast.error(t('auditInvalidAmount' as any));
+      showFieldError('fund-expense-amount', t('auditErrExpenseAmount' as any));
       return;
     }
 
@@ -777,19 +781,21 @@ export default function GroupFundDetail() {
         </head>
         <body>
           <div class="report">
-            <div class="report-header">
+            <div class="report-header stacked">
               ${KHARCHA_PDF_WORDMARK_HTML}
               <div class="report-heading">
                 <h1>${escapePdfHtml(fund.name)}</h1>
                 <p>${escapePdfHtml(t('auditPurposeReport' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.purpose))} (${escapePdfHtml(groupFundOptionLabel(t, fund.contributionType))}) ${fund.isRecurring ? `| ${escapePdfHtml(t('auditFrequencyShort' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.recurringFrequency))}` : ''} | ${escapePdfHtml(t('auditPeriodLabel' as any))}: ${escapePdfHtml(selectedPeriod)} | ${escapePdfHtml(t('auditGeneratedOn' as any))}: ${escapePdfHtml(new Date().toLocaleDateString())}</p>
               </div>
             </div>
-          
-          <div class="summary">
-            <strong>${t('auditTotalCollected' as any)}:</strong> ₹${totalCollected.toLocaleString('en-IN')} | 
-            <strong>${t('auditTotalExpenses' as any)}:</strong> ₹${totalExpenses.toLocaleString('en-IN')} | 
-            <strong>${t('auditRemainingBalance' as any)}:</strong> ₹${remainingBalance.toLocaleString('en-IN')}
+
+          <div class="summary cards-4">
+            <div class="metric" style="--card-accent:#038f27">${escapePdfHtml(t('auditTotalCollected' as any))}<strong>₹${totalCollected.toLocaleString('en-IN')}</strong></div>
+            <div class="metric" style="--card-accent:#fd6d00">${escapePdfHtml(t('auditTotalExpenses' as any))}<strong>₹${totalExpenses.toLocaleString('en-IN')}</strong></div>
+            <div class="metric" style="--card-accent:#023b81">${escapePdfHtml(t('auditRemainingBalance' as any))}<strong>₹${remainingBalance.toLocaleString('en-IN')}</strong></div>
+            <div class="metric" style="--card-accent:#16834b">${escapePdfHtml(t('auditMembers' as any))}<strong>${fund.members.length}</strong><small>${escapePdfHtml(t('auditCollectedStatus' as any))}: ${fund.members.filter((m: GroupFundMember) => getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) === 'Collected').length} · ${escapePdfHtml(t('auditPending' as any))}: ${fund.members.filter((m: GroupFundMember) => getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) !== 'Collected').length}</small></div>
           </div>
+          ${(() => { const b = computeBudgetStatus(fund.budgetAmount, totalCollected, totalExpenses); if (!b) return ''; const st = b.state === 'over' ? `${t('auditBudgetOver' as any)} ₹${b.overBy.toLocaleString('en-IN')}` : b.state === 'collection-short' ? `${t('auditBudgetCollectionShort' as any)} ₹${b.collectionShortBy.toLocaleString('en-IN')}` : t('auditBudgetWithin' as any); const col = b.state === 'over' ? '#dc2626' : b.state === 'collection-short' ? '#b45309' : '#16834b'; return `<div class="summary cards-4 budget-row"><div class="metric" style="--card-accent:#023b81">${escapePdfHtml(t('auditBudget' as any))}<strong>₹${b.budget.toLocaleString('en-IN')}</strong></div><div class="metric" style="--card-accent:${col}">${escapePdfHtml(t('auditBudgetRemaining' as any))}<strong>₹${b.remaining.toLocaleString('en-IN')}</strong><small style="color:${col}">${escapePdfHtml(st)}</small></div><div class="metric" style="--card-accent:#038f27">${escapePdfHtml(t('auditTotalCollected' as any))}<strong>${b.collectedPct}%</strong><small>of budget</small></div><div class="metric" style="--card-accent:#fd6d00">${escapePdfHtml(t('auditTotalExpenses' as any))}<strong>${b.spentPct}%</strong><small>of budget</small></div></div>`; })()}
 
           <h3>${t('auditCollectionSummaryReport' as any)}</h3>
           <table>
@@ -900,12 +906,12 @@ export default function GroupFundDetail() {
     const latestFund = getGroupFundById(params.id) ?? fund;
     const trimmedName = memberName.trim();
     if (!trimmedName) {
-      toast.error(t('fillRequired'));
+      showFieldError('fund-member-name', t('auditErrMemberName' as any));
       return;
     }
     const expectedAmount = memberExpected.trim() ? parseFloat(memberExpected) : undefined;
     if (expectedAmount !== undefined && (!Number.isFinite(expectedAmount) || expectedAmount < 0)) {
-      toast.error(t('auditInvalidAmount' as any));
+      showFieldError('fund-member-expected', t('auditErrExpectedAmount' as any));
       return;
     }
 
@@ -1097,8 +1103,13 @@ export default function GroupFundDetail() {
 
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
+    if (budgetInput.trim() && !normalizeBudget(budgetInput)) {
+      showFieldError('fund-budget', t('auditErrBudget' as any));
+      return;
+    }
     const next = appendActivity({
       ...fund,
+      budgetAmount: normalizeBudget(budgetInput),
       collectionStartDate: fund.isRecurring ? collectionStartDate || undefined : undefined,
       collectionPeriodMode: fund.isRecurring && fund.recurringFrequency !== 'Daily' ? collectionPeriodMode : undefined,
       collectionTiming: fund.isRecurring ? (collectionPeriodMode === 'past' ? 'previous' : 'advance') : undefined,
@@ -1383,6 +1394,8 @@ export default function GroupFundDetail() {
               </Card>
             </div>
 
+            <FundBudgetCard budget={fund.budgetAmount} collected={lifetimeTotalCollected} expenses={totalExpenses} />
+
             <Card className="rounded-2xl border border-kharcha-line bg-white p-4 shadow-sm">
               <h3 className="font-black text-kharcha-navy flex items-center gap-2"><History size={18} /> {t('auditFundActivity' as any)}</h3>
               <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
@@ -1431,6 +1444,11 @@ export default function GroupFundDetail() {
                     )}
                   </div>
                 )}
+                <div>
+                  <Label htmlFor="fund-budget" className="font-black text-kharcha-navy">{t('auditBudgetOptional' as any)} (₹)</Label>
+                  <Input id="fund-budget" type="number" inputMode="decimal" min="0" placeholder="10000" value={budgetInput} onChange={e => setBudgetInput(e.target.value)} className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm" />
+                  <p className="mt-1 text-xs text-gray-600">{t('auditBudgetHelp' as any)}</p>
+                </div>
                 <div>
                   <Label htmlFor="fund-upi" className="font-black text-kharcha-navy">{t('auditFundUpiSettingsLabel' as any)}</Label>
                   <Input
@@ -1830,11 +1848,12 @@ export default function GroupFundDetail() {
             <DialogTitle className="font-black text-xl text-kharcha-navy">{t('auditRecordFundExpense' as any)}</DialogTitle>
             <DialogDescription className="text-kharcha-navy font-bold">{t('auditRecordFundExpenseDescription' as any)}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSaveExpense} className="space-y-4">
+          <form onSubmit={handleSaveExpense} noValidate className="space-y-4">
             <div>
               <Label className="font-black text-kharcha-navy">{t('auditExpenseTitleRequired' as any)}</Label>
               <Input
                 placeholder={t('auditExpenseTitlePlaceholder' as any)}
+                id="fund-expense-title"
                 value={expenseTitle}
                 onChange={e => setExpenseTitle(e.target.value)}
                 className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
@@ -1863,6 +1882,7 @@ export default function GroupFundDetail() {
                 type="number"
                 step="any"
                 placeholder="1500"
+                id="fund-expense-amount"
                 value={expenseAmount}
                 onChange={e => setExpenseAmount(e.target.value)}
                 className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
@@ -2147,11 +2167,12 @@ export default function GroupFundDetail() {
             <DialogTitle className="font-black text-xl text-kharcha-navy">{editingMember ? t('edit') : t('auditAddMemberManually' as any)}</DialogTitle>
             <DialogDescription className="text-kharcha-navy font-bold">{editingMember ? editingMember.name : t('auditAddParticipant' as any)}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSaveMember} className="space-y-4">
+          <form onSubmit={handleSaveMember} noValidate className="space-y-4">
             <div>
               <Label className="font-black text-kharcha-navy">{t('auditMemberNameRequired' as any)}</Label>
               <Input
                 placeholder={t('auditMemberName' as any)}
+                id="fund-member-name"
                 value={memberName}
                 onChange={e => setMemberName(e.target.value)}
                 className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
@@ -2163,6 +2184,7 @@ export default function GroupFundDetail() {
               <Input
                 type="number"
                 placeholder={fund.isRecurring && fund.amountType === 'Default Amount' ? String(fund.defaultContributionAmount ?? 0) : '500'}
+                id="fund-member-expected"
                 value={memberExpected}
                 onChange={e => setMemberExpected(e.target.value)}
                 className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"

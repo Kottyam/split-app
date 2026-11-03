@@ -1,3 +1,4 @@
+import { showFieldError } from '@/lib/formValidation';
 import { toLocalDateKey } from '@/lib/localDate';
 import { useState, useMemo } from 'react';
 import { getCustomSplitStatus, formatSplitAmount } from '@/lib/customSplit';
@@ -79,16 +80,11 @@ export default function AddExpenseDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const activeMembers = splitType === 'equal-all' ? new Set(trip.members.map(member => member.id)) : selectedMembers;
-    if (!description.trim() || !amount.trim() || !paidBy || activeMembers.size === 0) {
-      toast.error(t('fillRequired'));
-      return;
-    }
-
+    if (!description.trim()) { showFieldError('description', t('auditErrExpenseDescription' as any)); return; }
     const expenseAmount = parseFloat(amount);
-    if (!Number.isFinite(expenseAmount) || expenseAmount <= 0) {
-      toast.error(t('fillRequired'));
-      return;
-    }
+    if (!amount.trim() || !Number.isFinite(expenseAmount) || expenseAmount <= 0) { showFieldError('amount', t('auditErrExpenseAmount' as any)); return; }
+    if (!paidBy) { showFieldError('expense-paid-by', t('auditErrPaidBy' as any)); return; }
+    if (activeMembers.size === 0) { showFieldError('expense-split-members', t('auditErrSplitMembers' as any)); return; }
     let splits: Record<string, number> = {};
 
     if (splitType === 'equal-all' || splitType === 'equal-selected') {
@@ -167,7 +163,7 @@ export default function AddExpenseDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div>
             <Label htmlFor="description" className="font-bold text-black">
               {t('description')}
@@ -229,7 +225,7 @@ export default function AddExpenseDialog({
                 {t('paidBy')}
               </Label>
               <Select value={paidBy} onValueChange={setPaidBy}>
-                <SelectTrigger className="border-2 border-black rounded-lg mt-1">
+                <SelectTrigger id="expense-paid-by" className="border-2 border-black rounded-lg mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="border-2 border-black">
@@ -294,7 +290,7 @@ export default function AddExpenseDialog({
             <Label className="font-bold text-black mb-2 block">
               {splitType === 'equal-all' ? t('auditAllMembersIncluded' as any) : splitType === 'equal-selected' ? t('auditSelectPeople' as any) : t('auditCustomAmountsHint' as any)}
             </Label>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
+            <div id="expense-split-members" tabIndex={-1} className="space-y-2 max-h-40 overflow-y-auto rounded-lg">
               {trip.members.map(member => (
                 <div key={member.id} className="flex items-center gap-2">
                   <Checkbox

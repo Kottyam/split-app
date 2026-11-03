@@ -1,3 +1,4 @@
+import { showFieldError } from '@/lib/formValidation';
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
@@ -32,7 +33,11 @@ export default function CreateTripDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name && startDate && endDate) {
+    if (!name.trim()) { showFieldError('trip-name', t('auditErrTripName' as any)); return; }
+    if (!startDate) { showFieldError('start-date', t('auditErrStartDate' as any)); return; }
+    if (!endDate) { showFieldError('end-date', t('auditErrEndDate' as any)); return; }
+    if (new Date(endDate).getTime() < new Date(startDate).getTime()) { showFieldError('end-date', t('auditErrEndBeforeStart' as any)); return; }
+    {
       const start = new Date(startDate).getTime();
       const end = new Date(endDate).getTime();
       onCreateTrip(name, description, start, end);
@@ -53,7 +58,7 @@ export default function CreateTripDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div>
             <Label htmlFor="trip-name" className="font-bold text-black">
               {t('tripName')}

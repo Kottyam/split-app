@@ -3,19 +3,22 @@ import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+export type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
-let deferredPrompt: InstallPromptEvent | null = null;
+export let deferredPrompt: InstallPromptEvent | null = null;
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); deferredPrompt = event as InstallPromptEvent; });
 }
 
-function isInstalled(): boolean {
+export function isInstalled(): boolean {
   if (typeof window === 'undefined') return true;
   return window.matchMedia?.('(display-mode: standalone)').matches === true
     || new URLSearchParams(window.location.search).get('android') === '1'
     || /KharchaAndroid/i.test(navigator.userAgent);
 }
+
+export function getDeferredPrompt() { return deferredPrompt; }
+export function clearDeferredPrompt() { deferredPrompt = null; }
 
 /** "Install app" banner for the web (PWA). Hidden inside the installed/Android app. */
 export default function InstallAppButton() {

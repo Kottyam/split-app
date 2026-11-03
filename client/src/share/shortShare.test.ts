@@ -58,3 +58,14 @@ describe('short share links', () => {
     expect(buildUpiPayLink('a@upi', 'Office Fund', 100)).toBe('upi://pay?pa=a%40upi&pn=Office%20Fund&cu=INR&am=100.00');
   });
 });
+
+describe('fund share budget', () => {
+  it('round-trips budget and stays compatible with old links', async () => {
+    const { encodeFundSnapshot, decodeFundSnapshot } = await import('./fundShare');
+    const { compressToEncodedURIComponent } = await import('lz-string');
+    const fund: any = { id: 'f', type: 'group_fund', name: 'Tea', purpose: 'Office', contributionType: 'fixed', defaultContributionAmount: 0, members: [], contributions: [], expenses: [], createdAt: 0, budgetAmount: 5000 };
+    expect(decodeFundSnapshot(encodeFundSnapshot(fund))!.budgetAmount).toBe(5000);
+    const old = compressToEncodedURIComponent(JSON.stringify([1, 'Tea', '', '', '', 0, 0, 0, [], []]));
+    expect(decodeFundSnapshot(old)!.budgetAmount).toBeUndefined();
+  });
+});

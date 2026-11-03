@@ -704,3 +704,12 @@ body {
   min-height: 2.75rem;
   border-radius: 1rem;
 }
+
+/* Form validation: highlighted field that needs fixing. */
+[data-field-error="true"] {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25) !important;
+  background-color: #fff5f5 !important;
+  animation: kharcha-field-shake 0.32s ease-in-out 1;
+}
+@keyframes kharcha-field-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }

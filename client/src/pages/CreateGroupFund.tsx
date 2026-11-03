@@ -1,3 +1,5 @@
+import { normalizeBudget } from '@/groupFund/budget';
+import { showFieldError } from '@/lib/formValidation';
 import { toLocalDateKey } from '@/lib/localDate';
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
@@ -24,6 +26,7 @@ export default function CreateGroupFund() {
   const [startingBalance, setStartingBalance] = useState('');
   const [contributionType, setContributionType] = useState<ContributionType>('monthly');
   const [defaultContributionAmount, setDefaultContributionAmount] = useState('');
+  const [budgetAmount, setBudgetAmount] = useState('');
 
   // Recurring collection states
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
@@ -46,7 +49,11 @@ export default function CreateGroupFund() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error(t('auditFundNameRequired' as any));
+      showFieldError('fund-name', t('auditFundNameRequired' as any));
+      return;
+    }
+    if (budgetAmount.trim() && !normalizeBudget(budgetAmount)) {
+      showFieldError('fund-budget', t('auditErrBudget' as any));
       return;
     }
 
@@ -58,6 +65,7 @@ export default function CreateGroupFund() {
       customPurpose: purpose === 'Other' ? customPurpose.trim() || undefined : undefined,
       description: description.trim() || undefined,
       targetAmount: targetAmount ? parseFloat(targetAmount) : undefined,
+      budgetAmount: normalizeBudget(budgetAmount),
       startingBalance: startingBalance ? parseFloat(startingBalance) : 0,
       contributionType,
       defaultContributionAmount: parseFloat(defaultContributionAmount) || 0,
@@ -104,7 +112,7 @@ export default function CreateGroupFund() {
         />
 
         <Card className="rounded-2xl border border-kharcha-line bg-white p-6 shadow-sm">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <div>
               <Label htmlFor="fund-name" className="font-bold text-kharcha-navy">{t('auditFundName' as any)} *</Label>
               <Input
@@ -419,6 +427,12 @@ export default function CreateGroupFund() {
                 />
               </div>
             )}
+
+            <div>
+              <Label htmlFor="fund-budget" className="font-bold text-kharcha-navy">{t('auditBudgetOptional' as any)} (₹)</Label>
+              <Input id="fund-budget" type="number" inputMode="decimal" min="0" placeholder="10000" value={budgetAmount} onChange={e => setBudgetAmount(e.target.value)} className="border border-kharcha-line rounded-xl mt-1" />
+              <p className="mt-1 text-xs text-gray-600">{t('auditBudgetHelp' as any)}</p>
+            </div>
 
             <Button type="submit" className="w-full bg-[#16834b] text-white font-black py-3 rounded-xl border border-kharcha-line shadow-sm hover:bg-green-700">
               {t('auditCreateGroupFund' as any)}

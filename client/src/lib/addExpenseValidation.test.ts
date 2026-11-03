@@ -11,7 +11,8 @@ describe('Trip Add Expense validation contract', () => {
   });
 
   it('uses themed feedback instead of native alerts', () => {
-    expect(source).toContain("toast.error(t('fillRequired'))");
+    expect(source).toContain("showFieldError('description'");
+    expect(source).toContain("showFieldError('amount'");
     expect(source).not.toContain("alert(t('fillRequired'))");
   });
 });
