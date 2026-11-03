@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { getCustomSplitStatus, formatSplitAmount } from '@/lib/customSplit';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Dialog,
@@ -58,6 +59,7 @@ export default function AddExpenseDialog({
     }
   };
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
+  const [splitError, setSplitError] = useState('');
   const { addExpense } = useTrips();
   const { t } = useLanguage();
 
@@ -107,10 +109,14 @@ export default function AddExpenseDialog({
         totalCustom += customAmount;
       });
 
-      if (Math.abs(totalCustom - expenseAmount) > 0.01) {
-        toast.error(t('customSplitError', { amount: expenseAmount }));
+      const splitStatus = getCustomSplitStatus(expenseAmount, Array.from(selectedMembers).map(id => customSplits[id]));
+      if (!splitStatus.matches) {
+        const message = t('tripSplitMismatch' as any, { split: formatSplitAmount(splitStatus.splitTotal), total: formatSplitAmount(splitStatus.expenseTotal), diff: formatSplitAmount(splitStatus.difference) });
+        setSplitError(message);
+        toast.error(message);
         return;
       }
+      setSplitError('');
     }
 
     addExpense(
@@ -321,6 +327,17 @@ export default function AddExpenseDialog({
               ))}
             </div>
           </div>
+
+          {splitType === 'custom' && (() => {
+            const live = getCustomSplitStatus(parseFloat(amount), Array.from(selectedMembers).map(id => customSplits[id]));
+            const text = live.matches ? t('tripSplitMatched' as any) : live.difference > 0 ? t('tripSplitRemaining' as any, { amount: formatSplitAmount(live.difference) }) : t('tripSplitOver' as any, { amount: formatSplitAmount(live.difference) });
+            return (
+              <div data-testid="custom-split-status" role={splitError ? 'alert' : 'status'} className={`rounded-xl border px-3 py-2 text-sm font-bold ${live.matches ? 'border-[#16834b]/40 bg-[#e6f3e8] text-[#16834b]' : 'border-red-300 bg-red-50 text-red-700'}`}>
+                <p>{t('tripSplitTotals' as any, { split: formatSplitAmount(live.splitTotal), total: formatSplitAmount(live.expenseTotal) })} · {text}</p>
+                {splitError && !live.matches && <p className="mt-1 font-semibold">{splitError}</p>}
+              </div>
+            );
+          })()}
 
           <DialogFooter className="gap-2">
             <Button

@@ -209,6 +209,21 @@ export default function TripDetail({ params }: TripDetailProps) {
 
           {/* Expenses Tab */}
           <TabsContent value="expenses" className="space-y-4 mt-4">
+            {/* Add expense stays at the top (sticky) so it is reachable without scrolling past long expense lists. */}
+            <div className="sticky top-2 z-20" data-testid="trip-add-expense-sticky">
+              <Button
+                type="button"
+                data-testid="trip-add-expense"
+                disabled={trip.members.length === 0}
+                onClick={() => {
+                  if (trip.members.length > 0) setShowAddExpense(true);
+                }}
+                className="w-full min-h-12 shadow-[0_4px_12px_rgba(24,50,75,0.18)] bg-[#18324b] text-white font-bold rounded-xl border-2 border-[#18324b] hover:bg-[#10263a] disabled:cursor-not-allowed disabled:bg-[#18324b] disabled:text-white disabled:opacity-100"
+              >
+                <Split size={18} className="mr-2" />
+                {t('howToSplitAddExpense')}
+              </Button>
+            </div>
             <ExpenseListView trip={trip} onEditExpense={handleEditExpense} onExpenseDeleted={() => setTripRevision(revision => revision + 1)} />
             {trip.members.length === 0 && (
               <Card className="border border-[#d7e4dc] bg-white p-5 text-center rounded-xl">
@@ -227,18 +242,6 @@ export default function TripDetail({ params }: TripDetailProps) {
                 </Button>
               </Card>
             )}
-            <Button
-              type="button"
-              data-testid="trip-add-expense"
-              disabled={trip.members.length === 0}
-              onClick={() => {
-                if (trip.members.length > 0) setShowAddExpense(true);
-              }}
-              className="w-full min-h-12 bg-[#18324b] text-white font-bold rounded-xl border-2 border-[#18324b] hover:bg-[#10263a] disabled:cursor-not-allowed disabled:bg-[#18324b] disabled:text-white disabled:opacity-100"
-            >
-              <Split size={18} className="mr-2" />
-              {t('howToSplitAddExpense')}
-            </Button>
           </TabsContent>
 
           {/* Members Tab */}
