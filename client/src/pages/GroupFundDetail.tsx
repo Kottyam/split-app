@@ -1134,7 +1134,7 @@ export default function GroupFundDetail() {
         accent="green"
         onBack={() => navigate('/group-funds')}
         backLabel={t('auditBackToKharcha' as any)}
-        actions={<><Button variant="fund" onClick={() => setShowEditSync(true)} className="w-full min-h-12 text-base"><Share2 size={16} className="mr-1.5" /> {t('sharedHomeShare')}</Button><Button variant="soft" onClick={handleShareViewLink} className="w-full min-h-11"><Link2 size={16} className="mr-1" /> {t('auditShareViewLink' as any)}</Button><Button variant="soft" onClick={() => setShowQrDialog(true)} className="w-full min-h-11"><QrCode size={16} className="mr-1" /> {t('auditQrCode' as any)}</Button></>}
+        actions={<><Button variant="fund" data-testid="share-for-editing" onClick={() => setShowEditSync(true)} className="w-full min-h-12 text-base"><Share2 size={16} className="mr-1.5" /> Share for editing</Button><Button variant="soft" onClick={handleShareViewLink} className="w-full min-h-11"><Link2 size={16} className="mr-1" /> {t('auditShareViewLink' as any)}</Button><Button variant="soft" onClick={() => setShowQrDialog(true)} className="w-full min-h-11"><QrCode size={16} className="mr-1" /> {t('auditQrCode' as any)}</Button></>}
       >
         <div className="mx-auto mt-3 grid max-w-5xl grid-cols-3 gap-2 text-xs font-black sm:grid-cols-6">
           {[

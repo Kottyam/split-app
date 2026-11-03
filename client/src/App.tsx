@@ -14,6 +14,9 @@ import More from "./pages/More";
 import TripDetail from "./pages/TripDetail";
 import SharedView from "./pages/SharedView";
 import ShortShareView from "./pages/ShortShareView";
+import OldSyncLink from "./pages/OldSyncLink";
+import ImportKharcha from "./pages/ImportKharcha";
+import AndroidImportListener from "./sync/AndroidImportListener";
 import SharedHomeRedesign from "./pages/SharedHomeRedesign";
 import SharedHomeDetail from "./pages/SharedHomeDetail";
 import SharedHomeSharedView from "./pages/SharedHomeSharedView";
@@ -48,8 +51,11 @@ function Router() {
       <Route path={/^\/shared-home-payment\/.+$/} component={SharedHomePaymentRequest} />
       <Route path={/^\/share\/.+$/} component={SharedView} />
       <Route path={/^\/s\/[tf].+$/} component={ShortShareView} />
-      <Route path={/^\/edit-sync\/.+$/} component={EditSyncRecipient} />
-      <Route path={/^\/sync-review\/.+$/} component={SyncReview} />
+      <Route path={/^\/s\/e.+$/} component={EditSyncRecipient} />
+      <Route path={/^\/s\/u.+$/} component={SyncReview} />
+      <Route path="/import" component={ImportKharcha} />
+      <Route path={/^\/edit-sync\/.+$/} component={OldSyncLink} />
+      <Route path={/^\/sync-review\/.+$/} component={OldSyncLink} />
       <Route path="/sync-updates" component={SyncUpdates} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
@@ -66,6 +72,7 @@ function AppShell() {
 
   return (
     <div className="kharcha-app-shell min-h-screen pb-20">
+      <AndroidImportListener />
       <Router />
       <BottomNav />
       <InstallPromptDialog />

@@ -117,6 +117,7 @@ public class MainActivity extends FragmentActivity {
 
         launchStartedAt = SystemClock.uptimeMillis();
         buildWebView();
+        readImportIntent(getIntent());
 
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(CREAM);
@@ -131,6 +132,47 @@ public class MainActivity extends FragmentActivity {
                 FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(root);
         loadLocalApp();
+    }
+
+    private String pendingImport;
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        readImportIntent(intent);
+        deliverPendingImport();
+    }
+
+    /** Reads a shared or opened .kharcha file so the web app can show the import/review screen. */
+    private void readImportIntent(Intent intent) {
+        if (intent == null) return;
+        Uri uri = null;
+        if (Intent.ACTION_VIEW.equals(intent.getAction())) uri = intent.getData();
+        else if (Intent.ACTION_SEND.equals(intent.getAction())) uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        if (uri == null || !("content".equals(uri.getScheme()) || "file".equals(uri.getScheme()))) return;
+        try (InputStream in = getContentResolver().openInputStream(uri)) {
+            if (in == null) return;
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int read; int total = 0;
+            while ((read = in.read(buffer)) != -1) {
+                total += read;
+                if (total > 5 * 1024 * 1024) return;
+                out.write(buffer, 0, read);
+            }
+            String text = out.toString("UTF-8");
+            if (text.contains("\"kharcha\"")) pendingImport = text;
+        } catch (IOException | SecurityException error) {
+            pendingImport = null;
+        }
+    }
+
+    private void deliverPendingImport() {
+        if (pendingImport == null || webView == null) return;
+        String quoted = org.json.JSONObject.quote(pendingImport);
+        pendingImport = null;
+        webView.evaluateJavascript("window.__kharchaPendingImport=" + quoted + ";window.dispatchEvent(new CustomEvent('kharcha-import',{detail:" + quoted + "}));", null);
     }
 
     private void loadLocalApp() {
@@ -1301,6 +1343,7 @@ public class MainActivity extends FragmentActivity {
         @Override
         public void onPageFinished(WebView view, String url) {
             revealLandingPage();
+            deliverPendingImport();
         }
 
         @Override

@@ -10,10 +10,10 @@ describe('detail-page Share buttons', () => {
   it('uses the localized Share label and Kharcha green styling on each top control', () => {
     expect(tripSource).toContain("{t('sharedHomeShare' as any)}");
     expect(sharedHomeSource).toContain("{t('sharedHomeShare')}</Button>");
-    expect(groupFundSource).toContain("{t('sharedHomeShare')}");
+    expect(groupFundSource).toContain('data-testid="share-for-editing"');
     expect(tripSource).toContain('variant="soft" onClick={() => setShowShareTrip(true)}');
     expect(sharedHomeSource).toContain('bg-[#16834b]');
-    expect(groupFundSource).toContain('variant="fund" onClick={() => setShowEditSync(true)}');
+    expect(groupFundSource).toContain('variant="fund" data-testid="share-for-editing" onClick={() => setShowEditSync(true)}');
   });
 
   it('preserves the existing share handlers for all three detail pages', () => {
