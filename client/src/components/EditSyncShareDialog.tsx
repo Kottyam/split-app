@@ -15,7 +15,6 @@ interface Props {
   contextName: string;
   snapshot: SyncSnapshot;
 }
-const NAME_KEY = 'kharcha_sync_my_name';
 
 /** "Share for editing": a link (or .kharcha file) carrying an editable copy. No server involved. */
 export default function EditSyncShareDialog(props: Props) {
@@ -24,7 +23,7 @@ export default function EditSyncShareDialog(props: Props) {
 }
 
 function ShareForEditing({ open, onOpenChange, contextType, contextId, contextName, snapshot }: Props) {
-  const [from, setFrom] = useState(() => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } });
+  const [from, setFrom] = useState('');
   const pkg = useMemo<EditPackage>(() => {
     const original = snapshot as unknown as Snapshot;
     const normalized = normalizeSnapshot(original);
@@ -36,7 +35,7 @@ function ShareForEditing({ open, onOpenChange, contextType, contextId, contextNa
   const full = { ...pkg, ...(from.trim() ? { f: from.trim().slice(0, 40) } : {}) };
   const url = editLink(full);
   return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent data-testid="share-for-editing-dialog"><DialogHeader><DialogTitle>Share for editing</DialogTitle><DialogDescription>Anyone with this link can make their own editable copy of “{contextName}” and send their changes back to you. Nothing changes here until you review and accept.</DialogDescription></DialogHeader>
-    <label className="text-xs font-bold text-gray-600">Your name (shown to them)<Input data-testid="share-for-editing-name" value={from} onChange={e => { setFrom(e.target.value); try { localStorage.setItem(NAME_KEY, e.target.value); } catch { /* ignore */ } }} placeholder="e.g. Amal" className="mt-1" /></label>
+    <label className="text-xs font-bold text-gray-600">Your name (shown to them)<Input data-testid="share-for-editing-name" value={from} onChange={e => setFrom(e.target.value)} placeholder="Name" className="mt-1" /></label>
     <LinkOrFileActions url={url} fileContents={buildKharchaFile('edit', full)} fileName={`${contextName}-edit`} title={`Edit “${contextName}” in Kharcha`} message={`Edit “${contextName}” in Kharcha and send me your changes:`} testIdPrefix="edit-link" />
   </DialogContent></Dialog>;
 }
