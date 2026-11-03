@@ -556,6 +556,14 @@ body {
     border-color: #16834b;
   }
 
+  .border-kharcha-line {
+    border-color: var(--kharcha-line);
+  }
+
+  .text-kharcha-green {
+    color: var(--kharcha-green);
+  }
+
   .drop-shadow-lg {
     filter: drop-shadow(3px 3px 0px rgba(0, 0, 0, 0.2));
   }

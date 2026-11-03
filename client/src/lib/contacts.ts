@@ -18,6 +18,8 @@ type NativeContactBridge = {
 };
 
 const CONTACT_EVENT = 'kharcha-contacts-selected';
+/** Safety net only; selection of many contacts can take several minutes. */
+export const CONTACT_PICKER_SAFETY_TIMEOUT_MS = 30 * 60_000;
 
 function getNativeContactBridge(): NativeContactBridge | null {
   if (typeof window === 'undefined') return null;
@@ -72,7 +74,10 @@ async function pickFromNativeBridge(): Promise<ContactInfo[]> {
     // Register a direct callback as well as the event listener. Android WebView
     // can deliver the callback reliably even if a CustomEvent is missed.
     host.__kharchaContactsResolve = finish;
-    timeoutId = window.setTimeout(() => finish([]), 30_000);
+    // No short timeout: users may spend minutes searching and selecting many
+    // contacts. The native picker always reports back on add, cancel or dismiss.
+    // A long safety net only guards against a lost callback.
+    timeoutId = window.setTimeout(() => finish([]), CONTACT_PICKER_SAFETY_TIMEOUT_MS);
 
     window.addEventListener(CONTACT_EVENT, onSelected as EventListener, { once: true });
     try {

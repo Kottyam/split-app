@@ -101,7 +101,7 @@ export default function CreateGroupFund() {
           backLabel={t('backToKharcha' as any)}
         />
 
-        <Card className="rounded-2xl border border-[#d7e4dc] bg-white p-6 shadow-sm">
+        <Card className="rounded-2xl border border-kharcha-line bg-white p-6 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="fund-name" className="font-bold text-kharcha-navy">{t('auditFundName' as any)} *</Label>
@@ -110,7 +110,7 @@ export default function CreateGroupFund() {
                 placeholder={t('auditFundNamePlaceholder' as any)}
                 value={name}
                 onChange={e => setName(e.target.value)}
-                className="border border-[#d7e4dc] rounded-xl mt-1"
+                className="border border-kharcha-line rounded-xl mt-1"
                 autoFocus
                 required
               />
@@ -120,7 +120,7 @@ export default function CreateGroupFund() {
             <div>
               <Label className="font-bold text-kharcha-navy">{t('auditPurpose' as any)}</Label>
               <Select value={purpose} onValueChange={(v: any) => setPurpose(v)}>
-                <SelectTrigger className="border border-[#d7e4dc] rounded-xl mt-1">
+                <SelectTrigger className="border border-kharcha-line rounded-xl mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -144,7 +144,7 @@ export default function CreateGroupFund() {
                   placeholder={t('auditSpecifyPurpose' as any)}
                   value={customPurpose}
                   onChange={e => setCustomPurpose(e.target.value)}
-                  className="border border-[#d7e4dc] rounded-xl mt-1"
+                  className="border border-kharcha-line rounded-xl mt-1"
                 />
               </div>
             )}
@@ -155,7 +155,7 @@ export default function CreateGroupFund() {
                 placeholder={t('auditDescriptionPlaceholder' as any)}
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                className="border border-[#d7e4dc] rounded-xl mt-1"
+                className="border border-kharcha-line rounded-xl mt-1"
               />
             </div>
 
@@ -167,7 +167,7 @@ export default function CreateGroupFund() {
                   placeholder={t('auditOptional' as any)}
                   value={targetAmount}
                   onChange={e => setTargetAmount(e.target.value)}
-                  className="border border-[#d7e4dc] rounded-xl mt-1"
+                  className="border border-kharcha-line rounded-xl mt-1"
                 />
               </div>
               <div>
@@ -177,13 +177,13 @@ export default function CreateGroupFund() {
                   placeholder={t('auditStartingBalance' as any)}
                   value={startingBalance}
                   onChange={e => setStartingBalance(e.target.value)}
-                  className="border border-[#d7e4dc] rounded-xl mt-1"
+                  className="border border-kharcha-line rounded-xl mt-1"
                 />
               </div>
             </div>
 
             {/* RECURRING COLLECTION TOGGLE */}
-            <div className="flex items-center gap-3 p-3 bg-gray-50 border border-[#d7e4dc] rounded-xl shadow-sm">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 border border-kharcha-line rounded-xl shadow-sm">
               <input
                 type="checkbox"
                 id="recurring-toggle"
@@ -198,7 +198,7 @@ export default function CreateGroupFund() {
 
             {/* IF RECURRING COLLECTION = ON: SHOW FREQUENCY, START DATE, CYCLE BOUNDARIES & AMOUNT TYPE */}
             {isRecurring ? (
-              <div className="space-y-4 p-4 bg-emerald-50/50 border border-[#d7e4dc] rounded-2xl shadow-sm">
+              <div className="space-y-4 p-4 bg-emerald-50/50 border border-kharcha-line rounded-2xl shadow-sm">
                 <div>
                   <Label htmlFor="collection-start-date" className="font-bold text-kharcha-navy">{t('auditCollectionStartDate' as any)}</Label>
                   <Input
@@ -206,7 +206,7 @@ export default function CreateGroupFund() {
                     type="date"
                     value={collectionStartDate}
                     onChange={e => setCollectionStartDate(e.target.value)}
-                    className="border border-[#d7e4dc] rounded-xl mt-1 bg-white"
+                    className="border border-kharcha-line rounded-xl mt-1 bg-white"
                     required={isRecurring}
                   />
                   <p className="text-xs text-gray-600 mt-1">{t('auditCollectionStartDateHelp' as any)}</p>
@@ -220,7 +220,7 @@ export default function CreateGroupFund() {
                         key={f}
                         type="button"
                         onClick={() => setFrequency(f)}
-                        className={`min-w-0 break-words border border-[#d7e4dc] px-1 py-2 rounded-xl font-bold text-sm leading-tight transition-all shadow-sm ${
+                        className={`min-w-0 break-words border border-kharcha-line px-1 py-2 rounded-xl font-bold text-sm leading-tight transition-all shadow-sm ${
                           frequency === f ? 'bg-[#16834b] text-white' : 'bg-white text-kharcha-navy hover:bg-gray-100'
                         }`}
                       >
@@ -234,10 +234,10 @@ export default function CreateGroupFund() {
                   <div>
                     <Label className="font-bold text-kharcha-navy">{t('auditWeeklyCycleBoundary' as any)}</Label>
                     <Select value={weeklyStartDay} onValueChange={(v: any) => setWeeklyStartDay(v)}>
-                      <SelectTrigger className="border border-[#d7e4dc] rounded-xl mt-1 bg-white font-bold text-kharcha-navy w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                      <SelectTrigger className="border border-kharcha-line rounded-xl mt-1 bg-white font-bold text-kharcha-navy w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
                         <SelectValue className="truncate" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white border border-[#d7e4dc] font-bold w-[var(--radix-select-trigger-width)] max-w-full">
+                      <SelectContent className="bg-white border border-kharcha-line font-bold w-[var(--radix-select-trigger-width)] max-w-full">
                         <SelectItem value="Monday">{t('auditMondaySunday' as any)}</SelectItem>
                         <SelectItem value="Sunday">{t('auditSundaySaturday' as any)}</SelectItem>
                       </SelectContent>
@@ -249,10 +249,10 @@ export default function CreateGroupFund() {
                   <div>
                     <Label className="font-bold text-kharcha-navy">{t('auditMonthlyCycleBoundary' as any)}</Label>
                     <Select value={monthlyCycleType} onValueChange={(v: any) => setMonthlyCycleType(v)}>
-                      <SelectTrigger className="border border-[#d7e4dc] rounded-xl mt-1 bg-white font-bold text-kharcha-navy w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                      <SelectTrigger className="border border-kharcha-line rounded-xl mt-1 bg-white font-bold text-kharcha-navy w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
                         <SelectValue className="truncate" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white border border-[#d7e4dc] font-bold w-[var(--radix-select-trigger-width)] max-w-full">
+                      <SelectContent className="bg-white border border-kharcha-line font-bold w-[var(--radix-select-trigger-width)] max-w-full">
                         <SelectItem value="Calendar Month (1st to End)">{t('auditCalendarMonth' as any)}</SelectItem>
                         <SelectItem value="Join-Date Cycle (e.g. 15th to 14th)">{t('auditJoinDateCycle' as any)}</SelectItem>
                       </SelectContent>
@@ -264,8 +264,8 @@ export default function CreateGroupFund() {
                   <div>
                     <Label className="font-bold text-kharcha-navy">{t('auditWeeklyCycleBoundary' as any)}</Label>
                     <Select value={fortnightlyCycleBoundary} onValueChange={(v: any) => setFortnightlyCycleBoundary(v)}>
-                      <SelectTrigger className="border border-[#d7e4dc] rounded-xl mt-1 bg-white font-bold text-kharcha-navy w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-white border border-[#d7e4dc] font-bold w-[var(--radix-select-trigger-width)] max-w-full">
+                      <SelectTrigger className="border border-kharcha-line rounded-xl mt-1 bg-white font-bold text-kharcha-navy w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-white border border-kharcha-line font-bold w-[var(--radix-select-trigger-width)] max-w-full">
                         <SelectItem value="Monday-based 14-day cycle">{t('auditMondaySunday' as any)}</SelectItem>
                         <SelectItem value="Sunday-based 14-day cycle">{t('auditSundaySaturday' as any)}</SelectItem>
                         <SelectItem value="Start-Date Based — Every 14 Days">{t('auditCollectionStartDate' as any)}</SelectItem>
@@ -278,13 +278,13 @@ export default function CreateGroupFund() {
                   <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[1fr_1.5fr]">
                     <div>
                       <Label className="font-bold text-kharcha-navy">{t('auditCustomEveryN' as any)}</Label>
-                      <Input type="number" min="1" value={customInterval} onChange={e => setCustomInterval(e.target.value)} className="border border-[#d7e4dc] rounded-xl mt-1 bg-white" />
+                      <Input type="number" min="1" value={customInterval} onChange={e => setCustomInterval(e.target.value)} className="border border-kharcha-line rounded-xl mt-1 bg-white" />
                     </div>
                     <div>
                       <Label className="font-bold text-kharcha-navy">{t('auditFrequency' as any)}</Label>
                       <Select value={customIntervalUnit} onValueChange={(v: any) => setCustomIntervalUnit(v)}>
-                        <SelectTrigger className="border border-[#d7e4dc] rounded-xl mt-1 bg-white font-bold text-kharcha-navy"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-white border border-[#d7e4dc] font-bold">
+                        <SelectTrigger className="border border-kharcha-line rounded-xl mt-1 bg-white font-bold text-kharcha-navy"><SelectValue /></SelectTrigger>
+                        <SelectContent className="bg-white border border-kharcha-line font-bold">
                           <SelectItem value="days">{t('pbDays' as any)}</SelectItem>
                           <SelectItem value="weeks">{t('pbWeeks' as any)}</SelectItem>
                           <SelectItem value="months">{t('pbMonths' as any)}</SelectItem>
@@ -299,8 +299,8 @@ export default function CreateGroupFund() {
                   <div>
                     <Label className="font-bold text-kharcha-navy">{t('auditCollectionTiming' as any)}</Label>
                     <div className="mt-1 grid min-w-0 grid-cols-2 gap-2">
-                      <button type="button" onClick={() => setCollectionPeriodMode('past')} className={`min-w-0 break-words rounded-xl border border-[#d7e4dc] px-2 py-2 text-sm font-bold leading-tight shadow-sm ${collectionPeriodMode === 'past' ? 'bg-[#16834b] text-white' : 'bg-white text-kharcha-navy hover:bg-gray-100'}`}>{t('auditPreviousPeriod' as any)}</button>
-                      <button type="button" onClick={() => setCollectionPeriodMode('future')} className={`min-w-0 break-words rounded-xl border border-[#d7e4dc] px-2 py-2 text-sm font-bold leading-tight shadow-sm ${collectionPeriodMode === 'future' ? 'bg-[#16834b] text-white' : 'bg-white text-kharcha-navy hover:bg-gray-100'}`}>{t('auditCollectInAdvance' as any)}</button>
+                      <button type="button" onClick={() => setCollectionPeriodMode('past')} className={`min-w-0 break-words rounded-xl border border-kharcha-line px-2 py-2 text-sm font-bold leading-tight shadow-sm ${collectionPeriodMode === 'past' ? 'bg-[#16834b] text-white' : 'bg-white text-kharcha-navy hover:bg-gray-100'}`}>{t('auditPreviousPeriod' as any)}</button>
+                      <button type="button" onClick={() => setCollectionPeriodMode('future')} className={`min-w-0 break-words rounded-xl border border-kharcha-line px-2 py-2 text-sm font-bold leading-tight shadow-sm ${collectionPeriodMode === 'future' ? 'bg-[#16834b] text-white' : 'bg-white text-kharcha-navy hover:bg-gray-100'}`}>{t('auditCollectInAdvance' as any)}</button>
                     </div>
                   </div>
                 )}
@@ -310,24 +310,24 @@ export default function CreateGroupFund() {
                     <Label className="font-bold text-kharcha-navy">{t('auditCollectionDuration' as any)}</Label>
                     <div className="mt-1 grid grid-cols-3 gap-2">
                       {(['none', 'endDate', 'cycles'] as const).map(mode => (
-                        <button key={mode} type="button" onClick={() => setDurationMode(mode)} className={`rounded-xl border border-[#d7e4dc] px-2 py-2 text-xs font-bold shadow-sm ${durationMode === mode ? 'bg-[#16834b] text-white' : 'bg-white text-kharcha-navy hover:bg-gray-100'}`}>
+                        <button key={mode} type="button" onClick={() => setDurationMode(mode)} className={`rounded-xl border border-kharcha-line px-2 py-2 text-xs font-bold shadow-sm ${durationMode === mode ? 'bg-[#16834b] text-white' : 'bg-white text-kharcha-navy hover:bg-gray-100'}`}>
                           {mode === 'none' ? t('auditNoEndDate' as any) : mode === 'endDate' ? t('auditEndDate' as any) : t('auditNumberOfCollections' as any)}
                         </button>
                       ))}
                     </div>
-                    {durationMode === 'endDate' && <Input type="date" value={recurrenceEndDate} onChange={e => setRecurrenceEndDate(e.target.value)} className="border border-[#d7e4dc] rounded-xl mt-2 bg-white" />}
-                    {durationMode === 'cycles' && <Input type="number" min="1" value={recurrenceNumberOfCycles} onChange={e => setRecurrenceNumberOfCycles(e.target.value)} placeholder={t('pbOccurrences' as any)} className="border border-[#d7e4dc] rounded-xl mt-2 bg-white" />}
+                    {durationMode === 'endDate' && <Input type="date" value={recurrenceEndDate} onChange={e => setRecurrenceEndDate(e.target.value)} className="border border-kharcha-line rounded-xl mt-2 bg-white" />}
+                    {durationMode === 'cycles' && <Input type="number" min="1" value={recurrenceNumberOfCycles} onChange={e => setRecurrenceNumberOfCycles(e.target.value)} placeholder={t('pbOccurrences' as any)} className="border border-kharcha-line rounded-xl mt-2 bg-white" />}
                   </div>
                 )}
 
                 {isRecurring && (
-                  <details className="rounded-xl border border-[#d7e4dc] bg-white p-3">
+                  <details className="rounded-xl border border-kharcha-line bg-white p-3">
                     <summary className="cursor-pointer font-black text-kharcha-navy">{t('auditAdvancedRecurrence' as any)}</summary>
                     <div className="mt-3 space-y-3">
                       <div>
                         <Label className="font-bold text-kharcha-navy">{t('auditGracePeriod' as any)}</Label>
                         <Select value={String(gracePeriodDays)} onValueChange={value => setGracePeriodDays(Number(value) as 0 | 1 | 2 | 3 | 7)}>
-                          <SelectTrigger className="mt-1 w-full rounded-xl border border-[#d7e4dc] bg-white font-bold text-kharcha-navy"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="mt-1 w-full rounded-xl border border-kharcha-line bg-white font-bold text-kharcha-navy"><SelectValue /></SelectTrigger>
                           <SelectContent className="bg-white font-bold">
                             <SelectItem value="0">{t('auditNoGracePeriod' as any)}</SelectItem>
                             <SelectItem value="1">1 {t('pbDays' as any)}</SelectItem>
@@ -340,7 +340,7 @@ export default function CreateGroupFund() {
                       <div>
                         <Label className="font-bold text-kharcha-navy">{t('auditMissedCollection' as any)}</Label>
                         <Select value={missedCollectionRule} onValueChange={value => setMissedCollectionRule(value as MissedCollectionRule)}>
-                          <SelectTrigger className="mt-1 w-full rounded-xl border border-[#d7e4dc] bg-white font-bold text-kharcha-navy"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="mt-1 w-full rounded-xl border border-kharcha-line bg-white font-bold text-kharcha-navy"><SelectValue /></SelectTrigger>
                           <SelectContent className="bg-white font-bold">
                             <SelectItem value="carry_forward">{t('auditCarryForward' as any)}</SelectItem>
                             <SelectItem value="overdue">{t('auditKeepOverdue' as any)}</SelectItem>
@@ -360,7 +360,7 @@ export default function CreateGroupFund() {
                         key={amountTypeOption}
                         type="button"
                         onClick={() => setAmountType(amountTypeOption)}
-                        className={`border border-[#d7e4dc] py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm ${
+                        className={`border border-kharcha-line py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm ${
                           amountType === amountTypeOption ? 'bg-[#16834b] text-white' : 'bg-white text-kharcha-navy hover:bg-gray-100'
                         }`}
                       >
@@ -379,17 +379,17 @@ export default function CreateGroupFund() {
                         placeholder={t('auditDefaultAmountPlaceholder' as any)}
                         value={defaultContributionAmount}
                         onChange={e => setDefaultContributionAmount(e.target.value)}
-                        className="border border-[#d7e4dc] rounded-xl mt-1 bg-white"
+                        className="border border-kharcha-line rounded-xl mt-1 bg-white"
                         required={isRecurring && amountType === 'Default Amount'}
                       />
                     </div>
                     <div>
                       <Label className="font-bold text-kharcha-navy">{t('auditProrationRule' as any)}</Label>
                       <Select value={prorationRule} onValueChange={(v: any) => setProrationRule(v)}>
-                        <SelectTrigger className="border border-[#d7e4dc] rounded-xl mt-1 bg-white font-bold text-kharcha-navy">
+                        <SelectTrigger className="border border-kharcha-line rounded-xl mt-1 bg-white font-bold text-kharcha-navy">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-white border border-[#d7e4dc] font-bold w-[var(--radix-select-trigger-width)] max-w-full">
+                        <SelectContent className="bg-white border border-kharcha-line font-bold w-[var(--radix-select-trigger-width)] max-w-full">
                           <SelectItem value="Proportionate (Remaining Days)">{t('auditProportionateProration' as any)}</SelectItem>
                           <SelectItem value="Full Amount">{t('auditFullAmountProration' as any)}</SelectItem>
                         </SelectContent>
@@ -413,12 +413,12 @@ export default function CreateGroupFund() {
                   placeholder={t('auditDefaultAmountPlaceholder' as any)}
                   value={defaultContributionAmount}
                   onChange={e => setDefaultContributionAmount(e.target.value)}
-                  className="border border-[#d7e4dc] rounded-xl mt-1"
+                  className="border border-kharcha-line rounded-xl mt-1"
                 />
               </div>
             )}
 
-            <Button type="submit" className="w-full bg-[#16834b] text-white font-black py-3 rounded-xl border border-[#d7e4dc] shadow-sm hover:bg-green-700">
+            <Button type="submit" className="w-full bg-[#16834b] text-white font-black py-3 rounded-xl border border-kharcha-line shadow-sm hover:bg-green-700">
               {t('auditCreateGroupFund' as any)}
             </Button>
           </form>

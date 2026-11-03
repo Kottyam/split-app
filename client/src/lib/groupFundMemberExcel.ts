@@ -61,7 +61,7 @@ export function createGroupFundMemberTemplate(): Blob {
   return zipStore(files);
 }
 
-async function unzipXlsx(file: File): Promise<Map<string, Uint8Array>> {
+async function unzipXlsx(file: Blob): Promise<Map<string, Uint8Array>> {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let eocd = -1;
@@ -101,38 +101,116 @@ function xmlText(element: Element | null): string {
   return element?.textContent?.trim() ?? '';
 }
 
-export async function parseGroupFundMemberXlsx(file: File): Promise<GroupFundExcelMemberRow[]> {
+const NAME_HEADERS = ['name', 'member name', 'member', 'full name', 'പേര്', 'അംഗത്തിന്റെ പേര്'];
+const PHONE_HEADERS = ['mobile number', 'mobile', 'phone', 'phone number', 'mobile no', 'contact', 'contact number', 'മൊബൈൽ', 'മൊബൈൽ നമ്പർ', 'ഫോൺ', 'ഫോൺ നമ്പർ'];
+const AMOUNT_HEADERS = ['expected amount', 'expected contribution', 'amount', 'contribution', 'തുക', 'പ്രതീക്ഷിക്കുന്ന തുക'];
+
+function normaliseHeader(value: string): string {
+  return value.replace(/[*().:]/g, ' ').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
+}
+
+/** True when the file looks like an .xlsx workbook (ZIP signature) regardless of name/MIME. */
+export async function isXlsxFile(file: Blob & { name?: string }): Promise<boolean> {
+  if (file.name && /\.xlsx$/i.test(file.name)) return true;
+  const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+  return head[0] === 0x50 && head[1] === 0x4b && head[2] === 0x03 && head[3] === 0x04;
+}
+
+function resolveFirstSheetPath(files: Map<string, Uint8Array>, parser: DOMParser): string | undefined {
+  const workbook = files.get('xl/workbook.xml');
+  const rels = files.get('xl/_rels/workbook.xml.rels');
+  if (workbook && rels) {
+    const wb = parser.parseFromString(decoder.decode(workbook), 'application/xml');
+    const firstSheet = wb.getElementsByTagName('sheet')[0];
+    const relId = firstSheet?.getAttribute('r:id') ?? firstSheet?.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+    if (relId) {
+      const relDoc = parser.parseFromString(decoder.decode(rels), 'application/xml');
+      const rel = Array.from(relDoc.getElementsByTagName('Relationship')).find(item => item.getAttribute('Id') === relId);
+      const target = rel?.getAttribute('Target');
+      if (target) {
+        const path = target.startsWith('/') ? target.slice(1) : `xl/${target}`;
+        if (files.has(path)) return path;
+      }
+    }
+  }
+  if (files.has('xl/worksheets/sheet1.xml')) return 'xl/worksheets/sheet1.xml';
+  return Array.from(files.keys()).filter(name => /^xl\/worksheets\/[^/]+\.xml$/.test(name)).sort()[0];
+}
+
+export interface GroupFundExcelSkippedRow {
+  row: number;
+  reason: 'missingName' | 'invalidMobile' | 'invalidAmount';
+}
+
+export interface GroupFundExcelParseResult {
+  rows: GroupFundExcelMemberRow[];
+  skipped: GroupFundExcelSkippedRow[];
+}
+
+export async function parseGroupFundMemberXlsxDetailed(file: Blob): Promise<GroupFundExcelParseResult> {
   const files = await unzipXlsx(file);
-  const sheetBytes = files.get('xl/worksheets/sheet1.xml');
-  if (!sheetBytes) throw new Error('Excel sheet not found');
   const parser = new DOMParser();
+  const sheetPath = resolveFirstSheetPath(files, parser);
+  const sheetBytes = sheetPath ? files.get(sheetPath) : undefined;
+  if (!sheetBytes) throw new Error('Excel sheet not found');
   const sheet = parser.parseFromString(decoder.decode(sheetBytes), 'application/xml');
-  if (sheet.querySelector('parsererror')) throw new Error('Invalid Excel sheet');
+  if (sheet.getElementsByTagName('parsererror').length) throw new Error('Invalid Excel sheet');
   const sharedBytes = files.get('xl/sharedStrings.xml');
-  const shared = sharedBytes ? Array.from(parser.parseFromString(decoder.decode(sharedBytes), 'application/xml').querySelectorAll('si')).map(si => Array.from(si.querySelectorAll('t')).map(t => t.textContent ?? '').join('')) : [];
-  const rows = Array.from(sheet.querySelectorAll('sheetData row'));
-  if (!rows.length) return [];
-  const cellValue = (row: Element, column: string): string => {
-    const cell = Array.from(row.querySelectorAll('c')).find(item => item.getAttribute('r')?.replace(/\d+/g, '') === column);
-    if (!cell) return '';
-    const value = xmlText(cell.querySelector('v'));
-    if (cell.getAttribute('t') === 's') return shared[Number(value)] ?? '';
-    if (cell.getAttribute('t') === 'inlineStr') return Array.from(cell.querySelectorAll('t')).map(t => t.textContent ?? '').join('');
-    return value;
+  const shared = sharedBytes ? Array.from(parser.parseFromString(decoder.decode(sharedBytes), 'application/xml').getElementsByTagName('si')).map(si => Array.from(si.getElementsByTagName('t')).map(t => t.textContent ?? '').join('')) : [];
+  const rows = Array.from(sheet.getElementsByTagName('row'));
+  if (!rows.length) return { rows: [], skipped: [] };
+  const cellsOf = (row: Element): Map<string, string> => {
+    const map = new Map<string, string>();
+    Array.from(row.getElementsByTagName('c')).forEach((cell, index) => {
+      const column = cell.getAttribute('r')?.replace(/\d+/g, '') || String.fromCharCode(65 + index);
+      const type = cell.getAttribute('t');
+      let value: string;
+      if (type === 'inlineStr') value = Array.from(cell.getElementsByTagName('t')).map(t => t.textContent ?? '').join('');
+      else {
+        const raw = xmlText(cell.getElementsByTagName('v')[0] ?? null);
+        value = type === 's' ? shared[Number(raw)] ?? '' : raw;
+      }
+      map.set(column, value);
+    });
+    return map;
   };
-  const header = rows[0];
-  const nameCol = ['A', 'B', 'C'].find(col => ['name', 'member name'].includes(cellValue(header, col).trim().toLowerCase()));
-  const phoneCol = ['A', 'B', 'C'].find(col => ['mobile number', 'mobile', 'phone', 'phone number'].includes(cellValue(header, col).trim().toLowerCase()));
-  const amountCol = ['A', 'B', 'C'].find(col => ['expected amount', 'expected contribution', 'amount'].includes(cellValue(header, col).trim().toLowerCase()));
-  if (!nameCol || !phoneCol || !amountCol) throw new Error('Excel columns must be Name, Mobile Number, Expected Amount');
-  const parsed: (GroupFundExcelMemberRow | null)[] = rows.slice(1).map(row => {
-    const name = cellValue(row, nameCol).trim();
-    const mobileNumber = cellValue(row, phoneCol).replace(/\D/g, '').trim();
-    const rawAmount = cellValue(row, amountCol).trim();
-    const expectedAmount = rawAmount ? Number(rawAmount.replace(/,/g, '')) : undefined;
-    if (!name && !mobileNumber && !rawAmount) return null;
-    if (!name || mobileNumber.length !== 10 || (expectedAmount !== undefined && (!Number.isFinite(expectedAmount) || expectedAmount < 0))) return null;
-    return { name, mobileNumber, expectedAmount };
+  // Find the header row within the first few rows and search every column.
+  let headerIndex = -1;
+  let nameCol: string | undefined;
+  let phoneCol: string | undefined;
+  let amountCol: string | undefined;
+  for (let i = 0; i < Math.min(rows.length, 5) && headerIndex < 0; i += 1) {
+    const cells = cellsOf(rows[i]);
+    for (const [col, value] of Array.from(cells.entries())) {
+      const header = normaliseHeader(value);
+      if (!nameCol && NAME_HEADERS.includes(header)) nameCol = col;
+      else if (!phoneCol && PHONE_HEADERS.includes(header)) phoneCol = col;
+      else if (!amountCol && AMOUNT_HEADERS.includes(header)) amountCol = col;
+    }
+    if (nameCol) headerIndex = i;
+    else { phoneCol = undefined; amountCol = undefined; }
+  }
+  if (!nameCol) throw new Error('Excel must have a Name column');
+  const parsed: GroupFundExcelMemberRow[] = [];
+  const skipped: GroupFundExcelSkippedRow[] = [];
+  rows.slice(headerIndex + 1).forEach((row, offset) => {
+    const rowNumber = Number(row.getAttribute('r')) || headerIndex + offset + 2;
+    const cells = cellsOf(row);
+    const name = (cells.get(nameCol!) ?? '').trim();
+    const rawPhone = phoneCol ? (cells.get(phoneCol) ?? '').trim() : '';
+    const rawAmount = amountCol ? (cells.get(amountCol) ?? '').trim() : '';
+    if (!name && !rawPhone && !rawAmount) return;
+    if (!name) { skipped.push({ row: rowNumber, reason: 'missingName' }); return; }
+    const digits = rawPhone.replace(/\D/g, '');
+    const mobileNumber = digits.slice(-10);
+    if (digits && digits.length < 10) { skipped.push({ row: rowNumber, reason: 'invalidMobile' }); return; }
+    const expectedAmount = rawAmount ? Number(rawAmount.replace(/[,₹\s]/g, '')) : undefined;
+    if (expectedAmount !== undefined && (!Number.isFinite(expectedAmount) || expectedAmount < 0)) { skipped.push({ row: rowNumber, reason: 'invalidAmount' }); return; }
+    parsed.push({ name, mobileNumber, expectedAmount });
   });
-  return parsed.filter((row): row is GroupFundExcelMemberRow => row !== null);
+  return { rows: parsed, skipped };
+}
+
+export async function parseGroupFundMemberXlsx(file: Blob): Promise<GroupFundExcelMemberRow[]> {
+  return (await parseGroupFundMemberXlsxDetailed(file)).rows;
 }

@@ -42,7 +42,7 @@ export default function GroupFunds() {
 
         {funds.length === 0 ? (
           <Card className="rounded-3xl border border-[#d1e5d7] bg-white p-10 text-center shadow-sm sm:p-12">
-            <Wallet className="mx-auto h-12 w-12 text-[#16834b]" />
+            <Wallet className="mx-auto h-12 w-12 text-kharcha-green" />
             <h2 className="mt-4 text-xl font-black text-kharcha-navy">{t('auditNoFunds' as any)}</h2>
             <p className="mt-2 text-sm text-gray-600">{t('auditNoFundsDescription' as any)}</p>
             <Button onClick={() => navigate('/group-funds/new')} className="mt-6 rounded-xl bg-[#16834b] font-bold text-white shadow-sm hover:bg-[#11663b]">
@@ -64,7 +64,7 @@ export default function GroupFunds() {
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="rounded-full bg-[#dff1e5] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#16834b]">{fundTypeLabel}</span>
+                      <span className="rounded-full bg-[#dff1e5] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-kharcha-green">{fundTypeLabel}</span>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -76,7 +76,7 @@ export default function GroupFunds() {
                     </div>
                     <h3 className="mt-3 text-lg font-black text-kharcha-navy sm:text-xl">{f.name}</h3>
                     {f.description && <p className="mt-1 line-clamp-2 text-xs font-medium text-black">{f.description}</p>}
-                    <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#f2fbf3] px-2.5 py-1 text-xs font-black text-[#16834b]">
+                    <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#f2fbf3] px-2.5 py-1 text-xs font-black text-kharcha-green">
                       <span>{f.purpose}{f.isRecurring && f.recurringFrequency ? ` · ${f.recurringFrequency}` : ''}</span>
                     </div>
                   </div>
@@ -84,7 +84,7 @@ export default function GroupFunds() {
                   <div className="mt-4 flex items-center justify-between border-t border-[#e8eee9] pt-4">
                     <div>
                       <p className="text-[11px] font-bold text-gray-500">{t('auditCollected' as any)}</p>
-                      <p className="text-base font-black text-[#16834b]">₹{totalCollected.toLocaleString('en-IN')}</p>
+                      <p className="text-base font-black text-kharcha-green">₹{totalCollected.toLocaleString('en-IN')}</p>
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-gray-500">{t('auditBalance' as any)}</p>
