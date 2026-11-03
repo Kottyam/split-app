@@ -1,61 +1,70 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
+import { toast } from 'sonner';
 import AppSectionHeader from '@/components/AppSectionHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { trpc } from '@/lib/trpc';
-import { addSyncHistory, cloneSnapshot, getOrCreateOwnerKey, mergeSnapshots, nextSyncVersion, parseSnapshot, serializeSnapshot, summarizeChanges, type SyncContextType, type SyncSnapshot } from '@/lib/editSync';
-import { getAllTrips, saveTrip } from '@/lib/storage';
-import { getAllSharedHomes, saveSharedHome } from '@/sharedHome/storage';
-import { getGroupFunds, saveGroupFund } from '@/groupFund/storage';
-import type { Trip } from '@/types';
-import type { SharedHome } from '@/sharedHome/types';
-import type { GroupFund } from '@/groupFund/types';
-import { toast } from 'sonner';
+import { addSyncHistory, nextSyncVersion, summarizeChanges } from '@/lib/editSync';
+import { buildReview, decodeUpdatePackage, mergeAccepted, payloadFromPath, type ReviewItem, type Snapshot } from '@/sync/serverlessSync';
+import { getApplied, getBaseSnapshot, getShare, markApplied } from '@/sync/syncStore';
+import { kindLabel, loadSnapshot, routeFor, storeSnapshot } from '@/sync/contextData';
 
-function tokenFromPath() { return decodeURIComponent(window.location.pathname.split('/sync-review/')[1] ?? ''); }
-function getOwnerSnapshot(type: SyncContextType, id: string): SyncSnapshot | undefined { if (type === 'trip') return getAllTrips().find(item => item.id === id); if (type === 'shared_home') return getAllSharedHomes().find((item: SharedHome) => item.id === id); return getGroupFunds().find(item => item.id === id); }
-function saveOwnerSnapshot(type: SyncContextType, snapshot: SyncSnapshot) { if (type === 'trip') saveTrip(snapshot as Trip); else if (type === 'shared_home') saveSharedHome(snapshot as SharedHome); else saveGroupFund(snapshot as GroupFund); }
-function readPath(value: unknown, path: string): unknown { return path.split('/').filter(Boolean).reduce<unknown>((current, key) => { if (Array.isArray(current)) return current.find(item => item && typeof item === 'object' && String((item as Record<string, unknown>).id) === key); if (current && typeof current === 'object') return (current as Record<string, unknown>)[key]; return undefined; }, value); }
-function displayValue(value: unknown): string { if (value === undefined) return '—'; if (typeof value === 'string') return value || '—'; if (typeof value === 'number' || typeof value === 'boolean') return String(value); try { return JSON.stringify(value); } catch { return '—'; } }
-function parseSummary(value: string) { try { const parsed = JSON.parse(value) as { added?: number; changed?: number; removed?: number; paths?: Array<{ kind: 'added' | 'removed' | 'changed'; path: string }> }; return { total: (parsed.added ?? 0) + (parsed.changed ?? 0) + (parsed.removed ?? 0), added: parsed.added ?? 0, changed: parsed.changed ?? 0, removed: parsed.removed ?? 0, paths: Array.isArray(parsed.paths) ? parsed.paths.slice(0, 100) : [] }; } catch { return { total: 0, added: 0, changed: 0, removed: 0, paths: [] }; } }
+const SECTION: Record<string, string> = { members: 'Members', expenses: 'Expenses', contributions: 'Collections', payments: 'Payments' };
+function show(value: unknown): string {
+  if (value === undefined || value === null || value === '') return '—';
+  if (typeof value !== 'object') return String(value);
+  const r = value as Record<string, unknown>;
+  const bits = [r.name ?? r.description ?? r.title, r.amount !== undefined ? `₹${r.amount}` : undefined].filter(Boolean);
+  return bits.length ? bits.join(' · ') : JSON.stringify(value).slice(0, 80);
+}
 
+/** Opens an update link (/s/u…) on the owner's device: review, accept or reject, merge locally. */
 export default function SyncReview() {
-  const { t } = useLanguage();
   const [, navigate] = useLocation();
-  const token = useMemo(tokenFromPath, []);
-  const query = trpc.sync.getPackage.useQuery({ token }, { enabled: Boolean(token) });
-  const apply = trpc.sync.markApplied.useMutation();
-  const [done, setDone] = useState(false);
-  const [declined, setDeclined] = useState(false);
-  const data = query.data;
-  const contextType = data?.contextType as SyncContextType | undefined;
-  const base = data ? parseSnapshot<SyncSnapshot>(data.baseSnapshotJson) : null;
-  const edited = data ? parseSnapshot<SyncSnapshot>(data.editedSnapshotJson) : null;
-  const owner = data && contextType ? getOwnerSnapshot(contextType, data.contextId) : undefined;
-  const merge = base && edited && owner ? mergeSnapshots(base, owner, edited) : null;
-  const submittedSummary = data ? parseSummary(data.changeSummaryJson) : { total: 0, added: 0, changed: 0, removed: 0, paths: [] };
-  const summary = owner && edited ? summarizeChanges(owner, edited) : submittedSummary;
+  const pkg = useMemo(() => { const p = payloadFromPath('u', window.location.pathname); return p ? decodeUpdatePackage(p) : null; }, []);
+  const share = pkg ? getShare(pkg.s) : undefined;
+  const base = pkg && share ? getBaseSnapshot(pkg.s, pkg.n) : null;
+  const owner = share ? loadSnapshot(share.type, share.contextId) : undefined;
+  const already = pkg ? getApplied(pkg.u) : undefined;
+  const review = useMemo<ReviewItem[]>(() => (pkg && base && owner ? buildReview(base, owner, pkg.c) : []), [pkg, base, owner]);
+  const [accepted, setAccepted] = useState<Set<string>>(() => new Set(review.filter(i => !i.conflict && !i.noop).map(i => i.key)));
+  const [result, setResult] = useState<'accepted' | 'rejected' | null>(null);
 
-  const synchronize = async () => {
-    if (!data || !contextType || !merge || !owner || merge.conflicts.length > 0) {
-      if (merge?.conflicts.length) toast.error(t('editSyncConflict' as any));
-      return;
+  const box = (title: string, body: string) => <main className="mx-auto max-w-xl p-4"><Card data-testid="sync-review-message" className="p-5"><h1 className="text-xl font-black text-kharcha-navy">{title}</h1><p className="mt-2 text-sm text-gray-700">{body}</p>{share && <Button className="mt-4" variant="outline" onClick={() => navigate(routeFor(share.type, share.contextId))}>Open {share.name}</Button>}</Card></main>;
+  if (!pkg) return box('This update link is broken or incomplete', 'Ask them to send it again, or as a .kharcha file.');
+  if (!share || !owner) return box('Open this on the owner’s device', `This update is for “${pkg.m}”, which was not shared for editing from this device (or was deleted here).`);
+  if (!base) return box('This update is too old', 'It was made from a version that is no longer kept on this device. Share a fresh edit link and ask them to redo the changes.');
+  if (already && !result) return box(already.status === 'accepted' ? 'Already accepted' : 'Already rejected', `You ${already.status} this update on ${new Date(already.at).toLocaleString('en-IN')}. Opening it again changes nothing.`);
+
+  const actionable = review.filter(i => !i.noop);
+  const conflicts = actionable.filter(i => i.conflict).length;
+  const toggle = (key: string) => setAccepted(prev => { const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next; });
+  const accept = () => {
+    const { merged, applied, blocked } = mergeAccepted(owner, review, accepted);
+    const before = JSON.stringify(owner);
+    if (applied > 0) {
+      storeSnapshot(share.type, merged as Snapshot);
+      addSyncHistory({ contextType: share.type, contextId: share.contextId, contextName: share.name, version: nextSyncVersion(share.type, share.contextId), syncedAt: Date.now(), summary: summarizeChanges(owner as never, merged as never), beforeSnapshotJson: before, afterSnapshotJson: JSON.stringify(merged) });
     }
-    if (summary.total === 0) return;
-    const beforeSnapshot = cloneSnapshot(owner);
-    const ownerKey = getOrCreateOwnerKey(contextType, data.contextId);
-    const result = await apply.mutateAsync({ token, ownerKey });
-    if (!result.success) { toast.error(t('editSyncOwnerVerificationFailed' as any)); return; }
-    saveOwnerSnapshot(contextType, merge.merged);
-    addSyncHistory({ contextType, contextId: data.contextId, contextName: data.contextName, version: nextSyncVersion(contextType, data.contextId), syncedAt: Date.now(), summary, beforeSnapshotJson: serializeSnapshot(beforeSnapshot), afterSnapshotJson: serializeSnapshot(merge.merged) });
-    setDone(true);
-    toast.success(t('editSyncCompleted' as any));
+    markApplied({ uid: pkg.u, sid: pkg.s, status: 'accepted', at: Date.now() });
+    if (blocked.length) toast.warning(`${blocked.length} member deletion(s) skipped: still used in expenses or collections`);
+    toast.success(`Accepted ${applied} change${applied === 1 ? '' : 's'}. You can undo this from Sync history.`);
+    setResult('accepted');
   };
+  const reject = () => { markApplied({ uid: pkg.u, sid: pkg.s, status: 'rejected', at: Date.now() }); toast.message('Update rejected. Nothing was changed.'); setResult('rejected'); };
 
-  if (query.isLoading) return <main className="mx-auto max-w-xl p-4"><Card className="p-5">{t('loading' as any)}</Card></main>;
-  if (!data || !base || !edited || !owner || !merge) return <main className="min-h-screen bg-kharcha-cream p-4"><Card className="mx-auto max-w-xl p-5"><h1 className="text-xl font-black text-kharcha-navy">{t('editSyncUnavailable' as any)}</h1><Button variant="outline" className="mt-4" onClick={() => navigate('/')}>{t('cancel')}</Button></Card></main>;
-
-  return <main className="min-h-screen bg-kharcha-cream p-4"><div className="mx-auto max-w-2xl space-y-4"><AppSectionHeader title={done ? t('editSyncCompleted' as any) : t('editSyncReviewTitle' as any)} onBack={() => navigate('/')} backLabel={t('backToKharcha' as any)} /><Card className="border-2 border-[#c7d8cc] bg-white p-5"><div className="mt-4 rounded-xl bg-[#f2fbf3] p-4"><p className="text-xs font-black uppercase tracking-wide text-[#16834b]">{t('editSyncSelectedItem' as any)}</p><p className="mt-1 text-xl font-black text-kharcha-navy">{data.contextName}</p><p className="mt-2 text-xs text-gray-600">{data.recipientName || t('editSyncRecipientUnknown' as any)} · {new Date(data.createdAt).toLocaleString()}</p></div><div className="mt-4 grid grid-cols-3 gap-2 text-center"><div className="rounded-xl bg-[#fff3e3] p-3"><p className="text-2xl font-black text-[#e87817]">{summary.added}</p><p className="text-xs font-bold text-gray-600">{t('editSyncAdded' as any)}</p></div><div className="rounded-xl bg-[#f2fbf3] p-3"><p className="text-2xl font-black text-[#16834b]">{summary.changed}</p><p className="text-xs font-bold text-gray-600">{t('editSyncChanged' as any)}</p></div><div className="rounded-xl bg-[#eef2f7] p-3"><p className="text-2xl font-black text-kharcha-navy">{summary.removed}</p><p className="text-xs font-bold text-gray-600">{t('editSyncRemoved' as any)}</p></div></div><section className="mt-4 rounded-xl border border-[#c7d8cc] bg-white p-4"><h2 className="font-black text-kharcha-navy">{summary.total === 0 ? t('editSyncReviewChanges' as any) : t('editSyncReviewChanges' as any)}</h2>{summary.paths.length === 0 ? <p className="mt-2 text-sm text-gray-600">{t('editSyncReviewChanges' as any)}</p> : <div className="mt-3 space-y-2">{summary.paths.map((change, index) => <div key={`${change.path}-${index}`} className="rounded-lg border border-[#e7d7bd] bg-[#fffdf8] p-3"><p className="break-all text-xs font-black text-kharcha-navy">{change.kind.toUpperCase()} · {change.path || '/'}</p><div className="mt-2 grid gap-2 text-xs sm:grid-cols-2"><div><p className="font-bold text-gray-500">{t('editSyncOwnerProtection' as any)}</p><p className="mt-1 break-words text-gray-800">{displayValue(readPath(owner, change.path))}</p></div><div><p className="font-bold text-[#16834b]">{t('editSyncPending' as any)}</p><p className="mt-1 break-words text-gray-800">{displayValue(readPath(edited, change.path))}</p></div></div></div>)}</div>}</section>{!done && merge.conflicts.length > 0 && <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-3"><p className="font-black text-amber-900">{t('editSyncConflict' as any)}</p><p className="mt-1 text-sm text-amber-800">{merge.conflicts.length} {t('editSyncConflictFields' as any)}</p><div className="mt-2 space-y-1 text-xs text-amber-900">{merge.conflicts.slice(0, 20).map(conflict => <p key={conflict.path} className="break-all">{conflict.path || '/'}: {displayValue(conflict.ownerValue)} → {displayValue(conflict.editedValue)}</p>)}</div></div>}{summary.total > 0 && !done && <div className="mt-4 rounded-xl border-2 border-[#e87817] bg-[#fff8ed] p-4"><h2 className="font-black text-kharcha-navy">{t('editSyncPending' as any)}</h2><p className="mt-1 text-sm text-gray-700">{t('editSyncReviewDescription' as any)}</p></div>}<div className="mt-4 grid gap-2 sm:grid-cols-2"><Button variant="outline" onClick={() => { setDeclined(true); toast.message(t('cancel')); }}>{t('cancel')}</Button><Button onClick={synchronize} disabled={done || declined || apply.isPending || summary.total === 0 || merge.conflicts.length > 0} className="bg-[#16834b] text-white hover:bg-[#11663b]">{apply.isPending ? t('sharing' as any) : t('editSyncSynchronize' as any)}</Button></div></Card></div></main>;
+  return <main className="min-h-screen bg-kharcha-cream p-4"><div className="mx-auto max-w-2xl space-y-4"><AppSectionHeader title="Review changes" /><Card data-testid="sync-review" className="border-2 border-[#c7d8cc] bg-white p-5">
+    <p className="text-xs font-black uppercase tracking-wide text-[#16834b]">Changes to your {kindLabel(share.type)}</p>
+    <h1 className="text-xl font-black text-kharcha-navy">{share.name}</h1>
+    <p className="mt-1 text-sm text-gray-700">{actionable.length} change(s){conflicts ? `, ${conflicts} conflict(s) with edits you made since sharing` : ''}. Tick what to keep.</p>
+    {review.length - actionable.length > 0 && <p className="mt-1 text-xs text-gray-500">{review.length - actionable.length} change(s) already match your data.</p>}
+    <div className="mt-4 space-y-2">{actionable.map(item => <label key={item.key} data-testid="sync-review-item" className={`flex gap-3 rounded-xl border p-3 ${item.conflict ? 'border-amber-400 bg-amber-50' : 'border-gray-200'}`}>
+      <input type="checkbox" className="mt-1 h-4 w-4" checked={accepted.has(item.key)} disabled={Boolean(result)} onChange={() => toggle(item.key)} />
+      <span className="min-w-0 flex-1 text-sm"><span className="block font-black text-kharcha-navy"><span className={`mr-2 rounded px-1.5 py-0.5 text-[10px] uppercase ${item.action === 'added' ? 'bg-green-100 text-green-800' : item.action === 'deleted' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>{item.action === 'field' ? 'changed' : item.action}</span>{SECTION[item.section] ?? item.section}: {item.label}</span>
+        {item.action === 'edited' || item.action === 'field' ? <span className="block text-xs text-gray-700">{show(item.before)} → {show(item.theirs)}</span> : item.action === 'added' ? <span className="block text-xs text-gray-700">{show(item.theirs)}</span> : <span className="block text-xs text-gray-700">{show(item.before)}</span>}
+        {item.conflict && <span className="mt-1 block text-xs font-bold text-amber-900">Conflict: {item.conflictReason === 'owner-deleted' ? 'you deleted this' : 'you also changed this'} (yours: {show(item.owner)}). Ticked = use theirs, unticked = keep yours.</span>}
+      </span></label>)}</div>
+    {result ? <div className="mt-4 space-y-2"><p data-testid="sync-review-result" className="font-black text-kharcha-navy">{result === 'accepted' ? 'Changes accepted and saved.' : 'Update rejected. Nothing changed.'}</p><Button onClick={() => navigate(routeFor(share.type, share.contextId))} className="w-full">Open {share.name}</Button></div>
+      : <div className="mt-4 grid gap-2 sm:grid-cols-2"><Button data-testid="sync-reject" variant="outline" onClick={reject}>Reject all</Button><Button data-testid="sync-accept" onClick={accept} disabled={accepted.size === 0} className="bg-[#16834b] text-white hover:bg-[#11663b]">Accept selected ({Array.from(accepted).filter(k => actionable.some(i => i.key === k)).length})</Button></div>}
+  </Card></div></main>;
 }

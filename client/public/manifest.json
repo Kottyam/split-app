@@ -39,5 +39,15 @@
     "productivity"
   ],
   "id": "/",
-  "scope": "/"
+  "scope": "/",
+  "file_handlers": [
+    {
+      "action": "/import",
+      "accept": {
+        "application/x-kharcha": [
+          ".kharcha"
+        ]
+      }
+    }
+  ]
 }

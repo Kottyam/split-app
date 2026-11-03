@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Check, Copy, Share2 } from 'lucide-react';
+import { Check, Copy, Share2, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,7 +13,7 @@ interface ShareTripDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   trip: Trip;
-  /** Retained for caller compatibility; Step One intentionally keeps these out of this popup. */
+  /** Opens the serverless “Share for editing” dialog. */
   onEditSync?: () => void;
   onSyncUpdates?: () => void;
 }
@@ -23,7 +23,7 @@ export default function ShareTripDialog(props: ShareTripDialogProps) {
   return <ShareTripDialogOpen {...props} />;
 }
 
-function ShareTripDialogOpen({ open, onOpenChange, trip }: ShareTripDialogProps) {
+function ShareTripDialogOpen({ open, onOpenChange, trip, onEditSync }: ShareTripDialogProps) {
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
@@ -73,7 +73,7 @@ function ShareTripDialogOpen({ open, onOpenChange, trip }: ShareTripDialogProps)
         <DialogFooter className="grid gap-2 sm:grid-cols-3">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-2 border-black font-bold rounded-lg">{t('close')}</Button>
           <Button type="button" onClick={handleCopyLink} disabled={false} className="bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 min-w-0 whitespace-normal text-center"><>{copied ? <Check size={16} /> : <Copy size={16} />}</>{copied ? t('copied') : t('copyLink')}</Button>
-          <Button type="button" onClick={handleShare} disabled={sharing} className="bg-kharcha-green text-white font-bold rounded-lg hover:brightness-95 flex items-center justify-center gap-2 min-w-0 whitespace-normal text-center"><Share2 size={16} />{sharing ? t('sharing') : t('shareTrip')}</Button>
+          <Button type="button" onClick={handleShare} disabled={sharing} className="bg-kharcha-green text-white font-bold rounded-lg hover:brightness-95 flex items-center justify-center gap-2 min-w-0 whitespace-normal text-center"><Share2 size={16} />{sharing ? t('sharing') : t('shareTrip')}</Button>{onEditSync && <Button type="button" data-testid="share-for-editing" variant="outline" onClick={onEditSync} className="border-2 border-[#16834b] font-bold rounded-lg text-[#16834b] flex items-center justify-center gap-2 min-w-0 whitespace-normal text-center"><Users size={16} />Share for editing</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
