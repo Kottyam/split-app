@@ -98,6 +98,7 @@ export default function CreateGroupFund() {
       <div className="mx-auto max-w-xl space-y-6">
         <AppSectionHeader
           title={t('auditCreateGroupFund' as any)}
+          accent="green"
           onBack={() => navigate('/')}
           backLabel={t('backToKharcha' as any)}
         />

@@ -173,14 +173,14 @@ describe('Android packaging readiness', () => {
     expect(tripReport).toContain('calculateMemberBalances');
     expect(tripReport).toContain('simplifySettlements');
     expect(tripReport).toContain('categoryRows');
-    expect(tripDetail).toContain('bg-[#e7f0ea]');
+    expect(tripDetail).toContain('bg-[#f3f7fc]');
     expect(tripDetail).toContain('min-h-12');
     expect(tripDetail).toContain('text-sm font-black');
-    expect(tripDetail).toContain('data-[state=active]:bg-kharcha-green');
+    expect(tripDetail).toContain('data-[state=active]:bg-[#fd6d00]');
     expect(tripDetail).toContain('data-[state=active]:text-white');
     expect(indexCss).toContain('.android-trip-tabs [role="tab"][data-state="active"]');
-    expect(indexCss).toContain('background-color: #d9f1e2 !important;');
-    expect(indexCss).toContain('color: #18324b !important;');
+    expect(indexCss).toContain('background-color: #fd6d00 !important;');
+    expect(indexCss).toContain('color: #ffffff !important;');
     expect(indexCss).toContain('.android-trip-tabs [role="tab"][data-state="inactive"]');
     expect(sharedHomeDetail).toContain('handleGeneratePdfReport');
     expect(sharedHomeDetail).toContain('KharchaPdf');

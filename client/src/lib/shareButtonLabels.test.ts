@@ -11,9 +11,9 @@ describe('detail-page Share buttons', () => {
     expect(tripSource).toContain("{t('sharedHomeShare' as any)}");
     expect(sharedHomeSource).toContain("{t('sharedHomeShare')}</Button>");
     expect(groupFundSource).toContain("{t('sharedHomeShare')}");
-    expect(tripSource).toContain('bg-[#16834b]');
+    expect(tripSource).toContain('variant="soft" onClick={() => setShowShareTrip(true)}');
     expect(sharedHomeSource).toContain('bg-[#16834b]');
-    expect(groupFundSource).toContain('bg-[#16834b]');
+    expect(groupFundSource).toContain('variant="fund" onClick={() => setShowEditSync(true)}');
   });
 
   it('preserves the existing share handlers for all three detail pages', () => {

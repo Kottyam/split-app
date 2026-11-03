@@ -305,15 +305,15 @@ html.android-shell .android-trip-tabs [role="tab"] {
 /* Keep the active Trip tab readable even when the shared Tabs component's
    semantic active colors resolve to a light background in the Android shell. */
 .android-trip-tabs [role="tab"][data-state="active"] {
-  background-color: #d9f1e2 !important;
-  border-color: #16834b !important;
-  color: #18324b !important;
+  background-color: #fd6d00 !important;
+  border-color: #fd6d00 !important;
+  color: #ffffff !important;
   text-shadow: none !important;
 }
 
 .android-trip-tabs [role="tab"][data-state="inactive"] {
   background-color: #ffffff !important;
-  color: #18324b !important;
+  color: #023b81 !important;
 }
 
 html.android-shell .android-budget-header {
@@ -688,4 +688,19 @@ body {
       max-width: 1280px; /* Standard content width */
     }
   }
+}
+/* Inner-page brand polish (UI only): bolder primary buttons and dialog headers matching the landing page. */
+#root [data-slot="button"]:not([data-variant]) {
+  transition: transform 120ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+#root [data-slot="dialog-content"] {
+  border-radius: 1.5rem;
+  border-top: 5px solid #023b81;
+}
+#root [data-slot="dialog-title"] {
+  color: #023b81;
+}
+#root [data-slot="dialog-footer"] [data-slot="button"] {
+  min-height: 2.75rem;
+  border-radius: 1rem;
 }

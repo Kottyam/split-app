@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Users, Wallet, QrCode, CheckCircle2, History, Trash2, Edit, Search, Upload, UserPlus, Phone, Check, MessageSquare, FileText, RotateCcw, Receipt, AlertCircle, Loader2, Share2, Settings } from 'lucide-react';
+import { ArrowLeft, Landmark, Users, Wallet, QrCode, CheckCircle2, History, Trash2, Edit, Search, Upload, UserPlus, Phone, Check, MessageSquare, FileText, RotateCcw, Receipt, AlertCircle, Loader2, Share2, Settings } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { toast } from 'sonner';
 import { pickMultipleContacts, formatPhoneNumber } from '@/lib/contacts';
@@ -1110,23 +1110,22 @@ export default function GroupFundDetail() {
       {/* Header */}
       <AppSectionHeader
         title={fund.name}
+        subtitle={fund.isRecurring ? t('recurringCollection' as any) : t('pbOneTime' as any)}
+        icon={<Landmark size={24} />}
+        accent="green"
         onBack={() => navigate('/group-funds')}
         backLabel={t('auditBackToKharcha' as any)}
-        actions={<><Button variant="default" size="sm" onClick={() => setShowEditSync(true)} className="w-full rounded-xl bg-[#16834b] px-3 text-sm font-black text-white shadow-sm hover:bg-[#11663b]"><Share2 size={16} className="mr-1.5" /> {t('sharedHomeShare')}</Button><Button variant="outline" size="sm" onClick={() => setShowQrDialog(true)} className="w-full border border-kharcha-line bg-white text-kharcha-navy hover:bg-gray-100 font-black shadow-sm"><QrCode size={16} className="mr-1" /> {t('auditQrCode' as any)}</Button></>}
+        actions={<><Button variant="fund" onClick={() => setShowEditSync(true)} className="w-full min-h-12 text-base"><Share2 size={16} className="mr-1.5" /> {t('sharedHomeShare')}</Button><Button variant="soft" onClick={() => setShowQrDialog(true)} className="w-full min-h-11"><QrCode size={16} className="mr-1" /> {t('auditQrCode' as any)}</Button></>}
       >
-        <div className="mx-auto mt-3 max-w-5xl">
-          <span className="inline-flex rounded-full bg-[#dff1e5] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-kharcha-green">
-            {fund.isRecurring ? t('recurringCollection' as any) : t('pbOneTime' as any)}
-          </span>
-        </div>
-        <div className="mx-auto mt-3 grid max-w-5xl grid-cols-2 gap-2 text-xs font-black sm:grid-cols-4">
+        <div className="mx-auto mt-3 grid max-w-5xl grid-cols-3 gap-2 text-xs font-black sm:grid-cols-6">
           {[
-            { id: 'overview', label: t('auditDashboardTab' as any), icon: Wallet },
-            { id: 'collection', label: t('auditCollectionSummary' as any), icon: CheckCircle2 },
+            // Dashboard order: Overview → Collect → Members → Expenses → Reports → Settings (labels/order only).
+            { id: 'overview', label: t('sharedHomeOverview' as any), icon: Wallet },
+            { id: 'collection', label: t('auditFundTabCollect' as any), icon: CheckCircle2 },
             { id: 'members', label: t('auditMembers' as any), icon: Users },
             { id: 'expenses', label: t('auditExpensesTab' as any), icon: Receipt },
-            { id: 'settings', label: t('auditSaveSettings' as any), icon: Settings },
             { id: 'reports', label: t('sharedHomeReports' as any), icon: FileText },
+            { id: 'settings', label: t('auditSettings' as any), icon: Settings },
           ].map(tab => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -1135,13 +1134,13 @@ export default function GroupFundDetail() {
                 type="button"
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex min-h-10 items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-center transition-all shadow-sm ${
+                className={`flex min-h-11 items-center justify-center gap-1.5 rounded-2xl border px-2 py-2 text-center transition-all active:scale-[0.97] ${
                   active
-                    ? 'border-[#16834b] bg-[#16834b] text-white font-black'
-                    : 'border-[#d7e4dc] bg-white text-kharcha-navy font-bold hover:bg-gray-100'
+                    ? 'border-[#038f27] bg-[#038f27] text-white font-black shadow-[0_6px_14px_rgba(3,143,39,0.30)]'
+                    : 'border-[#e3ebf3] bg-[#f3f7fc] text-[#023b81] font-bold hover:bg-[#e6f6ea]'
                 }`}
               >
-                <Icon size={14} className={active ? 'text-white' : 'text-kharcha-navy'} /> <span>{tab.label}</span>
+                <Icon size={16} className={active ? 'text-white' : 'text-[#038f27]'} /> <span>{tab.label}</span>
               </button>
             );
           })}
@@ -1157,7 +1156,7 @@ export default function GroupFundDetail() {
         {activeTab === 'collection' && (
           <div className="space-y-4">
             {/* Top Bar with Auto-Generated Period Selector, WhatsApp Reminders, PDF Report & Bulk QR */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white border border-kharcha-line p-4 rounded-2xl shadow-sm">
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 overflow-hidden bg-white border border-[#e3ebf3] p-4 pl-5 rounded-[22px] shadow-[0_10px_28px_rgba(2,59,129,0.08)]"><span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-[#038f27]" />
               <div>
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)} ({selectedPeriod})</p>
                 <h2 className="text-2xl font-black text-kharcha-green sm:text-3xl">₹{totalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
@@ -1190,7 +1189,7 @@ export default function GroupFundDetail() {
                   <MessageSquare size={16} className="mr-1 text-kharcha-green" /> {t('auditSendBulkMessage' as any)}
                 </Button>
 
-                <Button onClick={handleOpenBulkCollection} disabled={isSelectedPeriodClosed} className="bg-[#e87817] text-white border border-kharcha-line font-black rounded-xl shadow-sm hover:bg-[#d06713] disabled:cursor-not-allowed disabled:opacity-50">
+                <Button onClick={handleOpenBulkCollection} disabled={isSelectedPeriodClosed} variant="trip" className="disabled:cursor-not-allowed disabled:opacity-50">
                   <QrCode size={16} className="mr-1" /> {t('auditBulkQr' as any)}
                 </Button>
               </div>
@@ -1297,7 +1296,7 @@ export default function GroupFundDetail() {
         {/* EXPENSES TAB */}
         {activeTab === 'expenses' && (
           <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white border border-kharcha-line p-4 rounded-2xl shadow-sm">
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 overflow-hidden bg-white border border-[#e3ebf3] p-4 pl-5 rounded-[22px] shadow-[0_10px_28px_rgba(2,59,129,0.08)]"><span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-[#038f27]" />
               <div>
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalFundExpensesLabel' as any)}</p>
                 <h2 className="text-2xl font-black text-red-600 sm:text-3xl">₹{totalExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
@@ -1476,7 +1475,7 @@ export default function GroupFundDetail() {
         {activeTab === 'members' && (
           <div className="space-y-4">
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white border border-kharcha-line p-4 rounded-2xl shadow-sm">
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 overflow-hidden bg-white border border-[#e3ebf3] p-4 pl-5 rounded-[22px] shadow-[0_10px_28px_rgba(2,59,129,0.08)]"><span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-[#038f27]" />
               <div>
                 <h2 className="text-lg font-black text-kharcha-navy">{t('auditFundMembersTitle' as any, { count: fund.members.length })}</h2>
                 <p className="text-xs text-kharcha-navy font-medium">{t('auditFundMembersDescription' as any)}</p>

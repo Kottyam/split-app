@@ -4,7 +4,7 @@ import { getGroupFunds, deleteGroupFund } from '@/groupFund/storage';
 import type { GroupFund } from '@/groupFund/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Users, Wallet, Trash2 } from 'lucide-react';
+import { Landmark, Plus, Wallet, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useDeleteConfirmation } from '@/contexts/DeleteConfirmationContext';
@@ -35,17 +35,21 @@ export default function GroupFunds() {
       <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6">
         <AppSectionHeader
           title={t('auditGroupFundsTitle' as any)}
+          subtitle={t('groupFundsDescription' as any)}
+          icon={<Landmark size={24} />}
+          accent="green"
           onBack={() => navigate('/')}
           backLabel={t('backToKharcha' as any)}
-          actions={<Button onClick={() => navigate('/group-funds/new')} className="w-full min-h-10 rounded-xl bg-[#16834b] px-3 font-black text-white shadow-sm hover:bg-green-700 sm:px-4"><Plus size={18} className="mr-1" /> {t('auditNewFund' as any)}</Button>}
+          actions={<Button variant="fund" onClick={() => navigate('/group-funds/new')} className="w-full min-h-12 px-3 text-base sm:px-4"><Plus size={18} className="mr-1" /> {t('auditNewFund' as any)}</Button>}
         />
 
         {funds.length === 0 ? (
-          <Card className="rounded-3xl border border-[#d1e5d7] bg-white p-10 text-center shadow-sm sm:p-12">
-            <Wallet className="mx-auto h-12 w-12 text-kharcha-green" />
+          <Card className="items-center rounded-[26px] border border-[#cdebd5] bg-white p-10 text-center shadow-[0_10px_28px_rgba(3,143,39,0.10)] sm:p-12">
+            <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[#038f27] text-white shadow-md"><Wallet size={30} /></span>
             <h2 className="mt-4 text-xl font-black text-kharcha-navy">{t('auditNoFunds' as any)}</h2>
             <p className="mt-2 text-sm text-gray-600">{t('auditNoFundsDescription' as any)}</p>
-            <Button onClick={() => navigate('/group-funds/new')} className="mt-6 rounded-xl bg-[#16834b] font-bold text-white shadow-sm hover:bg-[#11663b]">
+            <Button variant="fund" onClick={() => navigate('/group-funds/new')} className="mt-4 min-h-12 w-full max-w-xs">
+              <Plus size={18} />
               {t('auditCreateFirstFund' as any)}
             </Button>
           </Card>
@@ -60,8 +64,9 @@ export default function GroupFunds() {
                 <Card
                   key={f.id}
                   onClick={() => navigate(`/group-funds/${f.id}`)}
-                  className="flex cursor-pointer flex-col justify-between rounded-3xl border border-[#b9ddc9] bg-white p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg sm:p-5"
+                  className="relative flex cursor-pointer flex-col justify-between gap-0 overflow-hidden rounded-[22px] border border-[#e3ebf3] bg-white py-4 pl-5 pr-4 shadow-[0_10px_28px_rgba(2,59,129,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(2,59,129,0.14)] sm:p-5 sm:pl-6"
                 >
+                  <span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-[#038f27]" />
                   <div>
                     <div className="flex items-center justify-between gap-2">
                       <span className="rounded-full bg-[#dff1e5] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-kharcha-green">{fundTypeLabel}</span>
@@ -74,14 +79,17 @@ export default function GroupFunds() {
                         <Trash2 size={16} />
                       </Button>
                     </div>
-                    <h3 className="mt-3 text-lg font-black text-kharcha-navy sm:text-xl">{f.name}</h3>
+                    <div className="mt-3 flex items-center gap-3">
+                      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#e6f6ea] text-[#038f27]"><Landmark size={22} /></span>
+                      <h3 className="min-w-0 truncate text-lg font-black text-[#023b81] sm:text-xl">{f.name}</h3>
+                    </div>
                     {f.description && <p className="mt-1 line-clamp-2 text-xs font-medium text-black">{f.description}</p>}
                     <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#f2fbf3] px-2.5 py-1 text-xs font-black text-kharcha-green">
                       <span>{f.purpose}{f.isRecurring && f.recurringFrequency ? ` · ${f.recurringFrequency}` : ''}</span>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between border-t border-[#e8eee9] pt-4">
+                  <div className="mt-4 flex items-center justify-between rounded-2xl bg-[#f5faf6] px-3 py-2.5">
                     <div>
                       <p className="text-[11px] font-bold text-gray-500">{t('auditCollected' as any)}</p>
                       <p className="text-base font-black text-kharcha-green">₹{totalCollected.toLocaleString('en-IN')}</p>

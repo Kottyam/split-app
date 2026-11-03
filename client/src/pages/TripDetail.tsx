@@ -7,7 +7,7 @@ import { generateTripSummary } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, Users, BarChart3, CreditCard, Share2, Split, Wallet, FileText, Printer } from 'lucide-react';
+import { ArrowLeft, Plane, Plus, Users, BarChart3, CreditCard, Share2, Split, Wallet, FileText, Printer } from 'lucide-react';
 import { Expense, Member } from '@/types';
 import AddExpenseDialog from '@/components/AddExpenseDialog';
 import AddMemberDialog from '@/components/AddMemberDialog';
@@ -170,14 +170,16 @@ export default function TripDetail({ params }: TripDetailProps) {
       {/* Header */}
       <AppSectionHeader
         title={trip.name}
+        icon={<Plane size={24} />}
+        accent="orange"
         onBack={() => navigate('/')}
         backLabel={t('backToKharcha')}
-        actions={<><Button onClick={() => setShowTripPayExpense(true)} className="w-full bg-kharcha-saffron text-white font-black rounded-xl hover:brightness-95 shadow-md"><CreditCard size={18} className="mr-2" />{t('payAddExpenseAutomatically')}</Button><Button variant="default" size="sm" onClick={() => setShowShareTrip(true)} className="w-full rounded-xl bg-[#16834b] px-3 text-sm font-black text-white shadow-sm hover:bg-[#11663b]" title={t('shareThisTrip')}><Share2 size={16} className="mr-1.5" />{t('sharedHomeShare' as any)}</Button></>}
+        actions={<><Button variant="trip" onClick={() => setShowTripPayExpense(true)} className="w-full min-h-12 text-base"><CreditCard size={18} className="mr-2" />{t('payAddExpenseAutomatically')}</Button><Button variant="soft" onClick={() => setShowShareTrip(true)} className="w-full min-h-11 px-3 text-sm" title={t('shareThisTrip')}><Share2 size={16} className="mr-1.5" />{t('sharedHomeShare' as any)}</Button></>}
       >
         <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
-          <Card className="rounded-xl border border-[#d7e4dc] bg-white p-1.5 text-center sm:p-2"><p className="text-xs font-bold text-gray-600">{t('total')}</p><p className="text-base font-black text-kharcha-navy sm:text-lg">{formatCurrency(summary.totalExpenses)}</p></Card>
-          <Card className="rounded-xl border border-[#d7e4dc] bg-white p-1.5 text-center sm:p-2"><p className="text-xs font-bold text-gray-600">{t('members')}</p><p className="text-base font-black text-kharcha-navy sm:text-lg">{trip.members.length}</p></Card>
-          <Card className="rounded-xl border border-[#d7e4dc] bg-white p-1.5 text-center sm:p-2"><p className="text-xs font-bold text-gray-600">{t('expenses')}</p><p className="text-base font-black text-kharcha-navy sm:text-lg">{trip.expenses.length}</p></Card>
+          <Card className="relative gap-0 overflow-hidden rounded-2xl border border-[#e3ebf3] bg-white p-2 text-center shadow-[0_6px_16px_rgba(2,59,129,0.07)]"><span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-[#fd6d00]" /><p className="text-xs font-bold text-[#5b6b78]">{t('total')}</p><p className="text-base font-black text-[#023b81] sm:text-lg">{formatCurrency(summary.totalExpenses)}</p></Card>
+          <Card className="relative gap-0 overflow-hidden rounded-2xl border border-[#e3ebf3] bg-white p-2 text-center shadow-[0_6px_16px_rgba(2,59,129,0.07)]"><span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-[#023b81]" /><p className="text-xs font-bold text-[#5b6b78]">{t('members')}</p><p className="text-base font-black text-[#023b81] sm:text-lg">{trip.members.length}</p></Card>
+          <Card className="relative gap-0 overflow-hidden rounded-2xl border border-[#e3ebf3] bg-white p-2 text-center shadow-[0_6px_16px_rgba(2,59,129,0.07)]"><span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-[#038f27]" /><p className="text-xs font-bold text-[#5b6b78]">{t('expenses')}</p><p className="text-base font-black text-[#023b81] sm:text-lg">{trip.expenses.length}</p></Card>
         </div>
         <div className="mt-3"><BudgetCard summary={budgetSummary} onOpenDetails={() => setShowBudgetDetails(true)} onEdit={() => setShowBudget(true)} /></div>
       </AppSectionHeader>
@@ -189,20 +191,20 @@ export default function TripDetail({ params }: TripDetailProps) {
       {/* Tabs */}
       <div className="px-3 py-3 sm:px-4 sm:py-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="android-trip-tabs grid h-auto min-h-14 w-full grid-cols-5 gap-1 rounded-xl border border-[#d7e4dc] bg-[#e7f0ea] p-1">
-            <TabsTrigger value="dashboard" className="min-h-12 min-w-0 rounded-xl px-1 text-center text-sm font-black leading-tight text-kharcha-navy whitespace-normal transition-colors data-[state=active]:border-kharcha-green data-[state=active]:bg-kharcha-green data-[state=active]:text-white data-[state=active]:shadow-[0_2px_0_0_rgba(0,0,0,0.22)] sm:px-2 sm:text-base">
+          <TabsList className="android-trip-tabs grid h-auto min-h-14 w-full grid-cols-5 gap-1 rounded-2xl border border-[#e3ebf3] bg-[#f3f7fc] p-1">
+            <TabsTrigger value="dashboard" className="min-h-12 min-w-0 rounded-xl px-1 text-center text-sm font-black leading-tight text-kharcha-navy whitespace-normal transition-colors data-[state=active]:border-[#fd6d00] data-[state=active]:bg-[#fd6d00] data-[state=active]:text-white data-[state=active]:shadow-[0_6px_14px_rgba(253,109,0,0.30)] sm:px-2 sm:text-base">
               {t('dashboard')}
             </TabsTrigger>
-            <TabsTrigger value="members" className="min-h-12 min-w-0 rounded-xl px-1 text-center text-sm font-black leading-tight text-kharcha-navy whitespace-normal transition-colors data-[state=active]:border-kharcha-green data-[state=active]:bg-kharcha-green data-[state=active]:text-white data-[state=active]:shadow-[0_2px_0_0_rgba(0,0,0,0.22)] sm:px-2 sm:text-base">
+            <TabsTrigger value="members" className="min-h-12 min-w-0 rounded-xl px-1 text-center text-sm font-black leading-tight text-kharcha-navy whitespace-normal transition-colors data-[state=active]:border-[#fd6d00] data-[state=active]:bg-[#fd6d00] data-[state=active]:text-white data-[state=active]:shadow-[0_6px_14px_rgba(253,109,0,0.30)] sm:px-2 sm:text-base">
               {t('members')}
             </TabsTrigger>
-            <TabsTrigger value="expenses" className="min-h-12 min-w-0 rounded-xl px-1 text-center text-sm font-black leading-tight text-kharcha-navy whitespace-normal transition-colors data-[state=active]:border-kharcha-green data-[state=active]:bg-kharcha-green data-[state=active]:text-white data-[state=active]:shadow-[0_2px_0_0_rgba(0,0,0,0.22)] sm:px-2 sm:text-base">
+            <TabsTrigger value="expenses" className="min-h-12 min-w-0 rounded-xl px-1 text-center text-sm font-black leading-tight text-kharcha-navy whitespace-normal transition-colors data-[state=active]:border-[#fd6d00] data-[state=active]:bg-[#fd6d00] data-[state=active]:text-white data-[state=active]:shadow-[0_6px_14px_rgba(253,109,0,0.30)] sm:px-2 sm:text-base">
               {t('expenses')}
             </TabsTrigger>
-            <TabsTrigger value="settle" className="min-h-12 min-w-0 rounded-xl px-1 text-center text-sm font-black leading-tight text-kharcha-navy whitespace-normal transition-colors data-[state=active]:border-kharcha-green data-[state=active]:bg-kharcha-green data-[state=active]:text-white data-[state=active]:shadow-[0_2px_0_0_rgba(0,0,0,0.22)] sm:px-2 sm:text-base">
+            <TabsTrigger value="settle" className="min-h-12 min-w-0 rounded-xl px-1 text-center text-sm font-black leading-tight text-kharcha-navy whitespace-normal transition-colors data-[state=active]:border-[#fd6d00] data-[state=active]:bg-[#fd6d00] data-[state=active]:text-white data-[state=active]:shadow-[0_6px_14px_rgba(253,109,0,0.30)] sm:px-2 sm:text-base">
               {t('settle')}
             </TabsTrigger>
-            <TabsTrigger value="reports" className="min-h-12 min-w-0 rounded-xl px-1 text-center text-sm font-black leading-tight text-kharcha-navy whitespace-normal transition-colors data-[state=active]:border-kharcha-green data-[state=active]:bg-kharcha-green data-[state=active]:text-white data-[state=active]:shadow-[0_2px_0_0_rgba(0,0,0,0.22)] sm:px-2 sm:text-base">
+            <TabsTrigger value="reports" className="min-h-12 min-w-0 rounded-xl px-1 text-center text-sm font-black leading-tight text-kharcha-navy whitespace-normal transition-colors data-[state=active]:border-[#fd6d00] data-[state=active]:bg-[#fd6d00] data-[state=active]:text-white data-[state=active]:shadow-[0_6px_14px_rgba(253,109,0,0.30)] sm:px-2 sm:text-base">
               {t('auditPdfReport' as any)}
             </TabsTrigger>
           </TabsList>
@@ -218,7 +220,8 @@ export default function TripDetail({ params }: TripDetailProps) {
                 onClick={() => {
                   if (trip.members.length > 0) setShowAddExpense(true);
                 }}
-                className="w-full min-h-12 shadow-[0_4px_12px_rgba(24,50,75,0.18)] bg-[#18324b] text-white font-bold rounded-xl border-2 border-[#18324b] hover:bg-[#10263a] disabled:cursor-not-allowed disabled:bg-[#18324b] disabled:text-white disabled:opacity-100"
+                variant="brand"
+                className="w-full min-h-12 text-base disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Split size={18} className="mr-2" />
                 {t('howToSplitAddExpense')}
@@ -235,7 +238,8 @@ export default function TripDetail({ params }: TripDetailProps) {
                     setActiveTab('members');
                     setShowAddMember(true);
                   }}
-                  className="mt-3 w-full bg-[#18324b] text-white font-bold rounded-xl border-2 border-[#18324b] hover:bg-[#10263a]"
+                  variant="brand"
+                  className="mt-3 w-full min-h-11"
                 >
                   <Users size={18} className="mr-2" />
                   {t('addMember')}
@@ -294,7 +298,8 @@ export default function TripDetail({ params }: TripDetailProps) {
                 aria-label={t('addMember')}
                 data-testid="trip-add-members"
                 onClick={() => setShowAddMember(true)}
-                className="flex-1 min-h-12 bg-[#18324b] text-white font-bold rounded-xl border-2 border-[#18324b] hover:bg-[#10263a]"
+                variant="brand"
+                className="flex-1 min-h-12"
               >
                 <Plus size={18} className="mr-2" />
                 {t('addMember')}
