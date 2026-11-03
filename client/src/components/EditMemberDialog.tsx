@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import UpiIdHint from '@/components/UpiIdHint';
 import {
   Dialog,
   DialogContent,
@@ -116,6 +117,7 @@ export default function EditMemberDialog({
               onChange={(e) => setUpiId(e.target.value)}
               className="border-2 border-black rounded-lg mt-1"
             />
+<UpiIdHint value={upiId} />
             <p className="text-xs text-gray-500 mt-1">
               {t('upiExample') || 'Example: user@okhdfcbank, name@ybl'}
             </p>

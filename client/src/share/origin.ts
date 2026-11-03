@@ -1,3 +1,4 @@
+import { buildUpiUri } from '@/lib/upiLink';
 /** Public web address used for every shared link, so links made inside the Android app open in any browser. */
 export const SHARE_ORIGIN = 'https://www.kharchasplit.in';
 
@@ -13,10 +14,7 @@ export function getShortSharePayload(kind: 't' | 'f', pathname: string = typeof 
 }
 
 export function buildUpiPayLink(upiId: string, payeeName: string, amount?: number, note?: string): string {
-  const params = [`pa=${encodeURIComponent(upiId.trim())}`, `pn=${encodeURIComponent(payeeName)}`, 'cu=INR'];
-  if (amount && amount > 0) params.push(`am=${amount.toFixed(2)}`);
-  if (note) params.push(`tn=${encodeURIComponent(note)}`);
-  return `upi://pay?${params.join('&')}`;
+  return buildUpiUri({ upiId, payeeName, amount, note });
 }
 
 export function buildUpiQrUrl(upiLink: string, size = 180): string {

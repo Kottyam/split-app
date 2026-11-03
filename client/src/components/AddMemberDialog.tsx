@@ -1,4 +1,5 @@
 import { showFieldError } from '@/lib/formValidation';
+import UpiIdHint from '@/components/UpiIdHint';
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Loader2 } from 'lucide-react';
@@ -255,6 +256,7 @@ export default function AddMemberDialog({
               onChange={(e) => setUpiId(e.target.value)}
               className="border-2 border-black rounded-lg mt-1"
             />
+<UpiIdHint value={upiId} />
             <p className="text-xs text-gray-500 mt-1">
               {t('auditUpiExamples' as any)}
             </p>

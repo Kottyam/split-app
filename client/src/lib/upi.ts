@@ -1,9 +1,10 @@
 /** UPI helpers for Kharcha's offline-first payment flows. */
 import { copyToClipboard, shareLink } from './shareLink';
 import { buildScannedUpiPaymentLink } from './qrPayment';
+import { buildUpiUri, checkUpiId, cleanUpiId } from './upiLink';
 
 export function isValidUpiId(upiId?: string): boolean {
-  return Boolean(upiId && /^[a-zA-Z0-9._-]{2,}@[a-zA-Z0-9.-]{2,}$/.test(upiId.trim()));
+  return checkUpiId(upiId).ok;
 }
 
 export function isValidMobileNumber(phone?: string): boolean {
@@ -13,26 +14,16 @@ export function isValidMobileNumber(phone?: string): boolean {
 }
 
 export function normalizePaymentAddress(upiId?: string, mobileNumber?: string): string | undefined {
-  if (isValidUpiId(upiId)) return upiId!.trim();
-  if (isValidMobileNumber(mobileNumber)) {
-    const digits = mobileNumber!.replace(/\D/g, '');
-    return `${digits.length === 12 ? digits.slice(2) : digits}@upi`;
-  }
-  return undefined;
+  // Only a real VPA can receive a UPI link. A phone number is NOT turned into
+  // "<number>@upi": that handle rarely exists and UPI apps reject the payee.
+  void mobileNumber;
+  return isValidUpiId(upiId) ? cleanUpiId(upiId) : undefined;
 }
 
-function createQuery(upiId: string | undefined, amount: number, payeeName: string, tripName: string, mobileNumber?: string): string {
-  const params = new URLSearchParams();
-  const paymentAddress = normalizePaymentAddress(upiId, mobileNumber);
-  if (paymentAddress) params.set('pa', paymentAddress);
-  params.set('pn', payeeName.trim());
-  params.set('am', Math.max(0, amount).toFixed(2));
-  params.set('tn', `Trip Settlement - ${tripName.trim()}`);
-  return params.toString();
-}
 
 export function generateUpiDeepLink(upiId: string | undefined, amount: number, payeeName: string, tripName: string, mobileNumber?: string): string {
-  return `upi://pay?${createQuery(upiId, amount, payeeName, tripName, mobileNumber)}`;
+  const pa = normalizePaymentAddress(upiId, mobileNumber);
+  return pa ? buildUpiUri({ upiId: pa, payeeName, amount, note: `Trip ${tripName}` }) : '';
 }
 
 export const generateUpiPaymentLink = generateUpiDeepLink;
