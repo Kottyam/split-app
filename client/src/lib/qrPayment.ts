@@ -59,3 +59,34 @@ export function isQrScannerSupported(): boolean {
 export function getQrFallbackMessage(): string {
   return 'Camera QR scanning is not available in this browser. Paste a UPI QR payment link below instead.';
 }
+
+export interface BulkScanItem {
+  key: string;
+  raw: string;
+  upiId: string;
+  payee: string;
+  description: string;
+  amount: string;
+}
+
+/**
+ * Turn a scanned QR / pasted UPI link into a bulk-scan row. Returns null for
+ * non-UPI codes. `existing` prevents the same QR frame being queued twice in a
+ * row while the camera keeps seeing it.
+ */
+export function toBulkScanItem(rawValue: string, existing: BulkScanItem[] = [], now = Date.now()): BulkScanItem | null {
+  const parsed = parseUpiQrPayload(rawValue);
+  if (!parsed?.paymentAddress) return null;
+  const raw = rawValue.trim();
+  const last = existing[existing.length - 1];
+  if (last && last.raw === raw) return null;
+  const payee = parsed.payeeName || parsed.paymentAddress;
+  return {
+    key: `${now}-${existing.length}`,
+    raw,
+    upiId: parsed.paymentAddress,
+    payee,
+    description: payee,
+    amount: parsed.amountFromQr && parsed.amountFromQr > 0 ? String(parsed.amountFromQr) : '',
+  };
+}

@@ -94,6 +94,15 @@ export interface GroupFundExpense {
   updatedAt: number;
 }
 
+export interface FundEstimate {
+  id: string;
+  name: string;
+  amount: number;
+  category?: string;
+  note?: string;
+  createdAt: number;
+}
+
 export interface GroupFund {
   id: string;
   type: 'group_fund';
@@ -104,6 +113,8 @@ export interface GroupFund {
   targetAmount?: number;
   /** Optional spending budget for the fund (absent on older funds). */
   budgetAmount?: number;
+  /** Optional planned/approximate cost line items (separate from budget). */
+  estimates?: FundEstimate[];
   startingBalance?: number;
   contributionType: ContributionType;
   defaultContributionAmount: number;

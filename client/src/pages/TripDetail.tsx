@@ -7,7 +7,7 @@ import { generateTripSummary } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plane, Plus, Users, BarChart3, CreditCard, Share2, Split, Wallet, FileText, Printer } from 'lucide-react';
+import { ArrowLeft, Plane, Plus, Users, BarChart3, CreditCard, Share2, Split, Wallet, FileText, Printer, ScanLine } from 'lucide-react';
 import { Expense, Member } from '@/types';
 import AddExpenseDialog from '@/components/AddExpenseDialog';
 import AddMemberDialog from '@/components/AddMemberDialog';
@@ -19,6 +19,7 @@ import EditSyncShareDialog from '@/components/EditSyncShareDialog';
 import EditSyncBackBar from '@/components/EditSyncBackBar';
 import EditSyncReviewBar from '@/components/EditSyncReviewBar';
 import TripPayExpenseDialog from '@/components/TripPayExpenseDialog';
+import TripBulkQrScanDialog from '@/components/TripBulkQrScanDialog';
 import SettlementView from '@/components/SettlementView';
 import DashboardView from '@/components/DashboardView';
 import ExpenseListView from '@/components/ExpenseListView';
@@ -50,6 +51,7 @@ export default function TripDetail({ params }: TripDetailProps) {
   const [showShareTrip, setShowShareTrip] = useState(false);
   const [showEditSyncTrip, setShowEditSyncTrip] = useState(false);
   const [showTripPayExpense, setShowTripPayExpense] = useState(false);
+  const [showBulkScan, setShowBulkScan] = useState(false);
   const [showBudget, setShowBudget] = useState(false);
   const [showBudgetDetails, setShowBudgetDetails] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
@@ -174,7 +176,7 @@ export default function TripDetail({ params }: TripDetailProps) {
         accent="orange"
         onBack={() => navigate('/')}
         backLabel={t('backToKharcha')}
-        actions={<><Button variant="trip" onClick={() => setShowTripPayExpense(true)} className="w-full min-h-12 text-base"><CreditCard size={18} className="mr-2" />{t('payAddExpenseAutomatically')}</Button><Button variant="soft" onClick={() => setShowShareTrip(true)} className="w-full min-h-11 px-3 text-sm" title={t('shareThisTrip')}><Share2 size={16} className="mr-1.5" />{t('sharedHomeShare' as any)}</Button></>}
+        actions={<><Button variant="trip" onClick={() => setShowTripPayExpense(true)} className="w-full min-h-12 text-base"><CreditCard size={18} className="mr-2" />{t('payAddExpenseAutomatically')}</Button><Button variant="soft" onClick={() => setShowBulkScan(true)} className="w-full min-h-11 px-3 text-sm" data-testid="trip-scan-qr"><ScanLine size={16} className="mr-1.5" />Scan QR</Button><Button variant="soft" onClick={() => setShowShareTrip(true)} className="w-full min-h-11 px-3 text-sm" title={t('shareThisTrip')}><Share2 size={16} className="mr-1.5" />{t('sharedHomeShare' as any)}</Button></>}
       >
         <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
           <Card className="relative gap-0 overflow-hidden rounded-2xl border border-[#e3ebf3] bg-white p-2 text-center shadow-[0_6px_16px_rgba(2,59,129,0.07)]"><span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-[#fd6d00]" /><p className="text-xs font-bold text-[#5b6b78]">{t('total')}</p><p className="text-base font-black text-[#023b81] sm:text-lg">{formatCurrency(summary.totalExpenses)}</p></Card>
@@ -405,6 +407,7 @@ export default function TripDetail({ params }: TripDetailProps) {
       />
       <BudgetDialog open={showBudget} onOpenChange={setShowBudget} title={t('budget')} periodLabel={t('budgetEntireTrip')} initial={trip.budget} onSave={saveBudget} />
       <BudgetDetailsDialog open={showBudgetDetails} onOpenChange={setShowBudgetDetails} periodLabel={t('budgetEntireTrip')} summary={budgetSummary} />
+      <TripBulkQrScanDialog open={showBulkScan} onOpenChange={setShowBulkScan} trip={trip} />
       <TripPayExpenseDialog
         open={showTripPayExpense}
         onOpenChange={setShowTripPayExpense}

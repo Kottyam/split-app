@@ -1,4 +1,5 @@
 import FundBudgetCard from '@/components/FundBudgetCard';
+import FundEstimatesCard from '@/components/FundEstimatesCard';
 import UpiIdHint from '@/components/UpiIdHint';
 import { normalizeBudget, computeBudgetStatus } from '@/groupFund/budget';
 import { showFieldError } from '@/lib/formValidation';
@@ -1431,6 +1432,15 @@ export default function GroupFundDetail() {
             </div>
 
             <FundBudgetCard budget={fund.budgetAmount} collected={lifetimeTotalCollected} expenses={totalExpenses} />
+
+            <FundEstimatesCard
+              estimates={fund.estimates}
+              collected={lifetimeTotalCollected}
+              expenses={totalExpenses}
+              activeMembers={fund.members.filter((m: GroupFundMember) => m.isActive !== false).length}
+              budget={fund.budgetAmount}
+              onChange={(next, message) => refresh(appendActivity({ ...fund, estimates: next }, message))}
+            />
 
             <Card className="rounded-2xl border border-kharcha-line bg-white p-4 shadow-sm">
               <h3 className="font-black text-kharcha-navy flex items-center gap-2"><History size={18} /> {t('auditFundActivity' as any)}</h3>

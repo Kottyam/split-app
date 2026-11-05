@@ -5,13 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CreditCard, CheckCircle, XCircle, ScanLine, Camera, Link2 } from 'lucide-react';
+import { CreditCard, CheckCircle, XCircle, ScanLine, Camera, Link2, ImageUp } from 'lucide-react';
 import { Trip, ExpenseCategory } from '@/types';
 import { useTrips } from '@/hooks/useTrips';
 import { getAllCategories, getCategoryInfo } from '@/lib/categories';
 import { launchScannedUpiPayment } from '@/lib/upi';
 import { buildExpenseSplits } from '@/lib/tripPayment';
 import { buildScannedUpiPaymentLink, isQrScannerSupported } from '@/lib/qrPayment';
+import { decodeQrFromImageFile, decodeQrFromVideo, describeCameraError } from '@/lib/qrDecode';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -22,9 +23,6 @@ interface TripPayExpenseDialogProps {
 }
 
 type Step = 'details' | 'scan' | 'confirm' | 'split';
-type BarcodeDetectorLike = new (options?: { formats?: string[] }) => {
-  detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue?: string }>>;
-};
 
 export interface QrPaymentTransition {
   step: 'confirm';
@@ -140,30 +138,19 @@ export default function TripPayExpenseDialog({ open, onOpenChange, trip }: TripP
       await videoRef.current.play();
       setCameraActive(true);
 
-      const BarcodeDetectorConstructor = (window as Window & { BarcodeDetector?: BarcodeDetectorLike }).BarcodeDetector;
-      if (!BarcodeDetectorConstructor) {
-        setScanError(t('auditCameraQrUnavailable' as any));
-        return;
-      }
-      const detector = new BarcodeDetectorConstructor({ formats: ['qr_code'] });
       const detectFrame = async () => {
         if (!videoRef.current || !streamRef.current) return;
-        try {
-          const codes = await detector.detect(videoRef.current);
-          const rawValue = codes.find(code => Boolean(code.rawValue))?.rawValue;
-          if (rawValue) {
-            launchScannedPayment(rawValue);
-            return;
-          }
-        } catch {
-          setScanError(t('auditScanReadFailed' as any));
+        const rawValue = await decodeQrFromVideo(videoRef.current).catch(() => null);
+        if (rawValue) {
+          launchScannedPayment(rawValue);
+          return;
         }
-        scanTimerRef.current = window.setTimeout(() => void detectFrame(), 350);
+        scanTimerRef.current = window.setTimeout(() => void detectFrame(), 300);
       };
       void detectFrame();
-    } catch {
+    } catch (error) {
       stopCamera();
-      setScanError(t('auditCameraPermission' as any));
+      setScanError(describeCameraError(error));
     }
   };
 
@@ -251,6 +238,8 @@ export default function TripPayExpenseDialog({ open, onOpenChange, trip }: TripP
               <div className="border-t-2 border-gray-200 pt-4 space-y-2">
                 <Label className="font-bold text-[#18324b]">{t('auditManualUpiFallback' as any)}</Label>
                 <Input value={manualQrValue} onChange={event => setManualQrValue(event.target.value)} placeholder={t('auditUpiPlaceholder' as any)} className="border-2 border-[#e87817] rounded-lg" />
+                <input id="trip-pay-qr-image" type="file" accept="image/*" className="hidden" onChange={async event => { const file = event.target.files?.[0]; event.target.value = ''; if (!file) return; const raw = await decodeQrFromImageFile(file); if (raw) launchScannedPayment(raw); else setScanError('No QR code found in that image'); }} />
+                <Button type="button" variant="outline" onClick={() => document.getElementById('trip-pay-qr-image')?.click()} className="w-full border-2 border-[#16834b] rounded-lg"><ImageUp size={16} className="mr-2" /> Pick QR image / screenshot</Button>
                 <Button type="button" onClick={() => launchScannedPayment(manualQrValue)} disabled={!manualQrValue.trim()} className="w-full bg-blue-600 text-white font-bold rounded-lg"><Link2 size={16} className="mr-2" /> {t('auditUseUpiLink' as any)}</Button>
               </div>
             </div>
