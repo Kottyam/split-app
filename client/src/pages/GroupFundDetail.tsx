@@ -37,6 +37,7 @@ import EditSyncBackBar from '@/components/EditSyncBackBar';
 import EditSyncReviewBar from '@/components/EditSyncReviewBar';
 import AppSectionHeader from '@/components/AppSectionHeader';
 import { PDF_LAYOUT_CSS, KHARCHA_PDF_WORDMARK_HTML } from '@/lib/pdfLayout';
+import { expenseMatchesPeriod, getActiveFundExpenses } from '@/groupFund/expenses';
 import { downloadBlobFile } from '@/lib/fileDownload';
 
 function groupFundOptionLabel(t: (key: any, variables?: any) => string, value?: string) {
@@ -83,6 +84,7 @@ export default function GroupFundDetail() {
   const bulkMessageAutoAdvanceAt = useRef(0);
 
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const expenseSaveLockRef = useRef(false);
   const [expenseTitle, setExpenseTitle] = useState('');
   const [expenseCategory, setExpenseCategory] = useState<string>('Food');
   const [expenseAmount, setExpenseAmount] = useState('');
@@ -296,7 +298,7 @@ export default function GroupFundDetail() {
   const getMemberPeriodContributions = (memberId: string) => getActivePeriodContributions(fund.contributions, memberId, selectedPeriod);
   const allCollectionMembersCollected = canCloseCollectionPeriod(fund, selectedPeriod);
 
-  const activeExpenses = (fund.expenses || []).filter((e: GroupFundExpense) => e.status !== 'cancelled');
+  const activeExpenses = getActiveFundExpenses(fund.expenses);
   const totalExpenses = activeExpenses.reduce((s: number, e: GroupFundExpense) => s + e.amount, 0);
   const handleShareViewLink = async () => {
     const url = generateFundShareLink(fund);
@@ -647,6 +649,8 @@ export default function GroupFundDetail() {
 
   const handleSaveExpense = (e: React.FormEvent) => {
     e.preventDefault();
+    // Ignore a second submit (double tap / Enter + click) while the first save is in flight.
+    if (expenseSaveLockRef.current) return;
     if (!expenseTitle.trim()) {
       showFieldError('fund-expense-title', t('auditExpenseTitleRequiredMessage' as any));
       return;
@@ -670,9 +674,13 @@ export default function GroupFundDetail() {
       updatedAt: Date.now(),
     };
 
+    expenseSaveLockRef.current = true;
+    window.setTimeout(() => { expenseSaveLockRef.current = false; }, 800);
+    // Build on the latest saved fund so a stale snapshot never re-adds or drops expenses.
+    const latestFund = getGroupFundById(fund.id) ?? fund;
     const next = appendActivity({
-      ...fund,
-      expenses: [newExpense, ...(fund.expenses || [])],
+      ...latestFund,
+      expenses: [newExpense, ...(latestFund.expenses || []).filter((item: GroupFundExpense) => item.id !== newExpense.id)],
     }, t('auditExpenseActivity' as any, { name: newExpense.name, amount: amt, category: groupFundOptionLabel(t, expenseCategory) }));
 
     refresh(next);
@@ -774,6 +782,9 @@ export default function GroupFundDetail() {
 
   const handleGeneratePdfReport = (action: 'view' | 'print' | 'save' | 'share' = 'view') => {
     const reportTitle = `${fund.name} - ${selectedPeriod}`;
+    // Only the selected month's expenses belong in that month's report.
+    const pdfExpenses = activeExpenses.filter((e: GroupFundExpense) => expenseMatchesPeriod(e, selectedPeriod));
+    const pdfTotalExpenses = pdfExpenses.reduce((s: number, e: GroupFundExpense) => s + e.amount, 0);
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -793,8 +804,8 @@ export default function GroupFundDetail() {
 
           <div class="summary cards-4">
             <div class="metric" style="--card-accent:#038f27">${escapePdfHtml(t('auditTotalCollected' as any))}<strong>₹${totalCollected.toLocaleString('en-IN')}</strong></div>
-            <div class="metric" style="--card-accent:#fd6d00">${escapePdfHtml(t('auditTotalExpenses' as any))}<strong>₹${totalExpenses.toLocaleString('en-IN')}</strong></div>
-            <div class="metric" style="--card-accent:#023b81">${escapePdfHtml(t('auditRemainingBalance' as any))}<strong>₹${remainingBalance.toLocaleString('en-IN')}</strong></div>
+            <div class="metric" style="--card-accent:#fd6d00">${escapePdfHtml(t('auditTotalExpenses' as any))}<strong>₹${pdfTotalExpenses.toLocaleString('en-IN')}</strong></div>
+            <div class="metric" style="--card-accent:#023b81">${escapePdfHtml(t('auditRemainingBalance' as any))}<strong>₹${(totalCollected - pdfTotalExpenses).toLocaleString('en-IN')}</strong></div>
             <div class="metric" style="--card-accent:#16834b">${escapePdfHtml(t('auditMembers' as any))}<strong>${fund.members.length}</strong><small>${escapePdfHtml(t('auditCollectedStatus' as any))}: ${fund.members.filter((m: GroupFundMember) => getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) === 'Collected').length} · ${escapePdfHtml(t('auditPending' as any))}: ${fund.members.filter((m: GroupFundMember) => getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) !== 'Collected').length}</small></div>
           </div>
           ${(() => { const b = computeBudgetStatus(fund.budgetAmount, totalCollected, totalExpenses); if (!b) return ''; const st = b.state === 'over' ? `${t('auditBudgetOver' as any)} ₹${b.overBy.toLocaleString('en-IN')}` : b.state === 'collection-short' ? `${t('auditBudgetCollectionShort' as any)} ₹${b.collectionShortBy.toLocaleString('en-IN')}` : t('auditBudgetWithin' as any); const col = b.state === 'over' ? '#dc2626' : b.state === 'collection-short' ? '#b45309' : '#16834b'; return `<div class="summary cards-4 budget-row"><div class="metric" style="--card-accent:#023b81">${escapePdfHtml(t('auditBudget' as any))}<strong>₹${b.budget.toLocaleString('en-IN')}</strong></div><div class="metric" style="--card-accent:${col}">${escapePdfHtml(t('auditBudgetRemaining' as any))}<strong>₹${b.remaining.toLocaleString('en-IN')}</strong><small style="color:${col}">${escapePdfHtml(st)}</small></div><div class="metric" style="--card-accent:#038f27">${escapePdfHtml(t('auditTotalCollected' as any))}<strong>${b.collectedPct}%</strong><small>of budget</small></div><div class="metric" style="--card-accent:#fd6d00">${escapePdfHtml(t('auditTotalExpenses' as any))}<strong>${b.spentPct}%</strong><small>of budget</small></div></div>`; })()}
@@ -848,7 +859,7 @@ export default function GroupFundDetail() {
               </tr>
             </thead>
             <tbody>
-              ${activeExpenses.length > 0 ? activeExpenses.map((e: GroupFundExpense) => `
+              ${pdfExpenses.length > 0 ? pdfExpenses.map((e: GroupFundExpense) => `
                 <tr>
                   <td>${escapePdfHtml(e.name)}</td>
                   <td>${escapePdfHtml(groupFundOptionLabel(t, e.category))}</td>
