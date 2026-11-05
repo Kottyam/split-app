@@ -202,7 +202,7 @@ describe('native PDF pagination', () => {
   it('clips each PDF page to its own slice so sections are not drawn twice', () => {
     const src = readFileSync(resolve(root, 'android-app/app/src/main/java/app/kharcha/splitter/MainActivity.java'), 'utf8');
     const render = src.slice(src.indexOf('private void renderReportPdf'), src.indexOf('document.writeTo', src.indexOf('private void renderReportPdf')));
-    expect(render).toMatch(/canvas\.clipRect\(0, top, viewWidth, top \+ contentHeightPerPage\);\s*(\/\/.*\s*)*reportView\.draw\(canvas\)/);
+    expect(render).toMatch(/sliceCanvas\.clipRect\(0, top, viewWidth, top \+ contentHeightPerPage\);\s*reportView\.draw\(sliceCanvas\)/);
     expect(src).toMatch(/PDF_RENDER_SCALE = [3-9]/);
     expect((render.match(/reportView\.draw\(/g) ?? []).length).toBe(1);
   });
