@@ -48,3 +48,36 @@ export function expenseMatchesPeriod(expense: GroupFundExpense, period: string):
   if (day) { const m = MONTHS.findIndex(x => x.startsWith(day[1].toLowerCase())); if (m >= 0) return d.getFullYear() === Number(day[3]) && d.getMonth() === m && d.getDate() === Number(day[2]); }
   return true;
 }
+
+const expenseTime = (e: GroupFundExpense) => {
+  const n = Number(e.date || e.createdAt);
+  return Number.isFinite(n) ? n : 0;
+};
+
+/** Expenses sorted by their date ('desc' = newest first for the list, 'asc' = chronological for the PDF). Stable for equal dates. */
+export function sortExpensesByDate(expenses: GroupFundExpense[], order: 'asc' | 'desc' = 'desc'): GroupFundExpense[] {
+  return expenses
+    .map((e, i) => ({ e, i }))
+    .sort((a, b) => (order === 'asc' ? expenseTime(a.e) - expenseTime(b.e) : expenseTime(b.e) - expenseTime(a.e)) || a.i - b.i)
+    .map(x => x.e);
+}
+
+/** yyyy-mm-dd for a date input, in the device's local time. */
+export function toDateInputValue(ms: number = Date.now()): string {
+  const d = new Date(ms);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/**
+ * Timestamp for a yyyy-mm-dd date input. Today keeps the current time; other days use local noon so
+ * the expense stays on the chosen day/month in any timezone. Invalid input returns undefined.
+ */
+export function expenseDateFromInput(value: string, now: number = Date.now()): number | undefined {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+  if (!m) return undefined;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0, 0);
+  if (d.getMonth() !== Number(m[2]) - 1) return undefined;
+  if (toDateInputValue(now) === value) return now;
+  return d.getTime();
+}
