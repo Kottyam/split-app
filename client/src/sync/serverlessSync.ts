@@ -14,7 +14,8 @@ export type Snapshot = Rec & { id: string; name?: string };
 export const MAX_LINK_LENGTH = 1800;
 const FORMAT = 1;
 
-export interface EditPackage { v: number; t: SyncKind; s: string; n: number; m: string; f?: string; d: Snapshot }
+/** o = origin: when a recipient re-shares their editable copy, the owner's share id/version it came from. */
+export interface EditPackage { v: number; t: SyncKind; s: string; n: number; m: string; f?: string; o?: { s: string; n: number }; d: Snapshot }
 export type ChangeOp =
   | { k: string; o: 'a' | 'e'; id: string; v: Rec }
   | { k: string; o: 'd'; id: string }

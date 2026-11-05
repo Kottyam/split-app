@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import type { SyncContextType, SyncSnapshot } from '@/lib/editSync';
 import { buildKharchaFile, editLink, normalizeSnapshot, type EditPackage, type Snapshot } from '@/sync/serverlessSync';
-import { recordSharedBase } from '@/sync/syncStore';
+import { getCopy, recordSharedBase } from '@/sync/syncStore';
 import { storeSnapshot } from '@/sync/contextData';
 import LinkOrFileActions from '@/sync/LinkOrFileActions';
 
@@ -30,7 +30,10 @@ function ShareForEditing({ open, onOpenChange, contextType, contextId, contextNa
     // Keep the ids we hand out: if normalisation had to add ids, save them locally too.
     if (JSON.stringify(normalized) !== JSON.stringify(original)) storeSnapshot(contextType, normalized);
     const { sid, ver } = recordSharedBase(contextType, contextId, contextName, normalized);
-    return { v: 1, t: contextType, s: sid, n: ver, m: contextName, d: normalized };
+    // Re-sharing an editable copy: remember which owner share it came from, so the original
+    // owner can merge it into their existing item instead of saving another copy.
+    const copy = getCopy(contextId);
+    return { v: 1, t: contextType, s: sid, n: ver, m: contextName, ...(copy ? { o: { s: copy.sid, n: copy.ver } } : {}), d: normalized };
   }, [contextType, contextId, contextName, snapshot]);
   const full = { ...pkg, ...(from.trim() ? { f: from.trim().slice(0, 40) } : {}) };
   const url = editLink(full);

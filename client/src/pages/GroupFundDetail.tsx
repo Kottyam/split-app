@@ -37,6 +37,7 @@ import EditSyncBackBar from '@/components/EditSyncBackBar';
 import EditSyncReviewBar from '@/components/EditSyncReviewBar';
 import AppSectionHeader from '@/components/AppSectionHeader';
 import { PDF_LAYOUT_CSS, KHARCHA_PDF_WORDMARK_HTML } from '@/lib/pdfLayout';
+import { getActiveFundExpenses } from '@/groupFund/expenses';
 import { downloadBlobFile } from '@/lib/fileDownload';
 
 function groupFundOptionLabel(t: (key: any, variables?: any) => string, value?: string) {
@@ -83,6 +84,7 @@ export default function GroupFundDetail() {
   const bulkMessageAutoAdvanceAt = useRef(0);
 
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const expenseSaveLockRef = useRef(false);
   const [expenseTitle, setExpenseTitle] = useState('');
   const [expenseCategory, setExpenseCategory] = useState<string>('Food');
   const [expenseAmount, setExpenseAmount] = useState('');
@@ -296,7 +298,7 @@ export default function GroupFundDetail() {
   const getMemberPeriodContributions = (memberId: string) => getActivePeriodContributions(fund.contributions, memberId, selectedPeriod);
   const allCollectionMembersCollected = canCloseCollectionPeriod(fund, selectedPeriod);
 
-  const activeExpenses = (fund.expenses || []).filter((e: GroupFundExpense) => e.status !== 'cancelled');
+  const activeExpenses = getActiveFundExpenses(fund.expenses);
   const totalExpenses = activeExpenses.reduce((s: number, e: GroupFundExpense) => s + e.amount, 0);
   const handleShareViewLink = async () => {
     const url = generateFundShareLink(fund);
@@ -647,6 +649,8 @@ export default function GroupFundDetail() {
 
   const handleSaveExpense = (e: React.FormEvent) => {
     e.preventDefault();
+    // Ignore a second submit (double tap / Enter + click) while the first save is in flight.
+    if (expenseSaveLockRef.current) return;
     if (!expenseTitle.trim()) {
       showFieldError('fund-expense-title', t('auditExpenseTitleRequiredMessage' as any));
       return;
@@ -670,9 +674,13 @@ export default function GroupFundDetail() {
       updatedAt: Date.now(),
     };
 
+    expenseSaveLockRef.current = true;
+    window.setTimeout(() => { expenseSaveLockRef.current = false; }, 800);
+    // Build on the latest saved fund so a stale snapshot never re-adds or drops expenses.
+    const latestFund = getGroupFundById(fund.id) ?? fund;
     const next = appendActivity({
-      ...fund,
-      expenses: [newExpense, ...(fund.expenses || [])],
+      ...latestFund,
+      expenses: [newExpense, ...(latestFund.expenses || []).filter((item: GroupFundExpense) => item.id !== newExpense.id)],
     }, t('auditExpenseActivity' as any, { name: newExpense.name, amount: amt, category: groupFundOptionLabel(t, expenseCategory) }));
 
     refresh(next);
