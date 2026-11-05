@@ -21,3 +21,25 @@ describe('getActiveFundExpenses (Group Fund list, totals and PDF)', () => {
     expect(getActiveFundExpenses([exp('a', { status: 'cancelled' }), exp('b', { name: 'Bus' })]).map(e => e.id)).toEqual(['b']);
   });
 });
+
+import { expenseMatchesPeriod } from './expenses';
+describe('expenseMatchesPeriod (month filter for the Group Fund PDF)', () => {
+  const at = (y: number, m: number, d: number, h = 12) => exp('x', { date: new Date(y, m, d, h).getTime(), createdAt: 1 });
+  it('keeps only expenses from the selected month', () => {
+    expect(expenseMatchesPeriod(at(2026, 10, 5), 'November 2026')).toBe(true);
+    expect(expenseMatchesPeriod(at(2026, 9, 31, 23), 'November 2026')).toBe(false);
+    expect(expenseMatchesPeriod(at(2025, 10, 5), 'November 2026')).toBe(false);
+    expect(expenseMatchesPeriod(at(2026, 10, 1, 0), 'November 2026')).toBe(true);
+  });
+  it('falls back to createdAt when there is no date', () => {
+    expect(expenseMatchesPeriod(exp('y', { date: undefined as unknown as number, createdAt: new Date(2026, 1, 3).getTime() }), 'February 2026')).toBe(true);
+    expect(expenseMatchesPeriod(exp('y', { date: undefined as unknown as number, createdAt: new Date(2026, 1, 3).getTime() }), 'March 2026')).toBe(false);
+  });
+  it('handles yearly and daily labels and keeps all for one-time funds', () => {
+    expect(expenseMatchesPeriod(at(2026, 4, 2), 'Year 2026')).toBe(true);
+    expect(expenseMatchesPeriod(at(2026, 4, 2), 'Year 2025')).toBe(false);
+    expect(expenseMatchesPeriod(at(2026, 10, 5), 'Nov 5, 2026')).toBe(true);
+    expect(expenseMatchesPeriod(at(2026, 10, 6), 'Nov 5, 2026')).toBe(false);
+    expect(expenseMatchesPeriod(at(2020, 0, 1), 'One-time')).toBe(true);
+  });
+});

@@ -27,3 +27,24 @@ export function getActiveFundExpenses(expenses: GroupFundExpense[] | undefined):
   }
   return out;
 }
+
+const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+
+/**
+ * Whether an expense belongs to a collection period label. Uses the expense date (falls back to
+ * createdAt) in the device's local time. Monthly ("November 2026"), yearly ("Year 2026") and daily
+ * ("Nov 5, 2026") labels are matched; one-time and other cycle labels keep every expense.
+ */
+export function expenseMatchesPeriod(expense: GroupFundExpense, period: string): boolean {
+  const when = Number(expense.date || expense.createdAt);
+  if (!period || !Number.isFinite(when) || when <= 0) return true;
+  const d = new Date(when);
+  const label = period.trim();
+  const month = /^([A-Za-z]+) (\d{4})$/.exec(label);
+  if (month && MONTHS.includes(month[1].toLowerCase())) return d.getMonth() === MONTHS.indexOf(month[1].toLowerCase()) && d.getFullYear() === Number(month[2]);
+  const year = /^Year (\d{4})$/.exec(label);
+  if (year) return d.getFullYear() === Number(year[1]);
+  const day = /^([A-Za-z]{3}) (\d{1,2}), (\d{4})$/.exec(label);
+  if (day) { const m = MONTHS.findIndex(x => x.startsWith(day[1].toLowerCase())); if (m >= 0) return d.getFullYear() === Number(day[3]) && d.getMonth() === m && d.getDate() === Number(day[2]); }
+  return true;
+}
