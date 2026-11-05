@@ -87,3 +87,4 @@ describe('Overview vs Collect collected totals', () => {
     expect(fixed).not.toBe(legacyOverviewBug);
   });
 });
+
