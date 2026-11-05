@@ -28,7 +28,7 @@ describe('Group Fund member edit contract', () => {
     expect(source).toContain("fund?.prorationRule");
     expect(source).toContain("fund?.monthlyCycleType");
     expect(source).toContain("t('auditDone' as any)");
-    expect(source).toContain("t(isSelectedPeriodClosed ? 'auditUndoCloseCollection' : 'auditCloseCollection' as any)");
+    expect(source).toContain('isSelectedPeriodClosed ? COLLECTION_REOPEN_LABEL : COLLECTION_CLOSE_LABEL');
   });
 
   it('keeps the existing delete confirmation action', () => {

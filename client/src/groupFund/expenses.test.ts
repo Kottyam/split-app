@@ -43,3 +43,28 @@ describe('expenseMatchesPeriod (month filter for the Group Fund PDF)', () => {
     expect(expenseMatchesPeriod(at(2020, 0, 1), 'One-time')).toBe(true);
   });
 });
+
+import { sortExpensesByDate, toDateInputValue, expenseDateFromInput, expenseMatchesPeriod } from './expenses';
+describe('expense dates', () => {
+  it('sorts newest first and chronological', () => {
+    const l = [exp('a', { date: 2 }), exp('b', { date: 3 }), exp('c', { date: 1 })];
+    expect(sortExpensesByDate(l, 'desc').map(e => e.id)).toEqual(['b', 'a', 'c']);
+    expect(sortExpensesByDate(l, 'asc').map(e => e.id)).toEqual(['c', 'a', 'b']);
+  });
+  it('falls back to createdAt when date missing', () => {
+    const l = [exp('a', { date: 0 as any, createdAt: 5 }), exp('b', { date: 3 })];
+    expect(sortExpensesByDate(l, 'desc').map(e => e.id)).toEqual(['a', 'b']);
+  });
+  it('round-trips a date input and keeps the chosen month', () => {
+    const ms = expenseDateFromInput('2026-10-31', new Date(2026, 10, 5, 9).getTime())!;
+    expect(toDateInputValue(ms)).toBe('2026-10-31');
+    expect(expenseMatchesPeriod(exp('x', { date: ms }), 'October 2026')).toBe(true);
+    expect(expenseMatchesPeriod(exp('x', { date: ms }), 'November 2026')).toBe(false);
+  });
+  it('uses now for today and rejects invalid input', () => {
+    const now = new Date(2026, 10, 5, 9, 30).getTime();
+    expect(expenseDateFromInput(toDateInputValue(now), now)).toBe(now);
+    expect(expenseDateFromInput('2026-02-30')).toBeUndefined();
+    expect(expenseDateFromInput('')).toBeUndefined();
+  });
+});

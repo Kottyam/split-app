@@ -37,7 +37,7 @@ import EditSyncBackBar from '@/components/EditSyncBackBar';
 import EditSyncReviewBar from '@/components/EditSyncReviewBar';
 import AppSectionHeader from '@/components/AppSectionHeader';
 import { PDF_LAYOUT_CSS, KHARCHA_PDF_WORDMARK_HTML } from '@/lib/pdfLayout';
-import { expenseMatchesPeriod, getActiveFundExpenses } from '@/groupFund/expenses';
+import { expenseDateFromInput, expenseMatchesPeriod, getActiveFundExpenses, sortExpensesByDate, toDateInputValue } from '@/groupFund/expenses';
 import { downloadBlobFile } from '@/lib/fileDownload';
 
 function groupFundOptionLabel(t: (key: any, variables?: any) => string, value?: string) {
@@ -53,6 +53,9 @@ function escapePdfHtml(value: unknown): string {
     .replace(/\"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+const COLLECTION_CLOSE_LABEL = 'Close Collection';
+const COLLECTION_REOPEN_LABEL = 'Reopen Collection';
 
 export default function GroupFundDetail() {
   const params = useParams<{ id: string }>();
@@ -89,6 +92,7 @@ export default function GroupFundDetail() {
   const [expenseCategory, setExpenseCategory] = useState<string>('Food');
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseNote, setExpenseNote] = useState('');
+  const [expenseDate, setExpenseDate] = useState(() => toDateInputValue());
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isImportingContacts, setIsImportingContacts] = useState(false);
@@ -487,7 +491,7 @@ export default function GroupFundDetail() {
   const handleCashCollectionDone = () => {
     if (!selectedMemberForCollection) return;
     if (isSelectedPeriodClosed) {
-      toast.error(t('auditMonthClosed' as any, { period: selectedPeriod }));
+      toast.error(`Collection for ${selectedPeriod} is closed. Reopen it to record payments.`);
       return;
     }
     const amt = parseFloat(collectionAmount);
@@ -534,7 +538,7 @@ export default function GroupFundDetail() {
   const handleUpiCollectionDone = () => {
     if (!selectedMemberForCollection) return;
     if (isSelectedPeriodClosed) {
-      toast.error(t('auditMonthClosed' as any, { period: selectedPeriod }));
+      toast.error(`Collection for ${selectedPeriod} is closed. Reopen it to record payments.`);
       return;
     }
     const upi = fund.paymentConfig?.upiId;
@@ -585,7 +589,7 @@ export default function GroupFundDetail() {
 
   const handleBulkMemberCollect = (m: GroupFundMember) => {
     if (isSelectedPeriodClosed) {
-      toast.error(t('auditMonthClosed' as any, { period: selectedPeriod }));
+      toast.error(`Collection for ${selectedPeriod} is closed. Reopen it to record payments.`);
       return;
     }
     const amtStr = bulkAmounts[m.id] ?? '';
@@ -630,7 +634,7 @@ export default function GroupFundDetail() {
 
   const handleUndoCollection = (memberId: string) => {
     if (isSelectedPeriodClosed) {
-      toast.error(t('auditMonthClosed' as any, { period: selectedPeriod }));
+      toast.error(`Collection for ${selectedPeriod} is closed. Reopen it to record payments.`);
       return;
     }
     const matching = fund.contributions.filter((c: Contribution) => c.memberId === memberId && c.status !== 'Cancelled' && contributionMatchesPeriod(c.note, selectedPeriod));
@@ -661,13 +665,19 @@ export default function GroupFundDetail() {
       return;
     }
 
+    const when = expenseDateFromInput(expenseDate);
+    if (!when) {
+      showFieldError('fund-expense-date', 'Please choose the expense date.');
+      return;
+    }
+
     const newExpense: GroupFundExpense = {
       id: nanoid(),
       fundId: fund.id,
       name: expenseTitle.trim(),
       category: expenseCategory,
       amount: amt,
-      date: Date.now(),
+      date: when,
       note: expenseNote.trim() || undefined,
       status: 'active',
       createdAt: Date.now(),
@@ -688,6 +698,7 @@ export default function GroupFundDetail() {
     setExpenseTitle('');
     setExpenseAmount('');
     setExpenseNote('');
+    setExpenseDate(toDateInputValue());
     toast.success(t('auditExpenseSaved' as any));
   };
 
@@ -758,8 +769,9 @@ export default function GroupFundDetail() {
 
   const handleCloseSelectedCollection = () => {
     if (isSelectedPeriodClosed) return;
-    if (!allCollectionMembersCollected) {
-      toast.error(t('auditCloseCollectionNeedsAll' as any));
+    // Closing is always allowed; warn (not block) when some members are still pending.
+    if (!allCollectionMembersCollected && typeof window !== 'undefined'
+      && !window.confirm(`Some members have not paid for ${selectedPeriod} yet. Close this collection anyway? You can reopen it later.`)) {
       return;
     }
     const next = appendActivity({
@@ -767,7 +779,7 @@ export default function GroupFundDetail() {
       closedPeriods: closePeriod(closedPeriods, selectedPeriod),
     }, t('auditCollectionClosed' as any, { period: selectedPeriod }));
     refresh(next);
-    toast.success(t('auditCollectionClosed' as any, { period: selectedPeriod }));
+    toast.success(`Collection closed for ${selectedPeriod}`);
   };
 
   const handleUndoCloseSelectedCollection = () => {
@@ -777,13 +789,13 @@ export default function GroupFundDetail() {
       closedPeriods: reopenPeriod(closedPeriods, selectedPeriod),
     }, t('auditCollectionReopened' as any, { period: selectedPeriod }));
     refresh(next);
-    toast.success(t('auditCollectionReopened' as any, { period: selectedPeriod }));
+    toast.success(`Collection is active again for ${selectedPeriod}`);
   };
 
   const handleGeneratePdfReport = (action: 'view' | 'print' | 'save' | 'share' = 'view') => {
     const reportTitle = `${fund.name} - ${selectedPeriod}`;
     // Only the selected month's expenses belong in that month's report.
-    const pdfExpenses = activeExpenses.filter((e: GroupFundExpense) => expenseMatchesPeriod(e, selectedPeriod));
+    const pdfExpenses = sortExpensesByDate(activeExpenses.filter((e: GroupFundExpense) => expenseMatchesPeriod(e, selectedPeriod)), 'asc');
     const pdfTotalExpenses = pdfExpenses.reduce((s: number, e: GroupFundExpense) => s + e.amount, 0);
     const htmlContent = `
       <!DOCTYPE html>
@@ -1192,7 +1204,16 @@ export default function GroupFundDetail() {
               <div>
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)} ({selectedPeriod})</p>
                 <h2 className="text-2xl font-black text-kharcha-green sm:text-3xl">₹{totalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
-                {isSelectedPeriodClosed && <p className="mt-1 text-xs font-black text-kharcha-green">{t('auditMonthClosed' as any, { period: selectedPeriod })}</p>}
+                {isSelectedPeriodClosed ? (
+                  <p className="mt-1 flex flex-wrap items-center gap-2 text-xs font-black text-kharcha-navy">
+                    <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 uppercase tracking-wide text-red-700">Closed</span>
+                    No new payments for {selectedPeriod}. Tap "{COLLECTION_REOPEN_LABEL}" to make it active again.
+                  </p>
+                ) : (
+                  <p className="mt-1 flex items-center gap-2 text-xs font-black text-kharcha-navy">
+                    <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 uppercase tracking-wide text-kharcha-green">Active</span>
+                  </p>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
@@ -1209,12 +1230,11 @@ export default function GroupFundDetail() {
                 <Button
                   onClick={isSelectedPeriodClosed ? handleUndoCloseSelectedCollection : handleCloseSelectedCollection}
                   variant="outline"
-                  disabled={!isSelectedPeriodClosed && !allCollectionMembersCollected}
-                  title={!isSelectedPeriodClosed && !allCollectionMembersCollected ? t('auditCloseCollectionNeedsAll' as any) : undefined}
+                  title={isSelectedPeriodClosed ? 'Make this collection active again' : 'Close this collection (no new payments)'}
                   className={`border border-kharcha-line font-black rounded-xl shadow-sm ${isSelectedPeriodClosed ? 'bg-green-100 text-kharcha-green hover:bg-green-200' : 'bg-white text-kharcha-navy hover:bg-green-50'} disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   {isSelectedPeriodClosed ? <RotateCcw size={16} className="mr-1" /> : <CheckCircle2 size={16} className="mr-1 text-kharcha-green" />}
-                  {t(isSelectedPeriodClosed ? 'auditUndoCloseCollection' : 'auditCloseCollection' as any)}
+                  {isSelectedPeriodClosed ? COLLECTION_REOPEN_LABEL : COLLECTION_CLOSE_LABEL}
                 </Button>
 
                 <Button onClick={handleOpenBulkMessageDialog} disabled={isSelectedPeriodClosed} variant="outline" className="border border-kharcha-line bg-white text-kharcha-navy font-black rounded-xl shadow-sm hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50">
@@ -1346,17 +1366,20 @@ export default function GroupFundDetail() {
                   <Button onClick={() => setShowExpenseModal(true)} className="bg-black text-white font-black rounded-xl border border-kharcha-line shadow-sm">{t('auditRecordFirstFundExpense' as any)}</Button>
                 </Card>
               ) : (
-                activeExpenses.map((exp: GroupFundExpense) => (
+                sortExpensesByDate(activeExpenses, 'desc').map((exp: GroupFundExpense) => (
                   <Card key={exp.id} className="rounded-xl border border-kharcha-line bg-white p-4 flex justify-between items-center shadow-sm">
                     <div>
                       <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-black px-2 py-0.5 rounded-full border border-kharcha-line bg-blue-50 text-kharcha-navy whitespace-nowrap" title="Date">
+                          {new Date(exp.date || exp.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
                         <h4 className="font-black text-kharcha-navy text-base">{exp.name}</h4>
                         <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded-full border border-kharcha-line bg-amber-100 text-amber-800">
                           {exp.category}
                         </span>
                       </div>
                       <p className="text-xs text-kharcha-navy font-medium mt-1">
-                        {exp.note ? `${exp.note} — ` : ''}{new Date(exp.date).toLocaleDateString()}
+                        {exp.note || '—'}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -1838,10 +1861,9 @@ export default function GroupFundDetail() {
                   type="button"
                   variant="outline"
                   onClick={isSelectedPeriodClosed ? handleUndoCloseSelectedCollection : handleCloseSelectedCollection}
-                  disabled={!isSelectedPeriodClosed && !allCollectionMembersCollected}
-                  className={`border border-kharcha-line font-black rounded-xl ${isSelectedPeriodClosed ? 'bg-green-100 text-kharcha-green' : 'bg-white text-kharcha-navy'} disabled:cursor-not-allowed disabled:opacity-50`}
+                                    className={`border border-kharcha-line font-black rounded-xl ${isSelectedPeriodClosed ? 'bg-green-100 text-kharcha-green' : 'bg-white text-kharcha-navy'} disabled:cursor-not-allowed disabled:opacity-50`}
                 >
-                  {t(isSelectedPeriodClosed ? 'auditUndoCloseCollection' : 'auditCloseCollection' as any)}
+                  {isSelectedPeriodClosed ? COLLECTION_REOPEN_LABEL : COLLECTION_CLOSE_LABEL}
                 </Button>
                 <Button variant="outline" onClick={() => setSelectedMemberForCollection(undefined)} className="border border-kharcha-line font-black rounded-xl flex-1 bg-white text-kharcha-navy hover:bg-gray-100 shadow-sm">{t('auditCancel' as any)}</Button>
                 {collectionMethod === 'Cash' ? (
@@ -1899,6 +1921,17 @@ export default function GroupFundDetail() {
                 id="fund-expense-amount"
                 value={expenseAmount}
                 onChange={e => setExpenseAmount(e.target.value)}
+                className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="fund-expense-date" className="font-black text-kharcha-navy">Date *</Label>
+              <Input
+                type="date"
+                id="fund-expense-date"
+                value={expenseDate}
+                onChange={e => setExpenseDate(e.target.value)}
                 className="border border-kharcha-line rounded-lg mt-1 text-kharcha-navy font-bold bg-white shadow-sm"
                 required
               />
@@ -2162,11 +2195,10 @@ export default function GroupFundDetail() {
           <DialogFooter className="shrink-0 pt-2 border-t flex flex-wrap gap-2">
             <Button
               onClick={isSelectedPeriodClosed ? handleUndoCloseSelectedCollection : handleCloseSelectedCollection}
-              disabled={!isSelectedPeriodClosed && !allCollectionMembersCollected}
-              variant="outline"
+                            variant="outline"
               className={`flex-1 border border-kharcha-line font-black rounded-xl ${isSelectedPeriodClosed ? 'bg-green-100 text-kharcha-green' : 'bg-white text-kharcha-navy'} disabled:cursor-not-allowed disabled:opacity-50`}
             >
-              {t(isSelectedPeriodClosed ? 'auditUndoCloseCollection' : 'auditCloseCollection' as any)}
+              {isSelectedPeriodClosed ? COLLECTION_REOPEN_LABEL : COLLECTION_CLOSE_LABEL}
             </Button>
             <Button onClick={() => setShowBulkQrModal(false)} className="flex-1 bg-black text-white font-black rounded-xl py-3 border border-kharcha-line shadow-sm hover:bg-gray-800">{t('auditCloseBulkMode' as any)}</Button>
           </DialogFooter>
