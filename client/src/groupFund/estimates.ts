@@ -1,4 +1,4 @@
-import type { FundEstimate } from './types';
+import type { CollectPlan, CollectTier, FundEstimate } from './types';
 
 export const ESTIMATE_CATEGORIES = ['Travel', 'Stay', 'Food', 'Tickets', 'Shopping', 'Other'] as const;
 
@@ -50,4 +50,58 @@ export function computeEstimateSummary(estimates: FundEstimate[] | undefined, co
     byCategory: Array.from(cats, ([category, amount]) => ({ category, amount })).sort((a, b2) => b2.amount - a.amount),
     overBudgetBy: b ? r2(Math.max(0, totalEstimated - b)) : 0,
   };
+}
+
+export const tierMemberCount = (t: Pick<CollectTier, 'count' | 'memberIds'>) =>
+  t.memberIds && t.memberIds.length ? t.memberIds.length : Math.max(0, Math.floor(Number(t.count) || 0));
+
+export interface CollectPlanSummary {
+  mode: 'equal' | 'tiers';
+  activeMembers: number;
+  /** Members covered by the plan (all active members in equal mode). */
+  plannedMembers: number;
+  /** Members not on any tier (tiers mode only). */
+  unassigned: number;
+  /** Over-assigned members (tiers cover more than the active count). */
+  overAssigned: number;
+  perMember: number;
+  totalPlanned: number;
+  /** totalPlanned - estimate (negative = plan collects less than the estimate). */
+  diff: number;
+  tiers: { id: string; label: string; members: number; amount: number; subtotal: number }[];
+}
+
+export function equalShare(total: number, members: number): number {
+  return members > 0 ? Math.ceil((Number(total) / members) * 100) / 100 : 0;
+}
+
+export function computeCollectPlan(totalEstimated: number, activeMembers: number, plan?: CollectPlan): CollectPlanSummary {
+  const n = Math.max(0, Math.floor(activeMembers || 0));
+  const est = r2(totalEstimated);
+  if (!plan || plan.mode !== 'tiers') {
+    const per = equalShare(est, n);
+    const total = r2(per * n);
+    return { mode: 'equal', activeMembers: n, plannedMembers: n, unassigned: 0, overAssigned: 0, perMember: per, totalPlanned: total, diff: r2(total - est), tiers: [] };
+  }
+  const tiers = (plan.tiers || []).map((t, i) => {
+    const members = tierMemberCount(t);
+    const amount = r2(Math.max(0, Number(t.amount) || 0));
+    return { id: t.id, label: t.label?.trim() || `Rate ${i + 1}`, members, amount, subtotal: r2(members * amount) };
+  });
+  const planned = tiers.reduce((s, t) => s + t.members, 0);
+  const totalPlanned = r2(tiers.reduce((s, t) => s + t.subtotal, 0));
+  return {
+    mode: 'tiers', activeMembers: n, plannedMembers: planned,
+    unassigned: Math.max(0, n - planned), overAssigned: Math.max(0, planned - n),
+    perMember: planned > 0 ? r2(totalPlanned / planned) : 0,
+    totalPlanned, diff: r2(totalPlanned - est), tiers,
+  };
+}
+
+export function validateTierInput(count: string | number, amount: string | number, memberIds?: string[]): { ok: true; count: number; amount: number } | { ok: false; field: 'count' | 'amount' } {
+  const c = memberIds && memberIds.length ? memberIds.length : Math.floor(Number(count));
+  if (!Number.isFinite(c) || c <= 0) return { ok: false, field: 'count' };
+  const a = Number(amount);
+  if (!Number.isFinite(a) || a <= 0) return { ok: false, field: 'amount' };
+  return { ok: true, count: c, amount: r2(a) };
 }
