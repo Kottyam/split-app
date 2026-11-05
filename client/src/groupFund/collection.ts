@@ -16,6 +16,16 @@ export function contributionMatchesPeriod(note: string | undefined, period: stri
   return new RegExp(`(^|[^0-9A-Za-z])${escapeRegExp(period)}(?![0-9])`).test(head);
 }
 
+/**
+ * Money that counts toward "Total Collected".
+ * Must match Collect-tab / getActivePeriodContributions: every non-cancelled
+ * recorded payment (Paid, Partial, User Confirmed, …). Overview previously
+ * filtered status === 'Paid' only, so Partial collections disappeared there.
+ */
+export function isCountedTowardCollected(contribution: Contribution): boolean {
+  return contribution.status !== 'Cancelled';
+}
+
 export function getActivePeriodContributions(
   contributions: Contribution[],
   memberId: string,
@@ -24,7 +34,7 @@ export function getActivePeriodContributions(
   return contributions.filter(
     contribution =>
       contribution.memberId === memberId &&
-      contribution.status !== 'Cancelled' &&
+      isCountedTowardCollected(contribution) &&
       contributionMatchesPeriod(contribution.note, period),
   );
 }
@@ -38,6 +48,34 @@ export function getPeriodCollectedAmount(
     (total, contribution) => total + contribution.amount,
     0,
   );
+}
+
+/** Lifetime total collected across all periods (plus optional starting balance). */
+export function getLifetimeCollectedAmount(
+  contributions: Contribution[],
+  startingBalance = 0,
+): number {
+  const paid = (contributions ?? [])
+    .filter(isCountedTowardCollected)
+    .reduce((sum, contribution) => sum + contribution.amount, 0);
+  return paid + (Number(startingBalance) || 0);
+}
+
+/** Period total collected (same inclusion rule as Collect). Optionally add starting balance. */
+export function getPeriodTotalCollectedAmount(
+  contributions: Contribution[],
+  period: string,
+  startingBalance = 0,
+  includeStartingBalance = false,
+): number {
+  const paid = (contributions ?? [])
+    .filter(
+      contribution =>
+        isCountedTowardCollected(contribution) &&
+        contributionMatchesPeriod(contribution.note, period),
+    )
+    .reduce((sum, contribution) => sum + contribution.amount, 0);
+  return paid + (includeStartingBalance ? Number(startingBalance) || 0 : 0);
 }
 
 /** A zero-value contribution is still an intentional collection record. */

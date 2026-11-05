@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { getGroupFunds, deleteGroupFund } from '@/groupFund/storage';
+import { getLifetimeCollectedAmount } from '@/groupFund/collection';
 import type { GroupFund } from '@/groupFund/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -56,7 +57,7 @@ export default function GroupFunds() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {funds.map(f => {
-              const totalCollected = f.contributions.filter(c => c.status === 'Paid').reduce((s, c) => s + c.amount, 0) + (f.startingBalance ?? 0);
+              const totalCollected = getLifetimeCollectedAmount(f.contributions, f.startingBalance ?? 0);
               const totalSpent = (f.expenses ?? []).filter(e => e.status === 'active').reduce((s, e) => s + e.amount, 0);
               const balance = totalCollected - totalSpent;
               const fundTypeLabel = f.isRecurring ? t('recurringCollection' as any) : t('pbOneTime' as any);
