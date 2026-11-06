@@ -1,5 +1,6 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import type { GroupFund } from '@/groupFund/types';
+import { isCountedTowardCollected } from '@/groupFund/collection';
 import { buildShortShareUrl } from './origin';
 
 export interface SharedFundSnapshot {
@@ -23,7 +24,7 @@ const r2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
 export function encodeFundSnapshot(fund: GroupFund): string {
   const base = Math.floor((fund.createdAt || 0) / DAY);
   const paid = new Map<string, number>();
-  for (const c of fund.contributions || []) if (c.status === 'Paid') paid.set(c.memberId, (paid.get(c.memberId) || 0) + c.amount);
+  for (const c of fund.contributions || []) if (isCountedTowardCollected(c)) paid.set(c.memberId, (paid.get(c.memberId) || 0) + c.amount);
   const members = (fund.members || []).map(m => [m.name, r2(paid.get(m.id) || 0), m.isActive === false ? 0 : 1]);
   const expenses = (fund.expenses || []).filter(e => e.status !== 'cancelled').map(e => [e.name, r2(e.amount), Math.floor((e.date || 0) / DAY) - base]);
   const purpose = fund.purpose === 'Other' && fund.customPurpose ? fund.customPurpose : fund.purpose;

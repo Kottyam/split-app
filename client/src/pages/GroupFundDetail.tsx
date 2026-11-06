@@ -12,7 +12,7 @@ import { useParams, useLocation } from 'wouter';
 import { getGroupFundById, mergeContributionHistory, saveGroupFund } from '@/groupFund/storage';
 import { calculateExpectedAmount, calculateExpectedAmountForPeriod, calculateMemberAddExpectedAmountForConfiguredPeriod, getFundCollectionStartTime, getMemberStartDateValue, resolveCollectionPeriod } from '@/groupFund/calculations';
 import type { CollectionPeriodMode } from '@/groupFund/calculations';
-import { canCloseCollectionPeriod, closePeriod, getActivePeriodContributions, getAmountAfterCredit, getCreditAfterPayment, getMemberCreditBalance, getMemberPaymentRequestAmount, getPeriodCollectedAmount, getPeriodCollectionStatus, getSavedCollectionAmount, reopenPeriod } from '@/groupFund/collection';
+import { canCloseCollectionPeriod, closePeriod, getActivePeriodContributions, getAmountAfterCredit, getCreditAfterPayment, getLifetimeCollectedAmount, getMemberCreditBalance, getMemberPaymentRequestAmount, getPeriodCollectedAmount, getPeriodCollectionStatus, getPeriodTotalCollectedAmount, getSavedCollectionAmount, reopenPeriod } from '@/groupFund/collection';
 import type { GroupFund, GroupFundMember, Contribution, ContributionStatus, GroupFundExpense } from '@/groupFund/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -289,11 +289,15 @@ export default function GroupFundDetail() {
   };
 
   const periodContributions = fund.contributions.filter((c: Contribution) => c.status !== 'Cancelled' && contributionMatchesPeriod(c.note, selectedPeriod));
-  const totalCollected = periodContributions.reduce((s: number, c: Contribution) => s + c.amount, 0) + (selectedPeriod === collectionPeriods[0] ? (fund.startingBalance ?? 0) : 0);
-  // Dashboard totals are lifetime totals, matching the Group Funds list. Period totals remain scoped to selectedPeriod for collection/report workflows.
-  const lifetimeTotalCollected = fund.contributions
-    .filter((contribution: Contribution) => contribution.status === 'Paid')
-    .reduce((sum: number, contribution: Contribution) => sum + contribution.amount, 0) + (fund.startingBalance ?? 0);
+  // Collect / Reports / PDF use period scope; Overview uses lifetime. Same inclusion rule
+  // (every non-cancelled payment, including Partial) so the numbers stay consistent.
+  const totalCollected = getPeriodTotalCollectedAmount(
+    fund.contributions,
+    selectedPeriod,
+    fund.startingBalance ?? 0,
+    selectedPeriod === collectionPeriods[0],
+  );
+  const lifetimeTotalCollected = getLifetimeCollectedAmount(fund.contributions, fund.startingBalance ?? 0);
   const expectedTotal = fund.isRecurring
     ? fund.members.reduce((sum: number, m: GroupFundMember) => sum + calculateExpectedAmountForPeriod(fund, m, selectedPeriod), 0)
     : fund.members.reduce((sum: number, m: GroupFundMember) => sum + (m.expectedAmount ?? fund.defaultContributionAmount ?? 0), 0);
@@ -1416,7 +1420,10 @@ export default function GroupFundDetail() {
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-3">
               <Card className="rounded-2xl border border-kharcha-line bg-white p-5 shadow-sm">
-                <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)}</p>
+                <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">
+                  {t('auditTotalCollected' as any)}
+                  {fund.isRecurring ? ' (all time)' : ''}
+                </p>
                 <h3 className="text-2xl font-black text-kharcha-green mt-1">₹{lifetimeTotalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
               </Card>
               <Card className="rounded-2xl border border-kharcha-line bg-white p-5 shadow-sm">
