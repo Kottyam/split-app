@@ -105,4 +105,3 @@ export function validateTierInput(count: string | number, amount: string | numbe
   if (!Number.isFinite(a) || a <= 0) return { ok: false, field: 'amount' };
   return { ok: true, count: c, amount: r2(a) };
 }
-

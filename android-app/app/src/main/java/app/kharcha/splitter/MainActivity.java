@@ -17,7 +17,10 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.pdf.PdfDocument;
 import android.os.SystemClock;
 import android.print.PrintAttributes;
@@ -458,7 +461,12 @@ public class MainActivity extends FragmentActivity {
             reportView.setVerticalScrollBarEnabled(true);
             reportView.setHorizontalScrollBarEnabled(false);
             reportView.setInitialScale(100);
-            reportView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            // Pinch-to-zoom in the report viewer; hardware layer keeps text sharp when zoomed.
+            reportView.getSettings().setSupportZoom(true);
+            reportView.getSettings().setBuiltInZoomControls(true);
+            reportView.getSettings().setDisplayZoomControls(false);
+            reportView.getSettings().setUseWideViewPort(true);
+            reportView.getSettings().setLoadWithOverviewMode(true);
             final boolean[] reportReady = { false };
             reportView.setWebViewClient(new WebViewClient() {
                 @Override
@@ -670,6 +678,8 @@ public class MainActivity extends FragmentActivity {
     }
 
     /** Only pages that contain report content; ignores a sliver of trailing padding. */
+    static final int PDF_RENDER_SCALE = 4;
+
     static int pdfPageCount(int contentHeightPx, int pageHeightPx) {
         if (contentHeightPx <= 0 || pageHeightPx <= 0) return 1;
         int pages = contentHeightPx / pageHeightPx;
@@ -708,13 +718,22 @@ public class MainActivity extends FragmentActivity {
             for (int index = 0; index < pageCount; index++) {
                 int top = index * contentHeightPerPage;
                 PdfDocument.Page page = document.startPage(new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber++).create());
+                // Render each slice into a high-resolution bitmap (~300 DPI) and place it
+                // on the 72-DPI PDF page, so zooming the saved PDF stays sharp.
+                Bitmap slice = Bitmap.createBitmap(printableWidth * PDF_RENDER_SCALE, printableHeight * PDF_RENDER_SCALE, Bitmap.Config.ARGB_8888);
+                slice.eraseColor(Color.WHITE);
+                Canvas sliceCanvas = new Canvas(slice);
+                float bitmapScale = scale * PDF_RENDER_SCALE;
+                sliceCanvas.scale(bitmapScale, bitmapScale);
+                sliceCanvas.translate(0, -top);
+                // Clip to this page's slice. Without it the WebView drew past the
+                // printable area into the page margins, so the rows at the end of
+                // page N also appeared at the top of page N+1 (duplicate ledger).
+                sliceCanvas.clipRect(0, top, viewWidth, top + contentHeightPerPage);
+                reportView.draw(sliceCanvas);
                 Canvas canvas = page.getCanvas();
-                canvas.save();
-                canvas.translate(pageMargin, pageMargin);
-                canvas.scale(scale, scale);
-                canvas.translate(0, -top);
-                reportView.draw(canvas);
-                canvas.restore();
+                canvas.drawBitmap(slice, null, new Rect(pageMargin, pageMargin, pageMargin + printableWidth, pageMargin + printableHeight), new Paint(Paint.FILTER_BITMAP_FLAG));
+                slice.recycle();
                 document.finishPage(page);
             }
             document.writeTo(output);
