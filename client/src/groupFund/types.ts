@@ -103,6 +103,21 @@ export interface FundEstimate {
   createdAt: number;
 }
 
+export interface CollectTier {
+  id: string;
+  label?: string;
+  /** Number of members paying this rate (ignored when memberIds is non-empty). */
+  count: number;
+  amount: number;
+  /** Optional specific members on this rate. */
+  memberIds?: string[];
+}
+
+export interface CollectPlan {
+  mode: 'equal' | 'tiers';
+  tiers: CollectTier[];
+}
+
 export interface GroupFund {
   id: string;
   type: 'group_fund';
@@ -115,6 +130,8 @@ export interface GroupFund {
   budgetAmount?: number;
   /** Optional planned/approximate cost line items (separate from budget). */
   estimates?: FundEstimate[];
+  /** How the estimate is planned to be collected (equal split or member rate tiers). */
+  collectPlan?: CollectPlan;
   startingBalance?: number;
   contributionType: ContributionType;
   defaultContributionAmount: number;
