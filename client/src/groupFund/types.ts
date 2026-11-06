@@ -106,16 +106,18 @@ export interface FundEstimate {
 export interface CollectTier {
   id: string;
   label?: string;
-  /** Number of members paying this rate (ignored when memberIds is non-empty). */
+  /** Number of people paying this rate (planning count, no member picking). */
   count: number;
   amount: number;
-  /** Optional specific members on this rate. */
+  /** Legacy: specific members picked on older plans (count wins now). */
   memberIds?: string[];
 }
 
 export interface CollectPlan {
   mode: 'equal' | 'tiers';
   tiers: CollectTier[];
+  /** Planned total number of people (planning stage; members need not be added yet). */
+  plannedCount?: number;
 }
 
 export interface GroupFund {

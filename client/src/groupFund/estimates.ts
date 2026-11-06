@@ -52,18 +52,26 @@ export function computeEstimateSummary(estimates: FundEstimate[] | undefined, co
   };
 }
 
-export const tierMemberCount = (t: Pick<CollectTier, 'count' | 'memberIds'>) =>
-  t.memberIds && t.memberIds.length ? t.memberIds.length : Math.max(0, Math.floor(Number(t.count) || 0));
+export const tierMemberCount = (t: Pick<CollectTier, 'count' | 'memberIds'>) => {
+  const c = Math.max(0, Math.floor(Number(t.count) || 0));
+  return c > 0 ? c : (t.memberIds?.length || 0);
+};
 
 export interface CollectPlanSummary {
   mode: 'equal' | 'tiers';
   activeMembers: number;
-  /** Members covered by the plan (all active members in equal mode). */
+  /** Planned number of people (typed count in equal mode, sum of rate counts in custom mode). */
   plannedMembers: number;
-  /** Members not on any tier (tiers mode only). */
+  /** True when equal mode has no typed planned count and falls back to added members. */
+  usingActiveFallback: boolean;
+  /** Typed planned total (if any). */
+  plannedCount: number;
+  /** Custom mode: typed planned total minus people on rates (positive = people without a rate). */
   unassigned: number;
-  /** Over-assigned members (tiers cover more than the active count). */
+  /** Custom mode: rates cover more people than the typed planned total. */
   overAssigned: number;
+  /** actual active members - planned (hint only; 0 when no members yet). */
+  memberGap: number;
   perMember: number;
   totalPlanned: number;
   /** totalPlanned - estimate (negative = plan collects less than the estimate). */
@@ -75,13 +83,18 @@ export function equalShare(total: number, members: number): number {
   return members > 0 ? Math.ceil((Number(total) / members) * 100) / 100 : 0;
 }
 
+export const normalizePlannedCount = (n: unknown) => { const v = Math.floor(Number(n)); return Number.isFinite(v) && v > 0 ? v : 0; };
+
 export function computeCollectPlan(totalEstimated: number, activeMembers: number, plan?: CollectPlan): CollectPlanSummary {
   const n = Math.max(0, Math.floor(activeMembers || 0));
   const est = r2(totalEstimated);
+  const typed = normalizePlannedCount(plan?.plannedCount);
+  const gap = (planned: number) => (n > 0 && planned > 0 ? n - planned : 0);
   if (!plan || plan.mode !== 'tiers') {
-    const per = equalShare(est, n);
-    const total = r2(per * n);
-    return { mode: 'equal', activeMembers: n, plannedMembers: n, unassigned: 0, overAssigned: 0, perMember: per, totalPlanned: total, diff: r2(total - est), tiers: [] };
+    const people = typed || n;
+    const per = equalShare(est, people);
+    const total = r2(per * people);
+    return { mode: 'equal', activeMembers: n, plannedMembers: people, usingActiveFallback: !typed && n > 0, plannedCount: typed, unassigned: 0, overAssigned: 0, memberGap: gap(typed), perMember: per, totalPlanned: total, diff: r2(total - est), tiers: [] };
   }
   const tiers = (plan.tiers || []).map((t, i) => {
     const members = tierMemberCount(t);
@@ -91,18 +104,18 @@ export function computeCollectPlan(totalEstimated: number, activeMembers: number
   const planned = tiers.reduce((s, t) => s + t.members, 0);
   const totalPlanned = r2(tiers.reduce((s, t) => s + t.subtotal, 0));
   return {
-    mode: 'tiers', activeMembers: n, plannedMembers: planned,
-    unassigned: Math.max(0, n - planned), overAssigned: Math.max(0, planned - n),
+    mode: 'tiers', activeMembers: n, plannedMembers: planned, usingActiveFallback: false, plannedCount: typed,
+    unassigned: typed ? Math.max(0, typed - planned) : 0, overAssigned: typed ? Math.max(0, planned - typed) : 0,
+    memberGap: gap(planned),
     perMember: planned > 0 ? r2(totalPlanned / planned) : 0,
     totalPlanned, diff: r2(totalPlanned - est), tiers,
   };
 }
 
-export function validateTierInput(count: string | number, amount: string | number, memberIds?: string[]): { ok: true; count: number; amount: number } | { ok: false; field: 'count' | 'amount' } {
-  const c = memberIds && memberIds.length ? memberIds.length : Math.floor(Number(count));
+export function validateTierInput(count: string | number, amount: string | number): { ok: true; count: number; amount: number } | { ok: false; field: 'count' | 'amount' } {
+  const c = Math.floor(Number(count));
   if (!Number.isFinite(c) || c <= 0) return { ok: false, field: 'count' };
   const a = Number(amount);
   if (!Number.isFinite(a) || a <= 0) return { ok: false, field: 'amount' };
   return { ok: true, count: c, amount: r2(a) };
 }
-

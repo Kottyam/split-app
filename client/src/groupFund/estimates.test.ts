@@ -53,17 +53,38 @@ describe('fund estimates', () => {
     expect(p.unassigned).toBe(0);
     expect(p.tiers.map(t => [t.label, t.subtotal])).toEqual([['Adults', 30000], ['Rate 2', 16000]]);
   });
-  it('tier plan uses picked members count and flags unassigned/over', () => {
-    const p = computeCollectPlan(1000, 5, { mode: 'tiers', tiers: [{ id: 'a', count: 99, amount: 300, memberIds: ['m1', 'm2'] }] });
-    expect(p.plannedMembers).toBe(2);
-    expect(p.unassigned).toBe(3);
-    expect(p.totalPlanned).toBe(600);
-    expect(computeCollectPlan(100, 2, { mode: 'tiers', tiers: [{ id: 'a', count: 3, amount: 10 }] }).overAssigned).toBe(1);
+  it('planning: equal split uses typed planned people with zero members added', () => {
+    const p = computeCollectPlan(50000, 0, { mode: 'equal', tiers: [], plannedCount: 40 });
+    expect(p.plannedMembers).toBe(40);
+    expect(p.perMember).toBe(1250);
+    expect(p.totalPlanned).toBe(50000);
+    expect(p.usingActiveFallback).toBe(false);
+    expect(p.memberGap).toBe(0);
+    // typed count wins over added members; gap is a hint only
+    const q = computeCollectPlan(50000, 12, { mode: 'equal', tiers: [], plannedCount: 40 });
+    expect(q.perMember).toBe(1250);
+    expect(q.memberGap).toBe(-28);
+    // no typed count falls back to added members
+    expect(computeCollectPlan(9000, 3, { mode: 'equal', tiers: [] }).usingActiveFallback).toBe(true);
   });
-  it('validates tier input', () => {
+  it('planning: custom numeric tiers without any member picks or members added', () => {
+    const p = computeCollectPlan(50000, 0, { mode: 'tiers', plannedCount: 45, tiers: [{ id: 'a', label: 'Adults', count: 20, amount: 1500 }, { id: 'b', label: 'Kids', count: 20, amount: 800 }] });
+    expect(p.plannedMembers).toBe(40);
+    expect(p.totalPlanned).toBe(46000);
+    expect(p.unassigned).toBe(5);
+    expect(p.overAssigned).toBe(0);
+    expect(p.memberGap).toBe(0);
+    expect(computeCollectPlan(100, 0, { mode: 'tiers', plannedCount: 2, tiers: [{ id: 'a', count: 3, amount: 10 }] }).overAssigned).toBe(1);
+    expect(computeCollectPlan(1000, 42, { mode: 'tiers', tiers: [{ id: 'a', count: 40, amount: 25 }] }).memberGap).toBe(2);
+  });
+  it('validates tier input (count only)', () => {
     expect(validateTierInput('', '100')).toEqual({ ok: false, field: 'count' });
     expect(validateTierInput('2', '0')).toEqual({ ok: false, field: 'amount' });
-    expect(validateTierInput('', '100', ['x', 'y'])).toEqual({ ok: true, count: 2, amount: 100 });
+    expect(validateTierInput('20', '1500')).toEqual({ ok: true, count: 20, amount: 1500 });
+  });
+  it('round-trips planned people through the share link', () => {
+    const fund: any = { id: 'f', name: 'Goa', purpose: 'Trip', members: [], contributions: [], expenses: [], createdAt: 0, estimates: [est('a', 'Hotel', 6000)], collectPlan: { mode: 'equal', tiers: [], plannedCount: 30 } };
+    expect(decodeFundSnapshot(encodeFundSnapshot(fund))!.collectPlan).toEqual({ mode: 'equal', tiers: [], plannedCount: 30 });
   });
   it('round-trips the tier plan through the share link', () => {
     const fund: any = { id: 'f', name: 'Goa', purpose: 'Trip', members: [], contributions: [], expenses: [], createdAt: 0, estimates: [est('a', 'Hotel', 6000)], collectPlan: { mode: 'tiers', tiers: [{ id: 'x', label: 'Kids', count: 4, amount: 500 }] } };
