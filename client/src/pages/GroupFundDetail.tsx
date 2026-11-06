@@ -1448,7 +1448,6 @@ export default function GroupFundDetail() {
               budget={fund.budgetAmount}
               onChange={(next, message) => refresh(appendActivity({ ...fund, estimates: next }, message))}
               collectPlan={fund.collectPlan}
-              members={fund.members.filter((m: GroupFundMember) => m.isActive !== false).map((m: GroupFundMember) => ({ id: m.id, name: m.name }))}
               onPlanChange={(next, message) => refresh(appendActivity({ ...fund, collectPlan: next }, message))}
             />
 
