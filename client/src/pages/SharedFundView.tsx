@@ -59,7 +59,7 @@ export default function SharedFundView() {
       <div className="space-y-4 p-4">
         {fund.description && <Card className="rounded-3xl bg-white p-4 text-sm text-gray-700 shadow-sm">{fund.description}</Card>}
         <FundBudgetCard budget={fund.budgetAmount} collected={collected} expenses={spent} />
-        <FundEstimatesCard estimates={fund.estimates?.map((e, i) => ({ ...e, id: String(i), createdAt: 0 }))} collected={collected} expenses={spent} activeMembers={fund.members.filter(m => m.active).length} budget={fund.budgetAmount} />
+        <FundEstimatesCard estimates={fund.estimates?.map((e, i) => ({ ...e, id: String(i), createdAt: 0 }))} collected={collected} expenses={spent} activeMembers={fund.members.filter(m => m.active).length} budget={fund.budgetAmount} collectPlan={fund.collectPlan} />
         <div className="grid grid-cols-3 gap-2">
           {stats.map(s => (
             <Card key={s.label} className="overflow-hidden rounded-2xl bg-white p-0 shadow-sm">
