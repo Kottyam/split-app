@@ -15,7 +15,7 @@ export default function More() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, []);
   const items = [
-    { path: '/import', label: 'Import .kharcha file', description: 'Open an editable copy or changes someone sent you', icon: Upload, tone: 'text-[#16834b] bg-[#e9f7ed]' },
+    { path: '/import', label: t('moreImportLabel' as any), description: t('moreImportDescription' as any), icon: Upload, tone: 'text-[#16834b] bg-[#e9f7ed]' },
     { path: '/group-funds', label: t('groupFunds' as any), description: t('openFunds' as any), icon: Landmark, tone: 'text-[#e87817] bg-[#fff3e3]' },
     { path: '/trips', label: t('myTrips' as any), description: t('openTrips' as any), icon: Plane, tone: 'text-[#e87817] bg-[#fff3e3]' },
   ];

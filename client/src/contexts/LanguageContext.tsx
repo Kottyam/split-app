@@ -769,7 +769,7 @@ export type TranslationKey =
 type TranslationDictionary = Partial<Record<TranslationKey, string>>;
 type Variables = Record<string, string | number>;
 
-const english: Record<TranslationKey, string> = {
+export const english: Record<TranslationKey, string> = {
   language: 'Language',
   splitExpenses: 'Split expenses, travel smart',
   oneTrip: 'One Trip.',
@@ -1475,7 +1475,7 @@ const english: Record<TranslationKey, string> = {
   deviceAuthFailed: 'Phone authentication failed. Try again.',
 };
 
-const translations: Record<LanguageCode, TranslationDictionary> = {
+export const translations: Record<LanguageCode, TranslationDictionary> = {
   en: english,
   ml: {
     language: 'ഭാഷ', splitExpenses: 'ചെലവ് പങ്കിടൂ, യാത്ര സ്മാർട്ടാക്കൂ', oneTrip: 'ഒരു യാത്ര.', oneTap: 'ഒരു ടാപ്പ്.', loadingTrips: 'യാത്രകൾ ലോഡ് ചെയ്യുന്നു...', noTrips: 'ഇതുവരെ യാത്രകളില്ല. ആദ്യ യാത്ര സൃഷ്ടിക്കൂ!', createTrip: 'യാത്ര സൃഷ്ടിക്കുക', yourTrips: 'നിങ്ങളുടെ യാത്രകൾ', newestFirst: 'പുതിയത് ആദ്യം', oldestFirst: 'പഴയത് ആദ്യം', nameAZ: 'പേര് A-Z', nameZA: 'പേര് Z-A', membersCount: '{{count}} അംഗങ്ങൾ', tripNotFound: 'യാത്ര കണ്ടെത്തിയില്ല', backToTrips: 'യാത്രകളിലേക്ക് മടങ്ങുക', total: 'ആകെ', expenses: 'ചെലവുകൾ', members: 'അംഗങ്ങൾ', payAddExpenseAutomatically: 'പണമടച്ച് ചെലവ് ചേർക്കുക', shareThisTrip: 'ഈ യാത്ര പങ്കിടുക', dashboard: 'ഡാഷ്ബോർഡ്', settle: 'സെറ്റിൽ ചെയ്യുക', howToSplitAddExpense: 'എങ്ങനെ പങ്കിടാം & ചെലവ് ചേർക്കാം', addMember: 'അംഗത്തെ ചേർക്കുക', noMembers: 'ഇതുവരെ അംഗങ്ങളില്ല', paid: 'അടച്ചത്', owes: 'നൽകാനുള്ളത്', edit: 'തിരുത്തുക', delete: 'ഇല്ലാതാക്കുക', createNewTrip: 'പുതിയ യാത്ര സൃഷ്ടിക്കുക', startPlanning: 'അടുത്ത യാത്ര ആസൂത്രണം ചെയ്യാം', tripName: 'യാത്രയുടെ പേര്', description: 'വിവരണം', startDate: 'ആരംഭ തീയതി', endDate: 'അവസാന തീയതി', cancel: 'റദ്ദാക്കുക', copyLink: 'ലിങ്ക് പകർത്തുക', viewOnly: 'കാണാൻ മാത്രം',

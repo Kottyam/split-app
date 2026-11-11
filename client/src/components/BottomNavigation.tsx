@@ -27,7 +27,7 @@ export default function BottomNavigation() {
 
   return (
     <nav
-      aria-label="Primary navigation"
+      aria-label={t('primaryNavigation' as any)}
       className="fixed inset-x-0 bottom-0 z-50 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
     >
       <div className="mx-auto flex max-w-md items-center justify-between rounded-2xl border border-[#d7e4dc] bg-white/95 p-1.5 shadow-[0_-6px_24px_rgba(24,50,75,0.10)] backdrop-blur">

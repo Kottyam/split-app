@@ -6,6 +6,8 @@ export interface KharchaNotification {
   read?: boolean;
   path?: string;
   actionLabel?: string;
+  /** Translation keys + variables so the text follows the selected app language. */
+  i18n?: { title: string; message: string; action?: string; vars?: Record<string, string | number> };
 }
 
 const STORAGE_KEY = 'kharcha_notifications';

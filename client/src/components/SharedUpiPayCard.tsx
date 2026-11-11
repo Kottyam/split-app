@@ -32,15 +32,15 @@ export default function SharedUpiPayCard({ payees, accent = 'green' }: { payees:
                 <p className="truncate text-xs font-semibold text-gray-600">{upiId}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <a href={link} className="inline-flex min-h-10 items-center rounded-2xl px-4 text-sm font-black text-white shadow-md active:scale-[0.97]" style={{ background: color }}>{t('auditPayNowUpi' as any)}</a>
-                  <button type="button" onClick={async () => { if (await copyToClipboard(upiId)) setCopied(upiId); }} className="inline-flex min-h-10 items-center rounded-2xl border border-[#d7e4f3] bg-white px-3 text-xs font-black text-[#023b81]">{copied === upiId ? 'Copied ✓' : 'Copy UPI ID'}</button>
-                  {p.amount ? <a href={plainLink} className="inline-flex min-h-10 items-center rounded-2xl border border-[#d7e4f3] bg-white px-3 text-xs font-black text-[#023b81]">Open without amount</a> : null}
+                  <button type="button" onClick={async () => { if (await copyToClipboard(upiId)) setCopied(upiId); }} className="inline-flex min-h-10 items-center rounded-2xl border border-[#d7e4f3] bg-white px-3 text-xs font-black text-[#023b81]">{copied === upiId ? t('upiCopied' as any) : t('upiCopyId' as any)}</button>
+                  {p.amount ? <a href={plainLink} className="inline-flex min-h-10 items-center rounded-2xl border border-[#d7e4f3] bg-white px-3 text-xs font-black text-[#023b81]">{t('upiOpenWithoutAmount' as any)}</a> : null}
                 </div>
               </div>
             </div>
           );
         })}
         <p className="text-xs text-gray-500">{t('auditScanAnyUpi' as any)}</p>
-        <p className="text-xs text-gray-500">If your UPI app says the payment is declined or not allowed, scan the QR from your UPI app, or copy the UPI ID and pay to it directly.</p>
+        <p className="text-xs text-gray-500">{t('upiDeclinedHint' as any)}</p>
       </div>
     </Card>
   );

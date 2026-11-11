@@ -6,6 +6,7 @@ import { showFieldError } from '@/lib/formValidation';
 import { generateFundShareLink } from '@/share/fundShare';
 import { shareLink, copyToClipboard } from '@/lib/shareLink';
 import { contributionMatchesPeriod, ONE_TIME_PERIOD } from '@/groupFund/collection';
+import { formatPeriodLabel, intlLocale } from '@/groupFund/periodLabel';
 import { toLocalDateKey } from '@/lib/localDate';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useLocation } from 'wouter';
@@ -55,13 +56,14 @@ function escapePdfHtml(value: unknown): string {
     .replace(/'/g, '&#39;');
 }
 
-const COLLECTION_CLOSE_LABEL = 'Close Collection';
-const COLLECTION_REOPEN_LABEL = 'Reopen Collection';
 
 export default function GroupFundDetail() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const COLLECTION_CLOSE_LABEL = t('gfCloseCollection' as any);
+  const COLLECTION_REOPEN_LABEL = t('gfReopenCollection' as any);
+  const BULK_STATUS_KEYS: Record<string, string> = { 'Ready': 'gfStatusReady', 'Opened ✓': 'gfOpened', 'Failed': 'gfStatusFailed', 'Missing Number': 'gfStatusMissingNumber', 'Duplicate Number': 'gfStatusDuplicateNumber' };
   const { requestDelete } = useDeleteConfirmation();
   const [fund, setFund] = useState<GroupFund | undefined>(() => getGroupFundById(params.id));
   const [activeTab, setActiveTab] = useState<'overview' | 'collection' | 'expenses' | 'members' | 'settings' | 'reports'>('overview');
@@ -150,6 +152,7 @@ export default function GroupFundDetail() {
   };
   const collectionPeriods = useMemo(generatePeriods, [fund?.id, fund?.isRecurring, fund?.collectionStartDate, fund?.recurringFrequency, fund?.weeklyStartDay, fund?.fortnightlyCycleBoundary, fund?.customInterval, fund?.customIntervalUnit]);
   const [selectedPeriod, setSelectedPeriod] = useState<string>(() => collectionPeriods[2] || collectionPeriods[0]);
+  const periodLabel = formatPeriodLabel(selectedPeriod, language, t);
   const [collectionDate, setCollectionDate] = useState(() => toLocalDateKey(new Date()));
   const [collectionPeriodMode, setCollectionPeriodMode] = useState<CollectionPeriodMode>(fund?.collectionTiming === 'previous' ? 'past' : fund?.collectionTiming === 'advance' ? 'future' : (fund?.collectionPeriodMode ?? 'future'));
   useEffect(() => {
@@ -263,8 +266,8 @@ export default function GroupFundDetail() {
   if (!fund) {
     return (
       <div className="min-h-screen bg-kharcha-cream p-6 text-center">
-        <h1 className="text-xl font-black text-kharcha-navy">Group Fund not found</h1>
-        <Button onClick={() => navigate('/group-funds')} className="mt-4 bg-kharcha-navy text-white font-bold border border-kharcha-line">Back to Funds</Button>
+        <h1 className="text-xl font-black text-kharcha-navy">{t('gfNotFound' as any)}</h1>
+        <Button onClick={() => navigate('/group-funds')} className="mt-4 bg-kharcha-navy text-white font-bold border border-kharcha-line">{t('gfBackToFunds' as any)}</Button>
       </div>
     );
   }
@@ -363,7 +366,7 @@ export default function GroupFundDetail() {
 
   const buildBulkMessageUrl = (member: GroupFundMember) => {
     const customMessage = bulkMessageText.trim();
-    if (customMessage) return generateWhatsAppMessageUrl(member.mobileNumber, `${customMessage}\nDate: ${new Date().toLocaleDateString('en-IN')}`) ?? '';
+    if (customMessage) return generateWhatsAppMessageUrl(member.mobileNumber, `${customMessage}\n${t('gfMessageDate' as any, { date: new Date().toLocaleDateString('en-IN') })}`) ?? '';
     const upiIdConfig = fund.paymentConfig?.upiId?.trim();
     const savedAmount = getSavedCollectionAmount(member);
     const mobileNumber = member.mobileNumber!.trim();
@@ -375,41 +378,44 @@ export default function GroupFundDetail() {
     });
     if (messageKind === 'thank-you') {
       return generateGroupFundWhatsAppThankYouUrl({
+      t,
         fundName: fund.name,
         memberName: member.name,
         amount: getPeriodCollectedAmount(fund.contributions, member.id, selectedPeriod),
-        period: selectedPeriod,
+        period: periodLabel,
         mobileNumber,
         message: t('auditThankYouMessage' as any, {
           name: member.name,
           amount: getPeriodCollectedAmount(fund.contributions, member.id, selectedPeriod).toLocaleString('en-IN'),
           fund: fund.name,
-          period: selectedPeriod,
+          period: periodLabel,
         }),
       });
     }
     if (messageKind === 'payment-link') {
       return generateGroupFundWhatsAppPaymentUrl({
+      t,
         fundName: fund.name,
         memberName: member.name,
         amount: savedAmount!,
         upiId: upiIdConfig!,
         qrCodeUrl: fund.paymentConfig?.qrCodeUrl,
-        period: selectedPeriod,
+        period: periodLabel,
         mobileNumber,
         confirmationMessage: t('auditPaymentConfirmationInstruction' as any),
         note: `Contribution - ${selectedPeriod}`,
       });
     }
     return generateGroupFundWhatsAppReminderUrl({
+      t,
       fundName: fund.name,
       memberName: member.name,
-      period: selectedPeriod,
+      period: periodLabel,
       mobileNumber,
       message: t('auditBulkContributionReminderMessage' as any, {
         name: member.name,
         fund: fund.name,
-        period: selectedPeriod,
+        period: periodLabel,
       }),
     });
   };
@@ -496,7 +502,7 @@ export default function GroupFundDetail() {
   const handleCashCollectionDone = () => {
     if (!selectedMemberForCollection) return;
     if (isSelectedPeriodClosed) {
-      toast.error(`Collection for ${selectedPeriod} is closed. Reopen it to record payments.`);
+      toast.error(t('gfCollectionClosedError' as any, { period: periodLabel }));
       return;
     }
     const amt = parseFloat(collectionAmount);
@@ -531,7 +537,7 @@ export default function GroupFundDetail() {
       members: fund.members.map(item => item.id === selectedMemberForCollection.id
         ? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt), savedCollectionAmount: undefined }
         : item),
-    }, t('auditCashCollectionActivity' as any, { amount: amt, name: selectedMemberForCollection.name, period: selectedPeriod }));
+    }, t('auditCashCollectionActivity' as any, { amount: amt, name: selectedMemberForCollection.name, period: periodLabel }));
 
     refresh(next);
     setSelectedMemberForCollection(undefined);
@@ -543,7 +549,7 @@ export default function GroupFundDetail() {
   const handleUpiCollectionDone = () => {
     if (!selectedMemberForCollection) return;
     if (isSelectedPeriodClosed) {
-      toast.error(`Collection for ${selectedPeriod} is closed. Reopen it to record payments.`);
+      toast.error(t('gfCollectionClosedError' as any, { period: periodLabel }));
       return;
     }
     const upi = fund.paymentConfig?.upiId;
@@ -583,7 +589,7 @@ export default function GroupFundDetail() {
       members: fund.members.map(item => item.id === selectedMemberForCollection.id
         ? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt), savedCollectionAmount: undefined }
         : item),
-    }, t('auditUpiCollectionActivity' as any, { amount: amt, name: selectedMemberForCollection.name, period: selectedPeriod }));
+    }, t('auditUpiCollectionActivity' as any, { amount: amt, name: selectedMemberForCollection.name, period: periodLabel }));
 
     refresh(next);
     setSelectedMemberForCollection(undefined);
@@ -594,7 +600,7 @@ export default function GroupFundDetail() {
 
   const handleBulkMemberCollect = (m: GroupFundMember) => {
     if (isSelectedPeriodClosed) {
-      toast.error(`Collection for ${selectedPeriod} is closed. Reopen it to record payments.`);
+      toast.error(t('gfCollectionClosedError' as any, { period: periodLabel }));
       return;
     }
     const amtStr = bulkAmounts[m.id] ?? '';
@@ -630,7 +636,7 @@ export default function GroupFundDetail() {
       members: fund.members.map(item => item.id === m.id
         ? { ...item, creditBalance: getCreditAfterPayment(item, expected, existingPaid, amt), savedCollectionAmount: undefined }
         : item),
-    }, t('auditBulkCollectionActivity' as any, { amount: amt, name: m.name, period: selectedPeriod }));
+    }, t('auditBulkCollectionActivity' as any, { amount: amt, name: m.name, period: periodLabel }));
 
     refresh(next);
     setBulkRemarks(current => ({ ...current, [m.id]: '' }));
@@ -639,7 +645,7 @@ export default function GroupFundDetail() {
 
   const handleUndoCollection = (memberId: string) => {
     if (isSelectedPeriodClosed) {
-      toast.error(`Collection for ${selectedPeriod} is closed. Reopen it to record payments.`);
+      toast.error(t('gfCollectionClosedError' as any, { period: periodLabel }));
       return;
     }
     const matching = fund.contributions.filter((c: Contribution) => c.memberId === memberId && c.status !== 'Cancelled' && contributionMatchesPeriod(c.note, selectedPeriod));
@@ -651,7 +657,7 @@ export default function GroupFundDetail() {
     const next = appendActivity({
       ...fund,
       contributions: fund.contributions.map((c: Contribution) => c.id === targetId ? { ...c, status: 'Cancelled' as ContributionStatus } : c),
-    }, t('auditUndidCollectionActivity' as any, { period: selectedPeriod }));
+    }, t('auditUndidCollectionActivity' as any, { period: periodLabel }));
     refresh(next);
     toast.success(t('auditCollectionUndone' as any));
   };
@@ -712,12 +718,13 @@ export default function GroupFundDetail() {
     const message = t('auditBulkContributionReminderMessage' as any, {
       name: m.name,
       fund: fund.name,
-      period: selectedPeriod,
+      period: periodLabel,
     });
     const url = generateGroupFundWhatsAppReminderUrl({
+      t,
       fundName: fund.name,
       memberName: m.name,
-      period: selectedPeriod,
+      period: periodLabel,
       mobileNumber,
       message,
     });
@@ -736,11 +743,12 @@ export default function GroupFundDetail() {
       return;
     }
     const url = generateGroupFundWhatsAppPaymentUrl({
+      t,
       fundName: fund.name,
       memberName: m.name,
       amount,
       upiId: upiIdConfig,
-      period: selectedPeriod,
+      period: periodLabel,
       mobileNumber: m.mobileNumber?.trim() ?? '',
       confirmationMessage: t('auditPaymentConfirmationInstruction' as any),
       note: `Contribution - ${selectedPeriod}`,
@@ -763,28 +771,28 @@ export default function GroupFundDetail() {
   };
 
   const handleSendThankYou = (m: GroupFundMember, amount: number) => {
-    const message = generateGroupFundThankYouMessage({ fundName: fund.name, memberName: m.name, amount, period: selectedPeriod });
+    const message = generateGroupFundThankYouMessage({ t, fundName: fund.name, memberName: m.name, amount, period: periodLabel });
     const url = generateWhatsAppMessageUrl(m.mobileNumber, message);
     if (!normalizeWhatsAppNumber(m.mobileNumber) || !url) { toast.error(t('auditNoPhoneEmail' as any)); return; }
     const opened = window.open(url, '_blank', 'noopener,noreferrer');
     if (!opened) { toast.error(t('auditPopupBlocked' as any)); return; }
     setThankYouOpenedByMember(current => ({ ...current, [m.id]: true }));
-    toast.success('WhatsApp opened');
+    toast.success(t('gfWhatsAppOpened' as any));
   };
 
   const handleCloseSelectedCollection = () => {
     if (isSelectedPeriodClosed) return;
     // Closing is always allowed; warn (not block) when some members are still pending.
     if (!allCollectionMembersCollected && typeof window !== 'undefined'
-      && !window.confirm(`Some members have not paid for ${selectedPeriod} yet. Close this collection anyway? You can reopen it later.`)) {
+      && !window.confirm(t('gfCloseUnpaidConfirm' as any, { period: periodLabel }))) {
       return;
     }
     const next = appendActivity({
       ...fund,
       closedPeriods: closePeriod(closedPeriods, selectedPeriod),
-    }, t('auditCollectionClosed' as any, { period: selectedPeriod }));
+    }, t('auditCollectionClosed' as any, { period: periodLabel }));
     refresh(next);
-    toast.success(`Collection closed for ${selectedPeriod}`);
+    toast.success(t('gfCollectionClosedToast' as any, { period: periodLabel }));
   };
 
   const handleUndoCloseSelectedCollection = () => {
@@ -792,13 +800,13 @@ export default function GroupFundDetail() {
     const next = appendActivity({
       ...fund,
       closedPeriods: reopenPeriod(closedPeriods, selectedPeriod),
-    }, t('auditCollectionReopened' as any, { period: selectedPeriod }));
+    }, t('auditCollectionReopened' as any, { period: periodLabel }));
     refresh(next);
-    toast.success(`Collection is active again for ${selectedPeriod}`);
+    toast.success(t('gfCollectionActiveToast' as any, { period: periodLabel }));
   };
 
   const handleGeneratePdfReport = (action: 'view' | 'print' | 'save' | 'share' = 'view') => {
-    const reportTitle = `${fund.name} - ${selectedPeriod}`;
+    const reportTitle = `${fund.name} - ${periodLabel}`;
     // Only the selected month's expenses belong in that month's report.
     const pdfExpenses = sortExpensesByDate(activeExpenses.filter((e: GroupFundExpense) => expenseMatchesPeriod(e, selectedPeriod)), 'asc');
     const pdfTotalExpenses = pdfExpenses.reduce((s: number, e: GroupFundExpense) => s + e.amount, 0);
@@ -806,7 +814,7 @@ export default function GroupFundDetail() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>${escapePdfHtml(fund.name)} - ${escapePdfHtml(t('auditGroupFundLabel' as any))} &amp; ${escapePdfHtml(t('auditExpenseLedgerLabel' as any))} (${escapePdfHtml(selectedPeriod)})</title>
+          <title>${escapePdfHtml(fund.name)} - ${escapePdfHtml(t('auditGroupFundLabel' as any))} &amp; ${escapePdfHtml(t('auditExpenseLedgerLabel' as any))} (${escapePdfHtml(periodLabel)})</title>
           <style>${PDF_LAYOUT_CSS}</style>
         </head>
         <body>
@@ -815,7 +823,7 @@ export default function GroupFundDetail() {
               ${KHARCHA_PDF_WORDMARK_HTML}
               <div class="report-heading">
                 <h1>${escapePdfHtml(fund.name)}</h1>
-                <p>${escapePdfHtml(t('auditPurposeReport' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.purpose))} (${escapePdfHtml(groupFundOptionLabel(t, fund.contributionType))}) ${fund.isRecurring ? `| ${escapePdfHtml(t('auditFrequencyShort' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.recurringFrequency))}` : ''} | ${escapePdfHtml(t('auditPeriodLabel' as any))}: ${escapePdfHtml(selectedPeriod)} | ${escapePdfHtml(t('auditGeneratedOn' as any))}: ${escapePdfHtml(new Date().toLocaleDateString())}</p>
+                <p>${escapePdfHtml(t('auditPurposeReport' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.purpose))} (${escapePdfHtml(groupFundOptionLabel(t, fund.contributionType))}) ${fund.isRecurring ? `| ${escapePdfHtml(t('auditFrequencyShort' as any))}: ${escapePdfHtml(groupFundOptionLabel(t, fund.recurringFrequency))}` : ''} | ${escapePdfHtml(t('auditPeriodLabel' as any))}: ${escapePdfHtml(periodLabel)} | ${escapePdfHtml(t('auditGeneratedOn' as any))}: ${escapePdfHtml(new Date().toLocaleDateString())}</p>
               </div>
             </div>
 
@@ -1147,9 +1155,9 @@ export default function GroupFundDetail() {
         ...(fund.paymentConfig ?? {}),
         upiId: upiId.trim() || undefined,
       },
-    }, 'Updated payment configuration');
+    }, t('gfLogPaymentConfig' as any));
     refresh(next);
-    toast.success('Settings saved successfully!');
+    toast.success(t('gfSettingsSaved' as any));
   };
 
   const filteredMembers = fund.members.filter((m: GroupFundMember) => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -1164,7 +1172,7 @@ export default function GroupFundDetail() {
         accent="green"
         onBack={() => navigate('/group-funds')}
         backLabel={t('auditBackToKharcha' as any)}
-        actions={<><Button variant="fund" data-testid="share-for-editing" onClick={() => setShowEditSync(true)} className="w-full min-h-12 text-base"><Share2 size={16} className="mr-1.5" /> Share for editing</Button><Button variant="soft" onClick={handleShareViewLink} className="w-full min-h-11"><Link2 size={16} className="mr-1" /> {t('auditShareViewLink' as any)}</Button><Button variant="soft" onClick={() => setShowQrDialog(true)} className="w-full min-h-11"><QrCode size={16} className="mr-1" /> {t('auditQrCode' as any)}</Button></>}
+        actions={<><Button variant="fund" data-testid="share-for-editing" onClick={() => setShowEditSync(true)} className="w-full min-h-12 text-base"><Share2 size={16} className="mr-1.5" /> {t('shareForEditing' as any)}</Button><Button variant="soft" onClick={handleShareViewLink} className="w-full min-h-11"><Link2 size={16} className="mr-1" /> {t('auditShareViewLink' as any)}</Button><Button variant="soft" onClick={() => setShowQrDialog(true)} className="w-full min-h-11"><QrCode size={16} className="mr-1" /> {t('auditQrCode' as any)}</Button></>}
       >
         <div className="mx-auto mt-3 grid max-w-5xl grid-cols-3 gap-2 text-xs font-black sm:grid-cols-6">
           {[
@@ -1207,16 +1215,16 @@ export default function GroupFundDetail() {
             {/* Top Bar with Auto-Generated Period Selector, WhatsApp Reminders, PDF Report & Bulk QR */}
             <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 overflow-hidden bg-white border border-[#e3ebf3] p-4 pl-5 rounded-[22px] shadow-[0_10px_28px_rgba(2,59,129,0.08)]"><span aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-[#038f27]" />
               <div>
-                <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)} ({selectedPeriod})</p>
+                <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditTotalCollected' as any)} ({periodLabel})</p>
                 <h2 className="text-2xl font-black text-kharcha-green sm:text-3xl">₹{totalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
                 {isSelectedPeriodClosed ? (
                   <p className="mt-1 flex flex-wrap items-center gap-2 text-xs font-black text-kharcha-navy">
-                    <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 uppercase tracking-wide text-red-700">Closed</span>
-                    No new payments for {selectedPeriod}. Tap "{COLLECTION_REOPEN_LABEL}" to make it active again.
+                    <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 uppercase tracking-wide text-red-700">{t('gfStatusClosed' as any)}</span>
+                    {t('gfClosedHint' as any, { period: periodLabel, action: COLLECTION_REOPEN_LABEL })}
                   </p>
                 ) : (
                   <p className="mt-1 flex items-center gap-2 text-xs font-black text-kharcha-navy">
-                    <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 uppercase tracking-wide text-kharcha-green">Active</span>
+                    <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 uppercase tracking-wide text-kharcha-green">{t('gfStatusActive' as any)}</span>
                   </p>
                 )}
               </div>
@@ -1227,7 +1235,7 @@ export default function GroupFundDetail() {
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-kharcha-line font-bold text-kharcha-navy">
                     {collectionPeriods.map(p => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                      <SelectItem key={p} value={p}>{formatPeriodLabel(p, language, t)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1235,7 +1243,7 @@ export default function GroupFundDetail() {
                 <Button
                   onClick={isSelectedPeriodClosed ? handleUndoCloseSelectedCollection : handleCloseSelectedCollection}
                   variant="outline"
-                  title={isSelectedPeriodClosed ? 'Make this collection active again' : 'Close this collection (no new payments)'}
+                  title={isSelectedPeriodClosed ? t('gfReopenTitle' as any) : t('gfCloseTitle' as any)}
                   className={`border border-kharcha-line font-black rounded-xl shadow-sm ${isSelectedPeriodClosed ? 'bg-green-100 text-kharcha-green hover:bg-green-200' : 'bg-white text-kharcha-navy hover:bg-green-50'} disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   {isSelectedPeriodClosed ? <RotateCcw size={16} className="mr-1" /> : <CheckCircle2 size={16} className="mr-1 text-kharcha-green" />}
@@ -1265,7 +1273,7 @@ export default function GroupFundDetail() {
 
             {/* Member List with WhatsApp Payment Link Reminder, Undo & Collect Amount */}
             <div className="space-y-2">
-              <h3 className="font-black text-kharcha-navy text-sm uppercase tracking-wide">{t('auditMembersIndividualCollection' as any)} ({selectedPeriod})</h3>
+              <h3 className="font-black text-kharcha-navy text-sm uppercase tracking-wide">{t('auditMembersIndividualCollection' as any)} ({periodLabel})</h3>
               {filteredMembers.length === 0 ? (
                 <Card className="rounded-2xl border border-kharcha-line p-8 text-center bg-white shadow-sm">
                   <p className="text-kharcha-navy font-bold mb-3">{t('auditNoMembersAdded' as any)}</p>
@@ -1292,7 +1300,7 @@ export default function GroupFundDetail() {
                           </span>
                         </div>
                         <p className="text-xs text-kharcha-navy font-medium mt-0.5">
-                          {isCollected ? <><span>{t('auditPaid' as any)}:</span> <span className="font-black text-kharcha-green">₹{paid.toLocaleString('en-IN')}</span></> : <><span>Expected Amount:</span> <span className="font-black text-[#e87817]">₹{expected.toLocaleString('en-IN')}</span></>}
+                          {isCollected ? <><span>{t('auditPaid' as any)}:</span> <span className="font-black text-kharcha-green">₹{paid.toLocaleString('en-IN')}</span></> : <><span>{t('gfExpectedAmount' as any)}</span> <span className="font-black text-[#e87817]">₹{expected.toLocaleString('en-IN')}</span></>}
                           {lastPayment && isCollected && <span className="text-gray-600 ml-1">({t('auditPaymentMethodOnDate' as any, { method: groupFundOptionLabel(t, lastPayment.method), date: new Date(lastPayment.date).toLocaleDateString() })})</span>}
                         </p>
                       </div>
@@ -1303,9 +1311,9 @@ export default function GroupFundDetail() {
                           variant="outline"
                           onClick={() => handleSendIndividualCollectionMessage(m, isCollected, paid)}
                           className="border border-kharcha-line bg-white text-kharcha-navy font-black h-10 px-3 text-xs rounded-xl shadow-sm hover:bg-green-50"
-                          title={isCollected ? 'Open WhatsApp thank-you again' : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}
+                          title={isCollected ? t('gfThankYouAgain' as any) : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}
                         >
-                          <MessageSquare size={14} className="mr-1 text-kharcha-green" /> {isCollected ? (thankYouOpenedByMember[m.id] ? 'Opened ✓' : 'Thank You') : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}
+                          <MessageSquare size={14} className="mr-1 text-kharcha-green" /> {isCollected ? (thankYouOpenedByMember[m.id] ? t('gfOpened' as any) : t('gfThankYou' as any)) : t((getSavedCollectionAmount(m) !== undefined && getSavedCollectionAmount(m)! > 0 ? 'auditPaymentRequest' : 'auditSendWhatsAppReminder') as any)}
                         </Button>
 
                         {isCollected ? (
@@ -1375,8 +1383,8 @@ export default function GroupFundDetail() {
                   <Card key={exp.id} className="rounded-xl border border-kharcha-line bg-white p-4 flex justify-between items-center shadow-sm">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-black px-2 py-0.5 rounded-full border border-kharcha-line bg-blue-50 text-kharcha-navy whitespace-nowrap" title="Date">
-                          {new Date(exp.date || exp.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        <span className="text-[11px] font-black px-2 py-0.5 rounded-full border border-kharcha-line bg-blue-50 text-kharcha-navy whitespace-nowrap" title={t('gfDate' as any)}>
+                          {new Date(exp.date || exp.createdAt).toLocaleDateString(intlLocale(language), { day: '2-digit', month: 'short', year: 'numeric' })}
                         </span>
                         <h4 className="font-black text-kharcha-navy text-base">{exp.name}</h4>
                         <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded-full border border-kharcha-line bg-amber-100 text-amber-800">
@@ -1422,7 +1430,7 @@ export default function GroupFundDetail() {
               <Card className="rounded-2xl border border-kharcha-line bg-white p-5 shadow-sm">
                 <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">
                   {t('auditTotalCollected' as any)}
-                  {fund.isRecurring ? ' (all time)' : ''}
+                  {fund.isRecurring ? ` ${t('gfAllTime' as any)}` : ''}
                 </p>
                 <h3 className="text-2xl font-black text-kharcha-green mt-1">₹{lifetimeTotalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
               </Card>
@@ -1527,7 +1535,7 @@ export default function GroupFundDetail() {
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-lg font-black text-kharcha-navy">{t('sharedHomeReports' as any)}</h2>
-                  <p className="text-sm font-medium text-gray-600">{t('auditPeriodLabel' as any)}: {selectedPeriod}</p>
+                  <p className="text-sm font-medium text-gray-600">{t('auditPeriodLabel' as any)}: {periodLabel}</p>
                 </div>
                 <span className="rounded-full bg-[#dff1e5] px-2.5 py-1 text-xs font-black text-kharcha-green">{fund.isRecurring ? t('recurringCollection' as any) : t('pbOneTime' as any)}</span>
               </div>
@@ -1667,9 +1675,9 @@ export default function GroupFundDetail() {
                               const next = appendActivity({
                                 ...fund,
                                 members: updatedMembers,
-                              }, `${nextActive ? t('auditResumeRecurring' as any) : t('auditStopRecurring' as any)} recurring collection for ${m.name}`);
+                              }, t('gfLogRecurringToggled' as any, { state: nextActive ? t('auditResumeRecurring' as any) : t('auditStopRecurring' as any), name: m.name }));
                               refresh(next);
-                              toast.success(`${t('auditRecurringCollection' as any)} ${nextActive ? t('auditResumeRecurring' as any).toLowerCase() : t('auditStopRecurring' as any).toLowerCase()} for ${m.name}`);
+                              toast.success(t('gfRecurringToggled' as any, { state: nextActive ? t('auditResumeRecurring' as any) : t('auditStopRecurring' as any), name: m.name }));
                             }}
                             className={`border border-kharcha-line text-xs font-black h-8 px-2.5 rounded-lg shadow-sm ${
                               m.recurringActive !== false ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-kharcha-green hover:bg-green-100'
@@ -1761,7 +1769,7 @@ export default function GroupFundDetail() {
               onClick={() => setShowRecurringReminderModal(false)}
               className="w-full bg-black text-white font-black rounded-xl border border-kharcha-line shadow-sm hover:bg-gray-800 py-3"
             >
-              OK, Got It
+              {t('gfOkGotIt' as any)}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1773,14 +1781,14 @@ export default function GroupFundDetail() {
           {selectedMemberForCollection && (
             <>
               <DialogHeader>
-                <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditCollectAmount' as any)} ({selectedPeriod})</p>
+                <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditCollectAmount' as any)} ({periodLabel})</p>
                 <DialogTitle className="font-black text-2xl text-kharcha-navy">{selectedMemberForCollection.name}</DialogTitle>
                 <DialogDescription className="text-kharcha-navy font-bold">{t('auditHowCollect' as any)}</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 my-2">
                 <div className="rounded-xl border border-kharcha-line bg-green-50 p-3 shadow-sm">
-                  <Label className="font-black text-kharcha-navy">Save Amount</Label>
+                  <Label className="font-black text-kharcha-navy">{t('gfSaveAmount' as any)}</Label>
                   <div className="mt-2 flex gap-2">
                     <Input
                       type="number"
@@ -1870,8 +1878,8 @@ export default function GroupFundDetail() {
                   </div>
                 )}
                 <div className="space-y-1">
-                  <Label className="font-black text-kharcha-navy">Remark (optional)</Label>
-                  <Input value={collectionRemark} onChange={e => setCollectionRemark(e.target.value)} placeholder="e.g. Advance / Balance / Cash received" maxLength={160} />
+                  <Label className="font-black text-kharcha-navy">{t('remarkOptional' as any)}</Label>
+                  <Input value={collectionRemark} onChange={e => setCollectionRemark(e.target.value)} placeholder={t('gfRemarkPlaceholder' as any)} maxLength={160} />
                 </div>
               </div>
 
@@ -1945,7 +1953,7 @@ export default function GroupFundDetail() {
               />
             </div>
             <div>
-              <Label htmlFor="fund-expense-date" className="font-black text-kharcha-navy">Date *</Label>
+              <Label htmlFor="fund-expense-date" className="font-black text-kharcha-navy">{t('gfDateRequired' as any)}</Label>
               <Input
                 type="date"
                 id="fund-expense-date"
@@ -1993,8 +2001,8 @@ export default function GroupFundDetail() {
           {bulkMessageQueue.length === 0 ? (
             <>
               <div className="border border-kharcha-line rounded-xl p-3 bg-gray-50 space-y-2">
-                <p className="text-sm font-black text-kharcha-navy">Write Message</p>
-                <textarea value={bulkMessageText} onChange={event => setBulkMessageText(event.target.value)} placeholder="Write the WhatsApp message…" rows={3} className="w-full resize-none rounded-xl border border-kharcha-line bg-white p-3 text-sm font-medium text-kharcha-navy outline-none focus:ring-2 focus:ring-[#16834b]" />
+                <p className="text-sm font-black text-kharcha-navy">{t('gfWriteMessage' as any)}</p>
+                <textarea value={bulkMessageText} onChange={event => setBulkMessageText(event.target.value)} placeholder={t('gfWriteMessagePlaceholder' as any)} rows={3} className="w-full resize-none rounded-xl border border-kharcha-line bg-white p-3 text-sm font-medium text-kharcha-navy outline-none focus:ring-2 focus:ring-[#16834b]" />
               </div>
 
               <div className="flex min-w-0 flex-col gap-3 border border-kharcha-line rounded-xl p-3 bg-gray-50 sm:flex-row sm:items-center sm:justify-between">
@@ -2045,7 +2053,7 @@ export default function GroupFundDetail() {
                           <span className="block truncate text-sm font-black text-kharcha-navy">{member.name}</span>
                           <span className="block truncate text-xs font-bold text-gray-600">{member.mobileNumber?.trim() || t('auditNoPhoneEmail' as any)}</span>
                         </span>
-                        <span className="shrink-0 text-[10px] font-black uppercase tracking-wide text-gray-600">{bulkMessageStatuses[member.id] ?? 'Ready'}</span>
+                        <span className="shrink-0 text-[10px] font-black uppercase tracking-wide text-gray-600">{t(BULK_STATUS_KEYS[bulkMessageStatuses[member.id] ?? 'Ready'] as any)}</span>
                       </label>
                     );
                   })
@@ -2120,7 +2128,7 @@ export default function GroupFundDetail() {
       <Dialog open={showBulkQrModal} onOpenChange={setShowBulkQrModal}>
         <DialogContent className="bg-white border border-kharcha-line rounded-2xl max-w-lg max-h-[90vh] flex flex-col shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           <DialogHeader className="shrink-0">
-            <DialogTitle className="font-black text-xl text-kharcha-navy">{t('auditBulkCollection' as any, { period: selectedPeriod })}</DialogTitle>
+            <DialogTitle className="font-black text-xl text-kharcha-navy">{t('auditBulkCollection' as any, { period: periodLabel })}</DialogTitle>
             <DialogDescription className="text-kharcha-navy font-medium">{t('auditBulkCollectionDescription' as any)}</DialogDescription>
           </DialogHeader>
 
@@ -2140,7 +2148,7 @@ export default function GroupFundDetail() {
             <div className="min-w-0 flex-1">
               <p className="text-xs font-black uppercase tracking-wider text-kharcha-navy">{t('auditScanAnyUpi' as any)}</p>
               <p className="font-black text-kharcha-navy text-sm truncate">{fund.paymentConfig?.upiId || t('auditNoUpiConfigured' as any)}</p>
-              <p className="text-xs text-kharcha-green font-black mt-1">{t('auditPeriodLabel' as any)}: {selectedPeriod}</p>
+              <p className="text-xs text-kharcha-green font-black mt-1">{t('auditPeriodLabel' as any)}: {periodLabel}</p>
             </div>
           </div>
 
@@ -2166,7 +2174,7 @@ export default function GroupFundDetail() {
 
                     {isCollected ? (
                       <span className="text-xs font-black text-kharcha-green bg-green-50 px-3 py-1 rounded-lg border border-kharcha-line">
-                        ✓ Collected (₹{paid})
+                        {t('gfCollectedAmount' as any, { amount: paid })}
                       </span>
                     ) : (
                       <div className="flex items-center gap-2">
@@ -2183,7 +2191,7 @@ export default function GroupFundDetail() {
                           <Input
                             value={bulkRemarks[m.id] ?? ''}
                             onChange={e => setBulkRemarks(current => ({ ...current, [m.id]: e.target.value }))}
-                            placeholder="Individual remark"
+                            placeholder={t('gfIndividualRemark' as any)}
                             maxLength={160}
                             className="w-36 h-8 text-xs"
                           />

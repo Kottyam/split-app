@@ -90,7 +90,7 @@ export default function AddExpenseDialog({
     if (splitType === 'equal-all' || splitType === 'equal-selected') {
       const activeMembers = splitType === 'equal-all' ? new Set(trip.members.map(m => m.id)) : selectedMembers;
       if (activeMembers.size === 0) {
-        toast.error(t('auditChooseSplitMember' as any) !== 'auditChooseSplitMember' ? t('auditChooseSplitMember' as any) : 'Please select at least one member.');
+        toast.error(t('auditChooseSplitMember' as any));
         return;
       }
       const perPerson = expenseAmount / activeMembers.size;
@@ -179,8 +179,8 @@ export default function AddExpenseDialog({
           </div>
 
           <div>
-            <Label htmlFor="expense-remark" className="font-bold text-black">Remark (optional)</Label>
-            <Input id="expense-remark" value={remark} maxLength={300} onChange={(e) => setRemark(e.target.value)} placeholder="Add a note about this expense" className="border-2 border-black rounded-lg mt-1" />
+            <Label htmlFor="expense-remark" className="font-bold text-black">{t('remarkOptional' as any)}</Label>
+            <Input id="expense-remark" value={remark} maxLength={300} onChange={(e) => setRemark(e.target.value)} placeholder={t('expenseRemarkPlaceholder' as any)} className="border-2 border-black rounded-lg mt-1" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

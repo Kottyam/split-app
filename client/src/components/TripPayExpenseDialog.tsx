@@ -12,7 +12,7 @@ import { getAllCategories, getCategoryInfo } from '@/lib/categories';
 import { launchScannedUpiPayment } from '@/lib/upi';
 import { buildExpenseSplits } from '@/lib/tripPayment';
 import { buildScannedUpiPaymentLink, isQrScannerSupported } from '@/lib/qrPayment';
-import { decodeQrFromImageFile, decodeQrFromVideo, describeCameraError } from '@/lib/qrDecode';
+import { decodeQrFromImageFile, decodeQrFromVideo, cameraErrorKey } from '@/lib/qrDecode';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -150,7 +150,7 @@ export default function TripPayExpenseDialog({ open, onOpenChange, trip }: TripP
       void detectFrame();
     } catch (error) {
       stopCamera();
-      setScanError(describeCameraError(error));
+      setScanError(t(cameraErrorKey(error) as any));
     }
   };
 
@@ -238,8 +238,8 @@ export default function TripPayExpenseDialog({ open, onOpenChange, trip }: TripP
               <div className="border-t-2 border-gray-200 pt-4 space-y-2">
                 <Label className="font-bold text-[#18324b]">{t('auditManualUpiFallback' as any)}</Label>
                 <Input value={manualQrValue} onChange={event => setManualQrValue(event.target.value)} placeholder={t('auditUpiPlaceholder' as any)} className="border-2 border-[#e87817] rounded-lg" />
-                <input id="trip-pay-qr-image" type="file" accept="image/*" className="hidden" onChange={async event => { const file = event.target.files?.[0]; event.target.value = ''; if (!file) return; const raw = await decodeQrFromImageFile(file); if (raw) launchScannedPayment(raw); else setScanError('No QR code found in that image'); }} />
-                <Button type="button" variant="outline" onClick={() => document.getElementById('trip-pay-qr-image')?.click()} className="w-full border-2 border-[#16834b] rounded-lg"><ImageUp size={16} className="mr-2" /> Pick QR image / screenshot</Button>
+                <input id="trip-pay-qr-image" type="file" accept="image/*" className="hidden" onChange={async event => { const file = event.target.files?.[0]; event.target.value = ''; if (!file) return; const raw = await decodeQrFromImageFile(file); if (raw) launchScannedPayment(raw); else setScanError(t('bulkNoQrInImage' as any)); }} />
+                <Button type="button" variant="outline" onClick={() => document.getElementById('trip-pay-qr-image')?.click()} className="w-full border-2 border-[#16834b] rounded-lg"><ImageUp size={16} className="mr-2" /> {t('pickQrImage' as any)}</Button>
                 <Button type="button" onClick={() => launchScannedPayment(manualQrValue)} disabled={!manualQrValue.trim()} className="w-full bg-blue-600 text-white font-bold rounded-lg"><Link2 size={16} className="mr-2" /> {t('auditUseUpiLink' as any)}</Button>
               </div>
             </div>

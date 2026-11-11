@@ -6,6 +6,7 @@ import { buildKharchaFile, editLink, normalizeSnapshot, type EditPackage, type S
 import { getCopy, recordSharedBase } from '@/sync/syncStore';
 import { storeSnapshot } from '@/sync/contextData';
 import LinkOrFileActions from '@/sync/LinkOrFileActions';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Props {
   open: boolean;
@@ -23,6 +24,7 @@ export default function EditSyncShareDialog(props: Props) {
 }
 
 function ShareForEditing({ open, onOpenChange, contextType, contextId, contextName, snapshot }: Props) {
+  const { t } = useLanguage();
   const [from, setFrom] = useState('');
   const pkg = useMemo<EditPackage>(() => {
     const original = snapshot as unknown as Snapshot;
@@ -37,8 +39,8 @@ function ShareForEditing({ open, onOpenChange, contextType, contextId, contextNa
   }, [contextType, contextId, contextName, snapshot]);
   const full = { ...pkg, ...(from.trim() ? { f: from.trim().slice(0, 40) } : {}) };
   const url = editLink(full);
-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent data-testid="share-for-editing-dialog"><DialogHeader><DialogTitle>Share for editing</DialogTitle><DialogDescription>Anyone with this link can make their own editable copy of “{contextName}” and send their changes back to you. Nothing changes here until you review and accept.</DialogDescription></DialogHeader>
-    <label className="text-xs font-bold text-gray-600">Your name (shown to them)<Input data-testid="share-for-editing-name" value={from} onChange={e => setFrom(e.target.value)} placeholder="Name" className="mt-1" /></label>
-    <LinkOrFileActions url={url} fileContents={buildKharchaFile('edit', full)} fileName={`${contextName}-edit`} title={`Edit “${contextName}” in Kharcha`} message={`Edit “${contextName}” in Kharcha and send me your changes:`} testIdPrefix="edit-link" />
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent data-testid="share-for-editing-dialog"><DialogHeader><DialogTitle>{t('shareForEditing' as any)}</DialogTitle><DialogDescription>{t('syncShareEditDescription' as any, { name: contextName })}</DialogDescription></DialogHeader>
+    <label className="text-xs font-bold text-gray-600">{t('syncYourNameShown' as any)}<Input data-testid="share-for-editing-name" value={from} onChange={e => setFrom(e.target.value)} placeholder={t('syncNamePlaceholder' as any)} className="mt-1" /></label>
+    <LinkOrFileActions url={url} fileContents={buildKharchaFile('edit', full)} fileName={`${contextName}-edit`} title={t('syncEditTitle' as any, { name: contextName })} message={t('syncEditMessage' as any, { name: contextName })} testIdPrefix="edit-link" />
   </DialogContent></Dialog>;
 }

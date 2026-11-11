@@ -202,7 +202,7 @@ export default function CreateGroupFund() {
                 className="w-5 h-5 accent-[#16834b] cursor-pointer"
               />
               <label htmlFor="recurring-toggle" className="font-black text-kharcha-navy cursor-pointer select-none">
-                {t('recurringCollection' as any) !== 'recurringCollection' ? t('recurringCollection' as any) : 'Recurring Collection'}
+                {t('recurringCollection' as any)}
               </label>
             </div>
 

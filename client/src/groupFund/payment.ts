@@ -1,7 +1,18 @@
 import { buildUpiUri, checkUpiId } from '@/lib/upiLink';
 import { copyToClipboard, shareLink } from '@/lib/shareLink';
 
+/** Optional translator so outgoing messages follow the selected app language (English when omitted). */
+export type MessageTranslator = (key: any, vars?: Record<string, string | number>) => string;
+
+const EN: Record<string, string> = {
+  payMsgDate: 'Date: {{date}}', payMsgFundRequestTitle: 'Group Fund Contribution Request', payMsgFund: 'Fund: {{name}}', payMsgMember: 'Member: {{name}}', payMsgAmount: 'Amount: ₹{{amount}}', payMsgPayViaUpi: 'Pay via UPI: {{link}}', payMsgContributionRequestTitle: 'Contribution Request - {{name}}',
+  payMsgConfirmDefault: 'Once payment is done, please give a confirmation.', payMsgPleasePay: 'Hello {{name}}, please pay ₹{{amount}} for {{fund}} ({{period}}).', payMsgUpiId: 'UPI ID: {{upiId}}', payMsgQr: 'Payment QR Code: {{url}}', payMsgUpiLink: 'UPI payment link: {{link}}',
+  payMsgScreenshot: 'After completing the payment, please share the payment screenshot and confirm the payment.', payMsgThankYouDefault: 'Hello {{name}}, thank you for your ₹{{amount}} contribution to "{{fund}}" for {{period}}. Your collection has been recorded.', payMsgThankYouTitle: 'Thank you - {{name}}',
+};
+const tr = (t: MessageTranslator | undefined, key: string, vars: Record<string, string | number> = {}) => t ? t(key, vars) : Object.entries(vars).reduce((s, [k, v]) => s.replaceAll(`{{${k}}}`, String(v)), EN[key] ?? key);
+
 export interface GroupFundPaymentRequest {
+  t?: MessageTranslator;
   fundName: string;
   memberName: string;
   amount: number;
@@ -16,6 +27,7 @@ export interface GroupFundThankYouRequest {
   period: string;
   message?: string;
   title?: string;
+  t?: MessageTranslator;
 }
 
 export interface GroupFundWhatsAppPaymentRequest extends GroupFundPaymentRequest {
@@ -31,6 +43,7 @@ export interface GroupFundWhatsAppReminderRequest {
   period: string;
   mobileNumber?: string;
   message: string;
+  t?: MessageTranslator;
 }
 
 /** Normalize a stored member number for the official wa.me deep-link format. */
@@ -64,19 +77,19 @@ export function generateGroupFundUpiDeepLink(req: GroupFundPaymentRequest): stri
 export async function shareGroupFundPaymentRequest(req: GroupFundPaymentRequest): Promise<'shared' | 'copied' | 'failed'> {
   const link = generateGroupFundUpiDeepLink(req);
   if (!link) return 'failed';
-  const text = `Group Fund Contribution Request\nFund: ${req.fundName}\nMember: ${req.memberName}\nAmount: ₹${req.amount.toFixed(2)}\nPay via UPI: ${link}`;
-  if (await shareLink(`Contribution Request - ${req.fundName}`, text, link)) return 'shared';
+  const text = [tr(req.t, 'payMsgFundRequestTitle'), tr(req.t, 'payMsgFund', { name: req.fundName }), tr(req.t, 'payMsgMember', { name: req.memberName }), tr(req.t, 'payMsgAmount', { amount: req.amount.toFixed(2) }), tr(req.t, 'payMsgPayViaUpi', { link })].join('\n');
+  if (await shareLink(tr(req.t, 'payMsgContributionRequestTitle', { name: req.fundName }), text, link)) return 'shared';
   return (await copyToClipboard(text)) ? 'copied' : 'failed';
 }
 
 export function generateGroupFundWhatsAppPaymentMessage(req: GroupFundWhatsAppPaymentRequest): string {
   const link = generateGroupFundUpiDeepLink(req);
   if (!link) return '';
-  const confirmation = req.confirmationMessage || 'Once payment is done, please give a confirmation.';
+  const confirmation = req.confirmationMessage || tr(req.t, 'payMsgConfirmDefault');
   const sentDate = new Date().toLocaleDateString('en-IN');
   const upiId = req.upiId!.trim();
   const qrCodeUrl = req.qrCodeUrl?.trim() || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(link)}`;
-  return `Hello ${req.memberName}, please pay ₹${req.amount.toFixed(2)} for ${req.fundName} (${req.period}).\nDate: ${sentDate}\n\nUPI ID: ${upiId}\nPayment QR Code: ${qrCodeUrl}\nUPI payment link: ${link}\n\nAfter completing the payment, please share the payment screenshot and confirm the payment.\n\n${confirmation}`;
+  return `${tr(req.t, 'payMsgPleasePay', { name: req.memberName, amount: req.amount.toFixed(2), fund: req.fundName, period: req.period })}\n${tr(req.t, 'payMsgDate', { date: sentDate })}\n\n${tr(req.t, 'payMsgUpiId', { upiId })}\n${tr(req.t, 'payMsgQr', { url: qrCodeUrl })}\n${tr(req.t, 'payMsgUpiLink', { link })}\n\n${tr(req.t, 'payMsgScreenshot')}\n\n${confirmation}`;
 }
 
 export function generateGroupFundWhatsAppPaymentUrl(req: GroupFundWhatsAppPaymentRequest): string {
@@ -90,18 +103,19 @@ export function generateGroupFundWhatsAppReminderUrl(req: GroupFundWhatsAppRemin
   const recipient = normalizeWhatsAppNumber(req.mobileNumber);
   if (!recipient) return '';
   const sentDate = new Date().toLocaleDateString('en-IN');
-  const datedMessage = `${req.message}\nDate: ${sentDate}`;
+  const datedMessage = `${req.message}\n${tr(req.t, 'payMsgDate', { date: sentDate })}`;
   return `https://wa.me/${recipient}?text=${encodeURIComponent(datedMessage)}`;
 }
 
 export function generateGroupFundThankYouMessage(req: GroupFundThankYouRequest): string {
   const sentDate = new Date().toLocaleDateString('en-IN');
-  return req.message ? `${req.message}\nDate: ${sentDate}` : `Hello ${req.memberName}, thank you for your ₹${req.amount.toFixed(2)} contribution to "${req.fundName}" for ${req.period}. Your collection has been recorded.\nDate: ${sentDate}`;
+  const dated = tr(req.t, 'payMsgDate', { date: sentDate });
+  return req.message ? `${req.message}\n${dated}` : `${tr(req.t, 'payMsgThankYouDefault', { name: req.memberName, amount: req.amount.toFixed(2), fund: req.fundName, period: req.period })}\n${dated}`;
 }
 
 export async function shareGroupFundThankYou(req: GroupFundThankYouRequest): Promise<'shared' | 'copied' | 'failed'> {
   const text = generateGroupFundThankYouMessage(req);
-  if (await shareLink(req.title || `Thank you - ${req.fundName}`, text)) return 'shared';
+  if (await shareLink(req.title || tr(req.t, 'payMsgThankYouTitle', { name: req.fundName }), text)) return 'shared';
   return (await copyToClipboard(text)) ? 'copied' : 'failed';
 }
 
