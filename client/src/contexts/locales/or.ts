@@ -1237,5 +1237,5 @@ export const or: Record<string, string> = {
   "groupFundsDescription": "ଅଫିସ, କ୍ଲବ ଓ ସାଧାରଣ ଚାନ୍ଦା ପରିଚାଳନା କରନ୍ତୁ।",
   "openFunds": "ପାଣ୍ଠି ଖୋଲନ୍ତୁ",
   "personalBudget": "ବ୍ୟକ୍ତିଗତ ବଜେଟ",
-  "personalBudgetOverview": "ସମୀକ୍ଷା",
+  "personalBudgetOverview": "ଅବଲୋକନ",
 };
