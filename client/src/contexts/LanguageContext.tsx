@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { languageExtras } from './languageExtras';
-import { auditEnglishSources, localizeFallback } from './languageAudit';
+import { auditEnglishSources } from './languageAudit';
+import { newEnglishSources, type NewTranslationKey } from './locales/en';
+import { localeTranslations } from './locales';
 
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'English', nativeLabel: 'English' },
@@ -19,6 +21,7 @@ export const SUPPORTED_LANGUAGES = [
 
 export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]['code'];
 export type TranslationKey =
+  | NewTranslationKey
   | 'language'
   | 'splitExpenses'
   
@@ -769,7 +772,7 @@ export type TranslationKey =
 type TranslationDictionary = Partial<Record<TranslationKey, string>>;
 type Variables = Record<string, string | number>;
 
-export const english: Record<TranslationKey, string> = {
+export const english: Record<Exclude<TranslationKey, NewTranslationKey>, string> = {
   language: 'Language',
   splitExpenses: 'Split expenses, travel smart',
   loadingTrips: 'Loading trips...',
@@ -1333,15 +1336,27 @@ interface LanguageContextValue {
 const STORAGE_KEY = 'kharcha-language';
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
+/** English source text for a key (newest dictionaries first). */
+export function englishSource(key: string): string | undefined {
+  return (newEnglishSources as Record<string, string>)[key] ?? auditEnglishSources[key] ?? (english as Record<string, string>)[key];
+}
+
+/** Every key with an English source; each must have a translation in every supported language. */
+export function allTranslationKeys(): string[] {
+  return Array.from(new Set([...Object.keys(english), ...Object.keys(auditEnglishSources), ...Object.keys(newEnglishSources)]));
+}
+
+/** The explicit (non-English) translation for a key, or undefined when a language lacks it. */
+export function explicitTranslation(language: LanguageCode, key: string): string | undefined {
+  if (language === 'en') return englishSource(key);
+  return localeTranslations[language]?.[key] ?? (translations[language] as Record<string, string>)[key] ?? languageExtras[language]?.[key];
+}
+
 export function translate(language: LanguageCode, key: TranslationKey, variables?: Variables): string {
-  const explicit = translations[language][key] ?? languageExtras[language]?.[key];
-  const source = auditEnglishSources[key] ?? english[key] ?? key;
-  const template = explicit ?? source;
-  const knownSourceKey = key in auditEnglishSources || key in english;
-  const localized = !explicit || (knownSourceKey && explicit === source) ? localizeFallback(language, template) : template;
+  const template = explicitTranslation(language, key) ?? englishSource(key) ?? key;
   return Object.entries(variables ?? {}).reduce(
     (result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)),
-    localized,
+    template,
   );
 }
 

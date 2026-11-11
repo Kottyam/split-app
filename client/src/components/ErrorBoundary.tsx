@@ -1,8 +1,7 @@
 import { cn } from "@/lib/utils";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Component, ReactNode } from "react";
-import type { LanguageCode } from '@/contexts/LanguageContext';
-import { auditEnglishSources, localizeFallback } from '@/contexts/languageAudit';
+import { SUPPORTED_LANGUAGES, translate, type LanguageCode } from '@/contexts/LanguageContext';
 
 interface Props {
   children: ReactNode;
@@ -15,7 +14,8 @@ interface State {
 
 function localizedErrorText(key: 'auditUnexpectedError' | 'auditReloadPage'): string {
   const language = (typeof window !== 'undefined' ? window.localStorage.getItem('kharcha-language') : null) as LanguageCode | null;
-  return localizeFallback(language ?? 'en', auditEnglishSources[key]);
+  const code = SUPPORTED_LANGUAGES.some(item => item.code === language) ? language! : 'en';
+  return translate(code, key as any);
 }
 
 class ErrorBoundary extends Component<Props, State> {
