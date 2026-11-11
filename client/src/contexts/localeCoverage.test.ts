@@ -12,7 +12,7 @@ import { SUPPORTED_LANGUAGES, allTranslationKeys, englishSource, explicitTransla
 const ALLOWED_LATIN = new Set([
   'UPI', 'PDF', 'QR', 'Kharcha', 'ID', 'OK', 'PIN', 'JSON', 'json', 'CSV', 'WhatsApp', 'SMS', 'URL', 'APK',
   'Android', 'GPay', 'PhonePe', 'Paytm', 'BHIM', 'Google', 'A-Z', 'Z-A', 'LPG', 'Excel', 'xlsx', 'xls',
-  'EMI', 'SIP', 'ATM', 'GST', 'IFSC', 'AI', 'iPhone', 'iPad',
+  'EMI', 'SIP', 'ATM', 'GST', 'IFSC', 'AI', 'iPhone', 'iPad', 'Wi-Fi',
 ]);
 
 // Keys whose English text is intentionally kept as-is in every language

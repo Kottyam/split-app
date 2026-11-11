@@ -72,7 +72,7 @@ export default function EditMemberDialog({
         <DialogHeader>
           <DialogTitle className="font-black text-black text-xl">{t('editMember')}</DialogTitle>
           <DialogDescription className="text-gray-600 text-sm">
-            {t('updateMemberName') || "Update the member's name"}
+            {t('updateMemberName')}
           </DialogDescription>
         </DialogHeader>
 
