@@ -7,9 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import LanguageSelector from '@/components/LanguageSelector';
 import { useLanguage } from '@/contexts/LanguageContext';
 import HelpGuideModal from '@/components/HelpGuideModal';
-import { Settings, Shield, Database, Download, Upload, Share2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Settings, Shield, Database, Download, Upload, Share2, CheckCircle2, AlertTriangle, Sun, Moon, SmartphoneNfc } from 'lucide-react';
 import { generateBackupPayload, validateBackupJson, restoreBackupPayload, KharchaBackupPayload } from '@/lib/backupRestore';
-import { isAppLockEnabled, getLockMethod, getAutoLockTimeout, setAppLockConfig, hasPinConfigured, isNativeDeviceAuthAvailable, setSessionUnlocked } from '@/lib/appLock';
+import { isAppLockEnabled, getLockMethod, getAutoLockTimeout, setAppLockConfig, hasPinConfigured, isNativeDeviceAuthAvailable, setSessionUnlocked, isValidPin, clearPin, MAX_PIN_LENGTH } from '@/lib/appLock';
+import { useTheme } from '@/contexts/ThemeContext';
+import type { ThemePreference } from '@/lib/theme';
 
 interface Props {
   open: boolean;
@@ -18,6 +20,7 @@ interface Props {
 
 export default function AppSettingsDialogExtended({ open, onOpenChange }: Props) {
   const { t } = useLanguage();
+  const { preference: themePreference, setPreference: setThemePreference } = useTheme();
   const [activeTab, setActiveTab] = useState<'general' | 'backup' | 'security'>('general');
   const [showHelpGuide, setShowHelpGuide] = useState(false);
 
@@ -39,6 +42,7 @@ export default function AppSettingsDialogExtended({ open, onOpenChange }: Props)
   const [pinError, setPinError] = useState('');
   const [securitySuccess, setSecuritySuccess] = useState('');
   const [deviceAuthAvailable, setDeviceAuthAvailable] = useState(isNativeDeviceAuthAvailable());
+  const [pinConfigured, setPinConfigured] = useState(hasPinConfigured());
 
   useEffect(() => {
     if (!open) return;
@@ -46,6 +50,7 @@ export default function AppSettingsDialogExtended({ open, onOpenChange }: Props)
     setLockMethod(getLockMethod());
     setAutoLockTimeout(getAutoLockTimeout());
     setDeviceAuthAvailable(isNativeDeviceAuthAvailable());
+    setPinConfigured(hasPinConfigured());
     setPinInput('');
     setConfirmPinInput('');
     setPinError('');
@@ -133,25 +138,48 @@ export default function AppSettingsDialogExtended({ open, onOpenChange }: Props)
 
 
   const handleSaveSecurity = () => {
-    if (lockEnabled && lockMethod === 'pin') {
-      if (!hasPinConfigured() && (!pinInput || pinInput.length < 4)) {
-        setPinError(t('auditPinRequired' as any));
-        return;
-      }
-      if (pinInput && pinInput !== confirmPinInput) {
-        setPinError(t('auditPinMismatch' as any));
-        return;
-      }
+    if (!lockEnabled) {
+      // Turning the lock off also forgets the PIN, so an old PIN can never surprise the owner later.
+      setPinError('');
+      clearPin();
+      setAppLockConfig(false, lockMethod, autoLockTimeout);
+      setPinConfigured(false);
+      setPinInput('');
+      setConfirmPinInput('');
+      setSecuritySuccess(t('lockDisabledNotice' as any));
+      setTimeout(() => setSecuritySuccess(''), 3000);
+      return;
     }
-    const deviceLockNotice = lockEnabled && lockMethod === 'biometric' && !deviceAuthAvailable;
+    // A PIN is required for both methods: it is the fallback when fingerprint / phone lock is unavailable.
+    if (!pinConfigured && !pinInput) {
+      setPinError(t('auditPinRequired' as any));
+      return;
+    }
+    if (pinInput && !isValidPin(pinInput)) {
+      setPinError(t('lockPinTooShort' as any));
+      return;
+    }
+    if (pinInput && pinInput !== confirmPinInput) {
+      setPinError(t('auditPinMismatch' as any));
+      return;
+    }
+    const effectiveMethod = lockMethod === 'biometric' && !deviceAuthAvailable ? 'pin' : lockMethod;
     setPinError('');
     setSessionUnlocked(true);
-    setAppLockConfig(lockEnabled, lockMethod, autoLockTimeout, lockMethod === 'pin' && pinInput ? pinInput : undefined);
-    setSecuritySuccess(deviceLockNotice
-      ? `${t('auditSecurityUpdated' as any)} ${t('deviceLockUnavailable')}`
-      : t('auditSecurityUpdated' as any));
+    setAppLockConfig(true, effectiveMethod, autoLockTimeout, pinInput || undefined);
+    setLockMethod(effectiveMethod);
+    setPinConfigured(true);
+    setPinInput('');
+    setConfirmPinInput('');
+    setSecuritySuccess(pinInput && pinConfigured ? t('lockPinChanged' as any) : t('auditSecurityUpdated' as any));
     setTimeout(() => setSecuritySuccess(''), 3000);
   };
+
+  const themeOptions: { value: ThemePreference; label: string; icon: typeof Sun }[] = [
+    { value: 'light', label: t('themeLight' as any), icon: Sun },
+    { value: 'dark', label: t('themeDark' as any), icon: Moon },
+    { value: 'system', label: t('themeSystem' as any), icon: SmartphoneNfc },
+  ];
 
   const lastBackupTime = localStorage.getItem('kharcha_last_backup_at');
   const lastBackupFormatted = lastBackupTime ? new Date(lastBackupTime).toLocaleString() : t('auditNever' as any);
@@ -181,6 +209,31 @@ export default function AppSettingsDialogExtended({ open, onOpenChange }: Props)
             <div className="rounded-xl bg-[#fffaf3] p-3 border border-[#e7d7bd]">
               <p className="mb-2 text-sm font-bold text-kharcha-navy">{t('language')}</p>
               <LanguageSelector />
+            </div>
+
+            <div className="rounded-xl bg-[#fffaf3] p-3 border border-[#e7d7bd]" data-testid="appearance-settings">
+              <p className="text-sm font-bold text-kharcha-navy">{t('appearanceTitle' as any)}</p>
+              <p className="mt-0.5 text-xs text-gray-600">{t('appearanceHint' as any)}</p>
+              <div role="radiogroup" aria-label={t('appearanceTitle' as any)} className="mt-2 grid grid-cols-3 gap-2">
+                {themeOptions.map(option => {
+                  const Icon = option.icon;
+                  const active = themePreference === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      data-theme-option={option.value}
+                      onClick={() => setThemePreference(option.value)}
+                      className={`flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 py-2 text-xs font-black ${active ? 'border-[#16834b] bg-[#16834b] text-white' : 'border-[#d7e4dc] bg-white text-kharcha-navy'}`}
+                    >
+                      <Icon size={16} />
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
 
@@ -266,29 +319,29 @@ export default function AppSettingsDialogExtended({ open, onOpenChange }: Props)
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="border-2 border-black bg-white font-bold">
-                        <SelectItem value="pin">{t('pinMethod')}</SelectItem>
-                        <SelectItem value="biometric">{t('deviceLockMethod')}</SelectItem>
+                        <SelectItem value="pin">{t('lockPinOnlyMethod' as any)}</SelectItem>
+                        <SelectItem value="biometric" disabled={!deviceAuthAvailable}>{t('lockFingerprintMethod' as any)}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {lockMethod === 'pin' ? (
-                    <>
-                      <div>
-                        <Label className="text-xs font-bold">{t('pinCodeLabel')}</Label>
-                        <Input type="password" inputMode="numeric" maxLength={6} value={pinInput} onChange={e => setPinInput(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder={t('enterPinPlaceholder')} className="mt-1 border-2 border-black" />
-                      </div>
-                      <div>
-                        <Label className="text-xs font-bold">{t('confirmPinLabel')}</Label>
-                        <Input type="password" inputMode="numeric" maxLength={6} value={confirmPinInput} onChange={e => setConfirmPinInput(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder={t('confirmPinPlaceholder')} className="mt-1 border-2 border-black" />
-                      </div>
-                    </>
-                  ) : (
+                  {lockMethod === 'biometric' && (
                     <div className="rounded-lg border border-[#e87817]/40 bg-[#fff3e3] p-3 text-xs font-bold leading-5 text-gray-700">
-                      {t('deviceLockHint')}
-                      {!deviceAuthAvailable && <p className="mt-2 font-black text-[#b95000]">{t('deviceLockUnavailable')}</p>}
+                      {t('lockFingerprintSettingsHint' as any)}
                     </div>
                   )}
+                  {!deviceAuthAvailable && (
+                    <p className="text-xs font-bold leading-5 text-[#b95000]">{t('lockFingerprintAppOnly' as any)}</p>
+                  )}
+                  <div>
+                    <Label className="text-xs font-bold">{pinConfigured ? t('lockNewPinLabel' as any) : t('pinCodeLabel')}</Label>
+                    <Input type="password" inputMode="numeric" autoComplete="new-password" maxLength={MAX_PIN_LENGTH} value={pinInput} onChange={e => { setPinInput(e.target.value.replace(/\D/g, '').slice(0, MAX_PIN_LENGTH)); setPinError(''); }} placeholder={t('enterPinPlaceholder')} className="mt-1 border-2 border-black" />
+                    {lockMethod === 'biometric' && <p className="mt-1 text-[11px] font-bold text-gray-600">{t('lockBackupPinHint' as any)}</p>}
+                  </div>
+                  <div>
+                    <Label className="text-xs font-bold">{t('confirmPinLabel')}</Label>
+                    <Input type="password" inputMode="numeric" autoComplete="new-password" maxLength={MAX_PIN_LENGTH} value={confirmPinInput} onChange={e => { setConfirmPinInput(e.target.value.replace(/\D/g, '').slice(0, MAX_PIN_LENGTH)); setPinError(''); }} placeholder={t('confirmPinPlaceholder')} className="mt-1 border-2 border-black" />
+                  </div>
                   {pinError && <p className="text-xs font-black text-red-600">{pinError}</p>}
 
                   <div>
