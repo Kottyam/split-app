@@ -72,7 +72,7 @@ function HeaderAction({ children, label, ariaLabel, onClick, badge }: { children
 
 function CategoryCard({ icon, title, description, action, accent, onClick }: { icon: React.ReactNode; title: string; description: string; action: string; accent: 'orange' | 'green'; onClick: () => void }) {
   const color = accent === 'orange' ? '#fd6d00' : '#038f27';
-  const tint = accent === 'orange' ? '#fff1e5' : '#e6f6ea';
+  const tint = accent === 'orange' ? 'var(--kharcha-tint-orange, #fff1e5)' : 'var(--kharcha-tint-green, #e6f6ea)';
   return (
     <Card role="button" tabIndex={0} data-testid={`home-card-${accent}`} onClick={onClick} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') onClick(); }}
       className="group relative min-h-[150px] cursor-pointer overflow-hidden rounded-[26px] border border-[#e3ebf3] bg-white p-5 shadow-[0_10px_28px_rgba(2,59,129,0.10)] transition-all hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(2,59,129,0.16)] active:scale-[0.99] sm:p-6">

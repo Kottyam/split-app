@@ -28,6 +28,8 @@ import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import { DeleteConfirmationProvider } from "./contexts/DeleteConfirmationContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import AppLockGate from "./components/AppLockGate";
 
 function Router() {
   return (
@@ -82,11 +84,16 @@ function AppShell() {
 
 export default function App() {
   return (
-    <LanguageProvider>
-      <DeleteConfirmationProvider>
-        <AppShell />
-        <Toaster position="top-center" richColors closeButton />
-      </DeleteConfirmationProvider>
-    </LanguageProvider>
+    <ThemeProvider switchable>
+      <LanguageProvider>
+        <DeleteConfirmationProvider>
+          {/* App lock covers every route, including shared links, because they can read or change local data. */}
+          <AppLockGate>
+            <AppShell />
+          </AppLockGate>
+          <Toaster position="top-center" richColors closeButton />
+        </DeleteConfirmationProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { languageExtras } from './languageExtras';
 import { auditEnglishSources, localizeFallback } from './languageAudit';
+import './lockThemeTranslations';
 
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'English', nativeLabel: 'English' },

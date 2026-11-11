@@ -88,6 +88,9 @@ public class MainActivity extends FragmentActivity {
     private static final int PDF_SAVE_PERMISSION_REQUEST = 4105;
     private static final long MIN_SPLASH_DURATION_MS = 650L;
     private static final String DEVICE_AUTH_PREFS = "kharcha_security";
+    private static final String APPEARANCE_PREFS = "kharcha_appearance";
+    private static final String APPEARANCE_DARK_KEY = "dark_mode";
+    private static final int NIGHT = Color.rgb(15, 20, 25);
     private static final String DEVICE_AUTH_RESULT_KEY = "pending_device_auth_result";
     private static final String CONTACT_EVENT = "kharcha-contacts-selected";
     private static final int CREAM = Color.rgb(255, 250, 242);
@@ -96,6 +99,7 @@ public class MainActivity extends FragmentActivity {
     private WebView webView;
     private WebViewAssetLoader assetLoader;
     private View splashOverlay;
+    private View appRoot;
     private AlertDialog contactLoadingDialog;
     private boolean contactRequestInFlight;
     private boolean deviceAuthInFlight;
@@ -113,17 +117,18 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setStatusBarColor(CREAM);
-        getWindow().setNavigationBarColor(CREAM);
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        boolean savedDarkMode = getSharedPreferences(APPEARANCE_PREFS, MODE_PRIVATE)
+                .getBoolean(APPEARANCE_DARK_KEY, false);
+        applySystemBars(savedDarkMode);
 
         launchStartedAt = SystemClock.uptimeMillis();
         buildWebView();
         readImportIntent(getIntent());
 
         FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(CREAM);
+        root.setBackgroundColor(savedDarkMode ? NIGHT : CREAM);
+        if (savedDarkMode) webView.setBackgroundColor(NIGHT);
+        appRoot = root;
         root.addView(webView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
@@ -253,6 +258,7 @@ public class MainActivity extends FragmentActivity {
         settings.setUserAgentString(settings.getUserAgentString() + " KharchaAndroid/5");
         webView.addJavascriptInterface(new ContactBridge(), "KharchaContacts");
         webView.addJavascriptInterface(new SecurityBridge(), "KharchaSecurity");
+        webView.addJavascriptInterface(new AppearanceBridge(), "KharchaAppearance");
         webView.addJavascriptInterface(new ShareBridge(), "KharchaShare");
         webView.addJavascriptInterface(new PdfBridge(), "KharchaPdf");
         webView.addJavascriptInterface(new FileBridge(), "KharchaFiles");
@@ -339,6 +345,39 @@ public class MainActivity extends FragmentActivity {
         public String consumeDeviceAuthResult() {
             return MainActivity.this.consumeDeviceAuthResult();
         }
+    }
+
+    /** Lets the web layer read the phone's dark mode and match the system bars to the app theme. */
+    private final class AppearanceBridge {
+        @JavascriptInterface
+        public boolean isSystemDarkMode() {
+            int mode = getResources().getConfiguration().uiMode
+                    & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+            return mode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        }
+
+        @JavascriptInterface
+        public void setDarkMode(boolean dark) {
+            getSharedPreferences(APPEARANCE_PREFS, MODE_PRIVATE)
+                    .edit()
+                    .putBoolean(APPEARANCE_DARK_KEY, dark)
+                    .apply();
+            runOnUiThread(() -> {
+                applySystemBars(dark);
+                int background = dark ? NIGHT : CREAM;
+                if (appRoot != null) appRoot.setBackgroundColor(background);
+                if (webView != null) webView.setBackgroundColor(background);
+            });
+        }
+    }
+
+    private void applySystemBars(boolean dark) {
+        int barColor = dark ? NIGHT : CREAM;
+        getWindow().setStatusBarColor(barColor);
+        getWindow().setNavigationBarColor(barColor);
+        getWindow().getDecorView().setSystemUiVisibility(dark
+                ? 0
+                : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
     }
 
     private final class ShareBridge {
