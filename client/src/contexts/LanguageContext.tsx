@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { languageExtras } from './languageExtras';
 import { auditEnglishSources, localizeFallback } from './languageAudit';
+import { expenseFilterTranslations } from './expenseFilterTranslations';
 import './lockThemeTranslations';
 
 export const SUPPORTED_LANGUAGES = [
@@ -1524,8 +1525,8 @@ const STORAGE_KEY = 'kharcha-language';
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function translate(language: LanguageCode, key: TranslationKey, variables?: Variables): string {
-  const explicit = translations[language][key] ?? languageExtras[language]?.[key];
-  const source = auditEnglishSources[key] ?? english[key] ?? key;
+  const explicit = translations[language][key] ?? languageExtras[language]?.[key] ?? expenseFilterTranslations[language]?.[key];
+  const source = auditEnglishSources[key] ?? english[key] ?? expenseFilterTranslations.en[key] ?? key;
   const template = explicit ?? source;
   const knownSourceKey = key in auditEnglishSources || key in english;
   const localized = !explicit || (knownSourceKey && explicit === source) ? localizeFallback(language, template) : template;
