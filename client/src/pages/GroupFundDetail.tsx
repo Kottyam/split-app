@@ -41,6 +41,9 @@ import AppSectionHeader from '@/components/AppSectionHeader';
 import { PDF_LAYOUT_CSS, KHARCHA_PDF_WORDMARK_HTML } from '@/lib/pdfLayout';
 import { expenseDateFromInput, expenseMatchesPeriod, getActiveFundExpenses, sortExpensesByDate, toDateInputValue } from '@/groupFund/expenses';
 import { downloadBlobFile } from '@/lib/fileDownload';
+import ExpenseFilterBar from '@/components/ExpenseFilterBar';
+import { EMPTY_EXPENSE_FILTERS, filterGroupFundExpenses, summarizeExpenses, type ExpenseFilterState } from '@/lib/expenseFilters';
+import { fundExpenseCategoryLabel, fundExpenseCategoryOptions } from '@/groupFund/expenseCategoryOptions';
 
 function groupFundOptionLabel(t: (key: any, variables?: any) => string, value?: string) {
   const keys: Record<string, string> = { Food: 'auditFoodSnacks', Other: 'auditOther', Equipment: 'auditEquipment', Maintenance: 'auditMaintenance', Utility: 'auditUtility', Celebration: 'auditEventCelebration', Office: 'auditOffice', Club: 'auditClub', Outing: 'auditOuting', Welfare: 'auditWelfare', 'Common Collection': 'auditCommonCollection', Birthday: 'auditBirthday', Sports: 'auditSports', 'Custom Purpose': 'auditCustomPurpose', Daily: 'auditDaily', Weekly: 'auditWeekly', Monthly: 'auditMonthly', Fixed: 'auditFixed', Variable: 'auditVariable', Default: 'auditDefaultAmount', 'Default Amount': 'auditDefaultAmount', 'Variable Amount': 'auditVariableAmount' };
@@ -96,6 +99,7 @@ export default function GroupFundDetail() {
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseNote, setExpenseNote] = useState('');
   const [expenseDate, setExpenseDate] = useState(() => toDateInputValue());
+  const [ledgerFilters, setLedgerFilters] = useState<ExpenseFilterState>(EMPTY_EXPENSE_FILTERS);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isImportingContacts, setIsImportingContacts] = useState(false);
@@ -312,6 +316,9 @@ export default function GroupFundDetail() {
 
   const activeExpenses = getActiveFundExpenses(fund.expenses);
   const totalExpenses = activeExpenses.reduce((s: number, e: GroupFundExpense) => s + e.amount, 0);
+  // Ledger search/filters are view-only: totals, balances and the PDF keep using activeExpenses.
+  const filteredLedgerExpenses = filterGroupFundExpenses(sortExpensesByDate(activeExpenses, 'desc'), ledgerFilters, category => fundExpenseCategoryLabel(t, category));
+  const filteredLedgerSummary = summarizeExpenses(filteredLedgerExpenses);
   const handleShareViewLink = async () => {
     const url = generateFundShareLink(fund);
     if (await shareLink(fund.name, t('auditShareViewLink' as any), url)) return;
@@ -1379,7 +1386,23 @@ export default function GroupFundDetail() {
                   <Button onClick={() => setShowExpenseModal(true)} className="bg-black text-white font-black rounded-xl border border-kharcha-line shadow-sm">{t('auditRecordFirstFundExpense' as any)}</Button>
                 </Card>
               ) : (
-                sortExpensesByDate(activeExpenses, 'desc').map((exp: GroupFundExpense) => (
+                <>
+                <ExpenseFilterBar
+                  value={ledgerFilters}
+                  onChange={setLedgerFilters}
+                  categories={fundExpenseCategoryOptions(t, activeExpenses)}
+                  searchPlaceholderKey="expFilterSearchFund"
+                  resultCount={filteredLedgerSummary.count}
+                  totalCount={activeExpenses.length}
+                  filteredTotal={filteredLedgerSummary.total}
+                  testIdPrefix="fund-expense"
+                />
+                {filteredLedgerExpenses.length === 0 && (
+                  <Card className="rounded-xl border border-dashed border-kharcha-line dark:border-border bg-white dark:bg-card p-6 text-center shadow-sm" data-testid="fund-expense-no-matches">
+                    <p className="text-sm font-bold text-kharcha-navy dark:text-muted-foreground">{t('expFilterNoMatches' as any)}</p>
+                  </Card>
+                )}
+                {filteredLedgerExpenses.map((exp: GroupFundExpense) => (
                   <Card key={exp.id} className="rounded-xl border border-kharcha-line bg-white p-4 flex justify-between items-center shadow-sm">
                     <div>
                       <div className="flex items-center gap-2">
@@ -1418,7 +1441,8 @@ export default function GroupFundDetail() {
                       </Button>
                     </div>
                   </Card>
-                ))
+                ))}
+                </>
               )}
             </div>
           </div>

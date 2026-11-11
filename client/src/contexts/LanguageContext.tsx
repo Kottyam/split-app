@@ -3,6 +3,8 @@ import { languageExtras } from './languageExtras';
 import { auditEnglishSources } from './languageAudit';
 import { newEnglishSources, type NewTranslationKey } from './locales/en';
 import { localeTranslations } from './locales';
+import { expenseFilterTranslations } from './expenseFilterTranslations';
+import { lockThemeTranslations } from './lockThemeTranslations';
 
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'English', nativeLabel: 'English' },
@@ -1338,18 +1340,19 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 /** English source text for a key (newest dictionaries first). */
 export function englishSource(key: string): string | undefined {
-  return (newEnglishSources as Record<string, string>)[key] ?? auditEnglishSources[key] ?? (english as Record<string, string>)[key];
+  return (newEnglishSources as Record<string, string>)[key] ?? auditEnglishSources[key] ?? (english as Record<string, string>)[key] ?? expenseFilterTranslations.en[key];
 }
 
 /** Every key with an English source; each must have a translation in every supported language. */
 export function allTranslationKeys(): string[] {
-  return Array.from(new Set([...Object.keys(english), ...Object.keys(auditEnglishSources), ...Object.keys(newEnglishSources)]));
+  return Array.from(new Set([...Object.keys(english), ...Object.keys(auditEnglishSources), ...Object.keys(newEnglishSources), ...Object.keys(expenseFilterTranslations.en)]));
 }
 
 /** The explicit (non-English) translation for a key, or undefined when a language lacks it. */
 export function explicitTranslation(language: LanguageCode, key: string): string | undefined {
   if (language === 'en') return englishSource(key);
-  return localeTranslations[language]?.[key] ?? (translations[language] as Record<string, string>)[key] ?? languageExtras[language]?.[key];
+  // Feature modules carry the newest wording for their keys, so they win over the bulk locale files.
+  return lockThemeTranslations[language]?.[key] ?? expenseFilterTranslations[language]?.[key] ?? localeTranslations[language]?.[key] ?? (translations[language] as Record<string, string>)[key] ?? languageExtras[language]?.[key];
 }
 
 export function translate(language: LanguageCode, key: TranslationKey, variables?: Variables): string {

@@ -3,7 +3,9 @@ import { Trip, Expense } from '@/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trash2, Edit2, ArrowUpDown } from 'lucide-react';
-import { getCategoryInfo } from '@/lib/categories';
+import { getCategoryInfo, getAllCategories } from '@/lib/categories';
+import ExpenseFilterBar from '@/components/ExpenseFilterBar';
+import { EMPTY_EXPENSE_FILTERS, filterTripExpenses, summarizeExpenses, type ExpenseFilterState } from '@/lib/expenseFilters';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useTrips } from '@/hooks/useTrips';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -40,6 +42,7 @@ export default function ExpenseListView({ trip, onEditExpense, onExpenseDeleted 
   const memberMap = new Map(trip.members.map(m => [m.id, m.name]));
   const [sortBy, setSortBy] = useState<SortOption>('date-newest');
   const [filterByPaidBy, setFilterByPaidBy] = useState<string | null>(null);
+  const [filters, setFilters] = useState<ExpenseFilterState>(EMPTY_EXPENSE_FILTERS);
 
   const sortedExpenses = useMemo(() => {
     let sorted = [...trip.expenses];
@@ -76,6 +79,11 @@ export default function ExpenseListView({ trip, onEditExpense, onExpenseDeleted 
 
     return sorted;
   }, [trip.expenses, sortBy, filterByPaidBy]);
+
+  // View-only search/category/date filters on top of the existing sort + payer filter.
+  const visibleExpenses = useMemo(() => filterTripExpenses(sortedExpenses, filters, memberMap), [sortedExpenses, filters, trip.members]);
+  const visibleSummary = summarizeExpenses(visibleExpenses);
+  const categoryOptions = getAllCategories().map(category => ({ value: category, label: tripCategoryLabel(t, category) }));
 
   if (trip.expenses.length === 0) {
     return (
@@ -126,6 +134,19 @@ export default function ExpenseListView({ trip, onEditExpense, onExpenseDeleted 
         </div>
       )}
 
+      <ExpenseFilterBar
+        value={filters}
+        onChange={setFilters}
+        categories={categoryOptions}
+        searchPlaceholderKey="expFilterSearchTrip"
+        resultCount={visibleSummary.count}
+        totalCount={trip.expenses.length}
+        filteredTotal={visibleSummary.total}
+        externalActive={sortBy === 'paid-by' && Boolean(filterByPaidBy)}
+        onClearExternal={() => setFilterByPaidBy(null)}
+        testIdPrefix="trip-expense"
+      />
+
       {/* Paid By Filter Total */}
       {sortBy === 'paid-by' && filterByPaidBy && (
         <Card className="bg-white border-2 border-blue-300 rounded-lg p-3">
@@ -134,7 +155,7 @@ export default function ExpenseListView({ trip, onEditExpense, onExpenseDeleted 
               {t('auditTotalPaidBy' as any, { name: memberMap.get(filterByPaidBy) || t('auditUnknown' as any) })}
             </span>
             <span className="font-black text-lg text-blue-600">
-              {formatCurrency(sortedExpenses.reduce((sum, exp) => sum + exp.amount, 0))}
+              {formatCurrency(visibleSummary.total)}
             </span>
           </div>
         </Card>
@@ -142,7 +163,12 @@ export default function ExpenseListView({ trip, onEditExpense, onExpenseDeleted 
 
       {/* Expense List */}
       <div className="space-y-3">
-        {sortedExpenses.map(expense => {
+        {visibleExpenses.length === 0 && (
+          <Card className="bg-white dark:bg-card border-2 border-dashed border-gray-300 dark:border-border rounded-lg p-6 text-center" data-testid="trip-expense-no-matches">
+            <p className="text-sm font-semibold text-gray-600 dark:text-muted-foreground">{t('expFilterNoMatches' as any)}</p>
+          </Card>
+        )}
+        {visibleExpenses.map(expense => {
           const categoryInfo = getCategoryInfo(expense.category);
           const Icon = categoryInfo.icon;
           const paidByName = memberMap.get(expense.paidBy) || t('auditUnknown' as any);

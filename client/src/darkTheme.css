@@ -1,0 +1,276 @@
+/*
+ * Kharcha dark theme (html.dark). The app was built with many hard-coded light utility classes,
+ * so besides the design tokens this file remaps those light surfaces / dark text colours to a
+ * readable dark palette. Everything is screen-only: printing and the PDF report stay light.
+ * The per-class block at the bottom is generated from the classes used in client/src by
+ * scripts/generate_dark_theme_rules.py; re-run it when a new light colour class is introduced.
+ */
+:root {
+  --kharcha-tint-orange: #fff1e5;
+  --kharcha-tint-green: #e6f6ea;
+}
+
+@media screen {
+  html.dark {
+    color-scheme: dark;
+    --kd-bg: #0f1419;
+    --kd-surface: #172029;
+    --kd-surface-2: #1e2a35;
+    --kd-surface-3: #26343f;
+    --kd-line: #2e3d4b;
+    --kd-text: #e8eef4;
+    --kd-muted: #a9b6c2;
+    --kd-green-soft: #143222;
+    --kd-orange-soft: #35250f;
+    --kd-amber-soft: #332a10;
+    --kd-blue-soft: #152a42;
+    --kd-red-soft: #3b1a1a;
+    --kd-purple-soft: #2a2238;
+
+    /* Brand variables used by the shared polish layer in index.css */
+    --kharcha-cream: var(--kd-bg);
+    --kharcha-surface: var(--kd-surface);
+    --kharcha-navy: var(--kd-text);
+    --kharcha-green-soft: var(--kd-green-soft);
+    --kharcha-orange-soft: var(--kd-orange-soft);
+    --kharcha-line: var(--kd-line);
+    --kharcha-muted: var(--kd-muted);
+    --kharcha-tint-orange: #3a2410;
+    --kharcha-tint-green: #123522;
+
+    /* shadcn tokens: keep the Kharcha orange/green brand instead of the template blue */
+    --primary: oklch(0.72 0.16 55);
+    --primary-foreground: oklch(0.99 0.01 90);
+    --background: var(--kd-bg);
+    --foreground: var(--kd-text);
+    --card: var(--kd-surface);
+    --card-foreground: var(--kd-text);
+    --popover: var(--kd-surface);
+    --popover-foreground: var(--kd-text);
+    --secondary: var(--kd-surface-2);
+    --secondary-foreground: var(--kd-text);
+    --muted: var(--kd-surface-2);
+    --muted-foreground: var(--kd-muted);
+    --accent: var(--kd-surface-3);
+    --accent-foreground: var(--kd-text);
+    --border: var(--kd-line);
+    --input: var(--kd-line);
+    --ring: oklch(0.72 0.16 55);
+    --chart-1: oklch(0.72 0.16 55);
+    --chart-2: oklch(0.68 0.14 150);
+    --chart-3: oklch(0.7 0.1 255);
+    --chart-4: oklch(0.82 0.08 90);
+    --chart-5: oklch(0.66 0.1 150);
+    background: var(--kd-bg);
+  }
+
+  html.dark body,
+  html.dark.android-shell {
+    background: var(--kd-bg) !important;
+    color: var(--kd-text);
+  }
+
+  html.dark.android-shell body::before,
+  html.dark.android-shell body::after {
+    background: var(--kd-bg) !important;
+  }
+
+  html.dark ::selection {
+    background: #1f4a33;
+    color: #ffffff;
+  }
+
+  html.dark .kharcha-page-header {
+    background: rgba(23, 32, 41, 0.96);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  }
+
+  /* Form controls, including ones inside portalled dialogs (outside #root). */
+  html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  html.dark select,
+  html.dark textarea {
+    background-color: var(--kd-surface-2) !important;
+    color: var(--kd-text) !important;
+    border-color: var(--kd-line);
+  }
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: #7d8b98 !important;
+  }
+  html.dark [data-field-error="true"] {
+    background-color: #3b1a1a !important;
+  }
+
+  /* index.css paints legacy black chips with the navy variable; navy is the text colour in dark. */
+  html.dark #root .bg-black,
+  html.dark .bg-black {
+    background-color: #24384d !important;
+  }
+  html.dark #root .border-dashed {
+    background-color: var(--kd-surface) !important;
+  }
+  html.dark [data-slot="dialog-title"] {
+    color: var(--kd-text) !important;
+  }
+  html.dark [data-slot="dialog-content"],
+  html.dark [data-slot="sheet-content"],
+  html.dark [data-slot="card"] {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+  }
+  html.dark [data-slot="dialog-content"] {
+    border-top-color: #2f6fc0;
+  }
+  html.dark [data-slot="dialog-overlay"] {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+  html.dark .android-trip-tabs [role="tab"][data-state="inactive"] {
+    background-color: var(--kd-surface) !important;
+    color: #9cc3ff !important;
+  }
+
+  /* Logos are dark artwork on a transparent background: give them a light badge in dark mode. */
+  html.dark img[src*="kharcha-logo"] {
+    mix-blend-mode: normal !important;
+    background: #ffffff;
+    border-radius: 0.75rem;
+    padding: 0.2rem 0.45rem;
+  }
+
+  /* Generated light-colour remaps */
+  html.dark .bg-\[\#b9ddc9\] { background-color: #1f4a33 !important; }
+  html.dark .bg-\[\#dff1e5\] { background-color: var(--kd-green-soft) !important; }
+  html.dark .bg-\[\#e4efff\] { background-color: var(--kd-blue-soft) !important; }
+  html.dark .bg-\[\#e4f2e7\] { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-\[\#e6f3e8\] { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-\[\#e6f6ea\] { background-color: var(--kd-green-soft) !important; }
+  html.dark .bg-\[\#e8eee9\] { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-\[\#e9f7ed\] { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-\[\#eef4fb\] { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-\[\#f2fbf3\] { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-\[\#f3f7fc\] { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-\[\#f4c7a1\] { background-color: #4a3418 !important; }
+  html.dark .bg-\[\#f5faf6\] { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-\[\#f7faff\] { background-color: var(--kd-surface) !important; }
+  html.dark .bg-\[\#ffe0bc\] { background-color: var(--kd-orange-soft) !important; }
+  html.dark .bg-\[\#fff1e5\] { background-color: var(--kd-orange-soft) !important; }
+  html.dark .bg-\[\#fff1e6\] { background-color: var(--kd-orange-soft) !important; }
+  html.dark .bg-\[\#fff3e3\] { background-color: var(--kd-orange-soft) !important; }
+  html.dark .bg-\[\#fff8ed\] { background-color: var(--kd-orange-soft) !important; }
+  html.dark .bg-\[\#fffaf2\]\/95 { background-color: var(--kd-surface) !important; }
+  html.dark .bg-\[\#fffaf3\] { background-color: var(--kd-surface) !important; }
+  html.dark .bg-\[\#fffdf8\] { background-color: var(--kd-surface) !important; }
+  html.dark .bg-\[\#fffdf8\]\/96 { background-color: var(--kd-surface) !important; }
+  html.dark .bg-amber-100 { background-color: var(--kd-orange-soft) !important; }
+  html.dark .bg-amber-50 { background-color: var(--kd-orange-soft) !important; }
+  html.dark .bg-blue-100 { background-color: var(--kd-blue-soft) !important; }
+  html.dark .bg-blue-50 { background-color: var(--kd-blue-soft) !important; }
+  html.dark .bg-emerald-50\/50 { background-color: var(--kd-green-soft) !important; }
+  html.dark .bg-gray-100 { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-gray-200 { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-gray-300 { background-color: var(--kd-surface-3) !important; }
+  html.dark .bg-gray-50 { background-color: var(--kd-surface) !important; }
+  html.dark .bg-green-100 { background-color: var(--kd-green-soft) !important; }
+  html.dark .bg-green-200 { background-color: var(--kd-green-soft) !important; }
+  html.dark .bg-green-50 { background-color: var(--kd-surface) !important; }
+  html.dark .bg-kharcha-cream { background-color: var(--kd-surface) !important; }
+  html.dark .bg-lilac-200 { background-color: #3a2f4f !important; }
+  html.dark .bg-mint-200 { background-color: #1f4a33 !important; }
+  html.dark .bg-orange-100 { background-color: var(--kd-orange-soft) !important; }
+  html.dark .bg-orange-50 { background-color: var(--kd-orange-soft) !important; }
+  html.dark .bg-red-100 { background-color: var(--kd-red-soft) !important; }
+  html.dark .bg-red-50 { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-slate-100 { background-color: var(--kd-surface-2) !important; }
+  html.dark .bg-slate-50 { background-color: var(--kd-surface) !important; }
+  html.dark .bg-white { background-color: var(--kd-surface) !important; }
+  html.dark .bg-white\/80 { background-color: var(--kd-surface) !important; }
+  html.dark .bg-white\/95 { background-color: var(--kd-surface) !important; }
+  html.dark .bg-yellow-100 { background-color: var(--kd-amber-soft) !important; }
+  html.dark .bg-yellow-50 { background-color: var(--kd-amber-soft) !important; }
+  html.dark .bg-yellow-500 { background-color: #4a3418 !important; }
+  html.dark .border-\[\#18324b\] { border-color: var(--kd-line) !important; }
+  html.dark .border-\[\#b9ddc9\] { border-color: #2f6347 !important; }
+  html.dark .border-\[\#c7d8cc\] { border-color: var(--kd-line) !important; }
+  html.dark .border-\[\#cdebd5\] { border-color: #2f6347 !important; }
+  html.dark .border-\[\#d7e4dc\] { border-color: var(--kd-line) !important; }
+  html.dark .border-\[\#d7e4f3\] { border-color: #2f4f78 !important; }
+  html.dark .border-\[\#e3ebf3\] { border-color: #2f4f78 !important; }
+  html.dark .border-\[\#e3ecf7\] { border-color: #2f4f78 !important; }
+  html.dark .border-\[\#e7d7bd\] { border-color: #7a5226 !important; }
+  html.dark .border-\[\#ffd9b8\] { border-color: #7a5226 !important; }
+  html.dark .border-amber-200 { border-color: #7a5226 !important; }
+  html.dark .border-amber-300 { border-color: #7a5226 !important; }
+  html.dark .border-amber-400 { border-color: #7a5226 !important; }
+  html.dark .border-black { border-color: var(--kd-line) !important; }
+  html.dark .border-blue-300 { border-color: #2f4f78 !important; }
+  html.dark .border-gray-200 { border-color: var(--kd-line) !important; }
+  html.dark .border-gray-300 { border-color: var(--kd-line) !important; }
+  html.dark .border-green-200 { border-color: #2f6347 !important; }
+  html.dark .border-green-300 { border-color: #2f6347 !important; }
+  html.dark .border-kharcha-line { border-color: var(--kd-line) !important; }
+  html.dark .border-mint-300 { border-color: #2f6347 !important; }
+  html.dark .border-red-200 { border-color: #7a3030 !important; }
+  html.dark .border-red-300 { border-color: #7a3030 !important; }
+  html.dark .border-white\/80 { border-color: var(--kd-line) !important; }
+  html.dark .border-yellow-300 { border-color: #7a6326 !important; }
+  html.dark .hover\:bg-\[\#e4f5e7\]:hover { background-color: var(--kd-green-soft) !important; }
+  html.dark .hover\:bg-\[\#e6f6ea\]:hover { background-color: var(--kd-green-soft) !important; }
+  html.dark .hover\:bg-\[\#f2fbf3\]:hover { background-color: var(--kd-surface-2) !important; }
+  html.dark .hover\:bg-\[\#f3f7fc\]:hover { background-color: var(--kd-surface-2) !important; }
+  html.dark .hover\:bg-\[\#f7faf8\]:hover { background-color: var(--kd-surface-2) !important; }
+  html.dark .hover\:bg-\[\#fff1df\]:hover { background-color: var(--kd-orange-soft) !important; }
+  html.dark .hover\:bg-\[\#fffaf3\]:hover { background-color: var(--kd-surface) !important; }
+  html.dark .hover\:bg-blue-50:hover { background-color: var(--kd-blue-soft) !important; }
+  html.dark .hover\:bg-gray-100:hover { background-color: var(--kd-surface-2) !important; }
+  html.dark .hover\:bg-green-100:hover { background-color: var(--kd-green-soft) !important; }
+  html.dark .hover\:bg-green-200:hover { background-color: var(--kd-green-soft) !important; }
+  html.dark .hover\:bg-green-50:hover { background-color: var(--kd-surface) !important; }
+  html.dark .hover\:bg-red-100:hover { background-color: var(--kd-red-soft) !important; }
+  html.dark .hover\:bg-red-50:hover { background-color: var(--kd-surface-2) !important; }
+  html.dark .hover\:bg-slate-100:hover { background-color: var(--kd-surface-2) !important; }
+  html.dark .hover\:text-\[\#16834b\]:hover { color: #6ad89a !important; }
+  html.dark .hover\:text-blue-800:hover { color: #9cc3ff !important; }
+  html.dark .hover\:text-kharcha-navy:hover { color: var(--kd-text) !important; }
+  html.dark .hover\:text-red-700:hover { color: #fca5a5 !important; }
+  html.dark .text-\[\#023b81\] { color: #9cc3ff !important; }
+  html.dark .text-\[\#038f27\] { color: #6ad89a !important; }
+  html.dark .text-\[\#0a5bc0\] { color: #9cc3ff !important; }
+  html.dark .text-\[\#11663b\] { color: #6ad89a !important; }
+  html.dark .text-\[\#16834b\] { color: #6ad89a !important; }
+  html.dark .text-\[\#16a34a\] { color: #6ad89a !important; }
+  html.dark .text-\[\#18324b\] { color: var(--kd-text) !important; }
+  html.dark .text-\[\#2563eb\] { color: #9cc3ff !important; }
+  html.dark .text-\[\#5b6b78\] { color: var(--kd-muted) !important; }
+  html.dark .text-\[\#65747f\] { color: var(--kd-muted) !important; }
+  html.dark .text-\[\#b95000\] { color: #ffab66 !important; }
+  html.dark .text-\[\#c2410c\] { color: #ffab66 !important; }
+  html.dark .text-\[\#c45a00\] { color: #ffab66 !important; }
+  html.dark .text-amber-700 { color: #ffab66 !important; }
+  html.dark .text-amber-800 { color: #ffab66 !important; }
+  html.dark .text-amber-900 { color: #ffab66 !important; }
+  html.dark .text-black { color: var(--kd-text) !important; }
+  html.dark .text-blue-600 { color: #9cc3ff !important; }
+  html.dark .text-blue-700 { color: #9cc3ff !important; }
+  html.dark .text-blue-800 { color: #9cc3ff !important; }
+  html.dark .text-blue-900 { color: #9cc3ff !important; }
+  html.dark .text-gray-500 { color: var(--kd-muted) !important; }
+  html.dark .text-gray-600 { color: var(--kd-muted) !important; }
+  html.dark .text-gray-700 { color: var(--kd-text) !important; }
+  html.dark .text-gray-800 { color: var(--kd-text) !important; }
+  html.dark .text-green-600 { color: #6ad89a !important; }
+  html.dark .text-green-700 { color: #6ad89a !important; }
+  html.dark .text-green-800 { color: #6ad89a !important; }
+  html.dark .text-kharcha-green { color: #6ad89a !important; }
+  html.dark .text-kharcha-navy { color: var(--kd-text) !important; }
+  html.dark .text-kharcha-navy\/80 { color: var(--kd-text) !important; }
+  html.dark .text-orange-600 { color: #ffab66 !important; }
+  html.dark .text-orange-700 { color: #ffab66 !important; }
+  html.dark .text-red-500 { color: #fca5a5 !important; }
+  html.dark .text-red-600 { color: #fca5a5 !important; }
+  html.dark .text-red-700 { color: #fca5a5 !important; }
+  html.dark .text-red-800 { color: #fca5a5 !important; }
+  html.dark .text-slate-500 { color: var(--kd-muted) !important; }
+  html.dark .text-slate-600 { color: var(--kd-muted) !important; }
+  html.dark .text-slate-700 { color: var(--kd-text) !important; }
+  html.dark .text-slate-900 { color: var(--kd-text) !important; }
+  html.dark .text-yellow-700 { color: #ffab66 !important; }
+}
