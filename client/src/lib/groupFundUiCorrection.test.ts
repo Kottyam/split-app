@@ -49,8 +49,8 @@ describe('Group Fund recurring UI correction contract', () => {
     expect(auditSource).toContain("auditCollectInAdvance: 'Collect in Advance'");
     expect(auditSource).toContain("auditNumberOfCollections: 'Number of Collections'");
     expect(auditSource).toContain("auditEndDate: 'End Date'");
-    expect(detailSource).toContain("COLLECTION_CLOSE_LABEL = 'Close Collection'");
-    expect(detailSource).toContain("COLLECTION_REOPEN_LABEL = 'Reopen Collection'");
+    expect(detailSource).toContain("COLLECTION_CLOSE_LABEL = t('gfCloseCollection' as any)");
+    expect(detailSource).toContain("COLLECTION_REOPEN_LABEL = t('gfReopenCollection' as any)");
     expect(detailSource).not.toContain('Close Audit Collection');
   });
 });

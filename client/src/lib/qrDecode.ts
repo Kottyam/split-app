@@ -71,6 +71,15 @@ export async function decodeQrFromImageFile(file: File): Promise<string | null> 
   }
 }
 
+/** i18n key for a camera start failure; render with t(). */
+export function cameraErrorKey(error: unknown): 'camErrDenied' | 'camErrNotFound' | 'camErrBusy' | 'camErrGeneric' {
+  const name = (error as { name?: string })?.name || '';
+  if (name === 'NotAllowedError' || name === 'SecurityError') return 'camErrDenied';
+  if (name === 'NotFoundError' || name === 'OverconstrainedError') return 'camErrNotFound';
+  if (name === 'NotReadableError') return 'camErrBusy';
+  return 'camErrGeneric';
+}
+
 export function describeCameraError(error: unknown): string {
   const name = (error as { name?: string })?.name || '';
   if (name === 'NotAllowedError' || name === 'SecurityError') return 'Camera permission was denied. Allow camera access in your browser/app settings, or pick a QR image / paste the UPI link below.';

@@ -13,8 +13,8 @@ function isPast(date: Date): boolean {
   return date.getTime() < Date.now();
 }
 
-function add(list: KharchaNotification[], id: string, title: string, message: string, path: string, actionLabel = 'Open'): void {
-  list.push({ id: `${AUTO_PREFIX}${id}`, title, message, createdAt: new Date().toISOString(), read: false, path, actionLabel });
+function add(list: KharchaNotification[], id: string, title: string, message: string, path: string, actionLabel = 'Open', i18n?: KharchaNotification['i18n']): void {
+  list.push({ id: `${AUTO_PREFIX}${id}`, title, message, createdAt: new Date().toISOString(), read: false, path, actionLabel, ...(i18n ? { i18n } : {}) });
 }
 
 function buildTripNotifications(): KharchaNotification[] {
@@ -23,7 +23,7 @@ function buildTripNotifications(): KharchaNotification[] {
     if (!trip?.id || !trip.endDate || !isPast(new Date(trip.endDate))) continue;
     const settlements = simplifySettlements(trip).filter(item => item.amount > 0.01);
     if (settlements.length === 0) continue;
-    add(result, `trip-settlement-${trip.id}-${settlements.map(s => `${s.fromId}-${s.toId}-${s.amount}`).join('|')}`, 'Trip settlement pending', `${trip.name} has ended, but ${settlements.length} settlement${settlements.length === 1 ? '' : 's'} are still pending.`, `/trip/${trip.id}`, 'Settle now');
+    add(result, `trip-settlement-${trip.id}-${settlements.map(s => `${s.fromId}-${s.toId}-${s.amount}`).join('|')}`, 'Trip settlement pending', `${trip.name} has ended, but ${settlements.length} settlement${settlements.length === 1 ? '' : 's'} are still pending.`, `/trip/${trip.id}`, 'Settle now', { title: 'notifTripTitle', message: 'notifTripMessage', action: 'notifSettleNow', vars: { name: trip.name, count: settlements.length } });
   }
   return result;
 }
@@ -40,7 +40,7 @@ function buildSharedHomeNotifications(): KharchaNotification[] {
     });
     if (pendingMonths.length === 0) continue;
     const latest = pendingMonths[pendingMonths.length - 1][0];
-    add(result, `home-settlement-${home.id}-${latest}-${pendingMonths.length}`, 'Shared Home settlement pending', `${home.name} has ${pendingMonths.length} month${pendingMonths.length === 1 ? '' : 's'} with unsettled balances.`, `/shared-home/${home.id}`, 'Review settlement');
+    add(result, `home-settlement-${home.id}-${latest}-${pendingMonths.length}`, 'Shared Home settlement pending', `${home.name} has ${pendingMonths.length} month${pendingMonths.length === 1 ? '' : 's'} with unsettled balances.`, `/shared-home/${home.id}`, 'Review settlement', { title: 'notifHomeTitle', message: 'notifHomeMessage', action: 'notifReviewSettlement', vars: { name: home.name, count: pendingMonths.length } });
   }
   return result;
 }
@@ -75,7 +75,7 @@ function buildGroupFundNotifications(): KharchaNotification[] {
     if (!fund.isRecurring && fund.contributionType === 'one_time') {
       const period = resolveCollectionPeriod(fund, new Date(fund.createdAt), 'future');
       if (period && !fund.closedPeriods?.includes(period)) {
-        add(result, `fund-close-one-time-${fund.id}-${period}`, 'Close your collection', `${fund.name}: this one-time collection is still open. Close the collection when you are finished.`, `/group-fund/${fund.id}`, 'Close collection');
+        add(result, `fund-close-one-time-${fund.id}-${period}`, 'Close your collection', `${fund.name}: this one-time collection is still open. Close the collection when you are finished.`, `/group-fund/${fund.id}`, 'Close collection', { title: 'notifCloseTitle', message: 'notifCloseMessage', action: 'notifCloseAction', vars: { name: fund.name } });
       }
       continue;
     }
@@ -88,7 +88,7 @@ function buildGroupFundNotifications(): KharchaNotification[] {
       ? (periodHasPendingCollection(fund, previousPeriod) ? previousPeriod : '')
       : (periodHasPendingCollection(fund, currentPeriod, true) ? currentPeriod : periodHasPendingCollection(fund, previousPeriod) ? previousPeriod : '');
     if (!duePeriod) continue;
-    add(result, `fund-collection-${fund.id}-${duePeriod}`, 'Group Fund collection pending', `${fund.name}: the ${duePeriod} collection needs attention.`, `/group-fund/${fund.id}`, 'Open collection');
+    add(result, `fund-collection-${fund.id}-${duePeriod}`, 'Group Fund collection pending', `${fund.name}: the ${duePeriod} collection needs attention.`, `/group-fund/${fund.id}`, 'Open collection', { title: 'notifFundTitle', message: 'notifFundMessage', action: 'notifOpenCollection', vars: { name: fund.name, period: duePeriod } });
   }
   return result;
 }
@@ -99,7 +99,7 @@ function buildBackupNotification(): KharchaNotification[] {
   if (!stale) return [];
   const message = last ? `Your last backup was more than ${BACKUP_REMINDER_DAYS} days ago. Protect your Kharcha data with a new backup.` : 'You have not created a Kharcha backup yet. Create one to protect your data.';
   const result: KharchaNotification[] = [];
-  add(result, `backup-${last ?? 'never'}`, 'Backup reminder', message, '/more', 'Open settings');
+  add(result, `backup-${last ?? 'never'}`, 'Backup reminder', message, '/more', 'Open settings', { title: 'notifBackupTitle', message: last ? 'notifBackupOld' : 'notifBackupNever', action: 'notifOpenSettings', vars: { days: BACKUP_REMINDER_DAYS } });
   return result;
 }
 

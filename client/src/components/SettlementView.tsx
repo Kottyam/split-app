@@ -61,13 +61,13 @@ export default function SettlementView({ summary, trip, onSettlementStatusChange
 
   const handlePay = (settlement: Settlement) => {
     if (!trip) {
-      toast.error('Trip data not available');
+      toast.error(t('setlTripUnavailable' as any));
       return;
     }
 
     const receiver = trip.members.find(m => m.id === settlement.toId || m.name === settlement.to);
     if (!receiver || getPaymentMethod(receiver.upiId, receiver.mobileNumber) === 'none') {
-      toast.error('Add a UPI ID or a UPI-linked mobile number to the receiving member');
+      toast.error(t('setlNeedUpi' as any));
       return;
     }
 
@@ -76,22 +76,22 @@ export default function SettlementView({ summary, trip, onSettlementStatusChange
       setSelectedSettlement(settlement);
       setShowPaymentOptions(false);
       setShowPaymentConfirmation(true);
-      toast.success('Opening payment app… Return to Kharcha to confirm.');
+      toast.success(t('setlOpeningApp' as any));
     } catch (error) {
       console.error('[UPI] Failed to open payment:', error);
-      toast.error('Could not open payment app');
+      toast.error(t('setlCouldNotOpenApp' as any));
     }
   };
 
   const handleSharePaymentLink = async (settlement: Settlement) => {
     if (!trip) {
-      toast.error('Trip data not available');
+      toast.error(t('setlTripUnavailable' as any));
       return;
     }
 
     const receiver = trip.members.find(m => m.id === settlement.toId || m.name === settlement.to);
     if (!receiver) {
-      toast.error('Receiver details are unavailable');
+      toast.error(t('setlReceiverUnavailable' as any));
       return;
     }
 
@@ -102,10 +102,11 @@ export default function SettlementView({ summary, trip, onSettlementStatusChange
       trip.name,
       receiver.upiId,
       receiver.mobileNumber,
+      t as any,
     );
-    if (result === 'shared') toast.success('Payment request shared!');
-    else if (result === 'copied') toast.success('Payment request copied!');
-    else toast.info('Sharing was cancelled');
+    if (result === 'shared') toast.success(t('setlRequestShared' as any));
+    else if (result === 'copied') toast.success(t('setlRequestCopied' as any));
+    else toast.info(t('setlSharingCancelled' as any));
   };
 
   const handleConfirmPaid = (settlement: Settlement) => {
@@ -115,7 +116,7 @@ export default function SettlementView({ summary, trip, onSettlementStatusChange
     onSettlementStatusChange?.(settlement.fromId, settlement.toId, 'paid');
     setShowPaymentConfirmation(false);
     onQuickExpense?.();
-    toast.success('Payment marked as completed! Add it as an expense if needed.');
+    toast.success(t('setlMarkedCompletedAdd' as any));
   };
 
   const handleMarkAsPaid = (settlement: Settlement) => {
@@ -123,7 +124,7 @@ export default function SettlementView({ summary, trip, onSettlementStatusChange
     const newStatus = { ...settlementStatus, [key]: 'paid' };
     setSettlementStatus(newStatus);
     onSettlementStatusChange?.(settlement.fromId, settlement.toId, 'paid');
-    toast.success('Payment marked as completed!');
+    toast.success(t('setlMarkedCompleted' as any));
   };
 
   const handleUndo = (settlement: Settlement) => {
@@ -131,7 +132,7 @@ export default function SettlementView({ summary, trip, onSettlementStatusChange
     const newStatus = { ...settlementStatus, [key]: 'pending' };
     setSettlementStatus(newStatus);
     onSettlementStatusChange?.(settlement.fromId, settlement.toId, 'pending');
-    toast.success('Status reset to pending');
+    toast.success(t('setlStatusReset' as any));
   };
 
   return (

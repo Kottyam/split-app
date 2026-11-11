@@ -19,3 +19,5 @@ export function routeFor(type: SyncKind, id: string) {
   return type === 'trip' ? `/trip/${id}` : type === 'shared_home' ? `/shared-home/${id}` : `/group-fund/${id}`;
 }
 export const kindLabel = (type: SyncKind) => (type === 'trip' ? 'trip' : type === 'shared_home' ? 'shared home' : 'Group Fund');
+/** i18n key for the kind noun; render with t(). */
+export const kindLabelKey = (type: SyncKind) => (type === 'trip' ? 'syncKindTrip' : type === 'shared_home' ? 'syncKindSharedHome' : 'syncKindGroupFund');

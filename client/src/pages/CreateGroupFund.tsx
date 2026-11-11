@@ -90,7 +90,7 @@ export default function CreateGroupFund() {
       expenses: [],
       closedPeriods: [],
       activity: [
-        { id: nanoid(), message: `Created group fund "${name.trim()}"`, createdAt: Date.now() },
+        { id: nanoid(), message: t('gfLogCreated' as any, { name: name.trim() }), createdAt: Date.now() },
       ],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -202,7 +202,7 @@ export default function CreateGroupFund() {
                 className="w-5 h-5 accent-[#16834b] cursor-pointer"
               />
               <label htmlFor="recurring-toggle" className="font-black text-kharcha-navy cursor-pointer select-none">
-                {t('recurringCollection' as any) !== 'recurringCollection' ? t('recurringCollection' as any) : 'Recurring Collection'}
+                {t('recurringCollection' as any)}
               </label>
             </div>
 

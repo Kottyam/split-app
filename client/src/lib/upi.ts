@@ -115,8 +115,19 @@ export function generatePayerPayeePaymentMessage(payerName: string, payeeName: s
   ].filter(Boolean).join('\n');
 }
 
-export async function sharePaymentRequest(payerName: string, payeeName: string, amount: number, tripName: string, upiId?: string, mobileNumber?: string): Promise<'shared' | 'copied' | 'failed'> {
-  const message = isValidUpiId(upiId)
+export async function sharePaymentRequest(payerName: string, payeeName: string, amount: number, tripName: string, upiId?: string, mobileNumber?: string, t?: (key: any, vars?: Record<string, string | number>) => string): Promise<'shared' | 'copied' | 'failed'> {
+  const message = t
+    ? [
+        t('tripMsgRequestTitle'),
+        t('tripMsgTrip', { name: tripName }),
+        t('tripMsgWhoPays', { name: payerName }),
+        t('tripMsgWhoReceives', { name: payeeName }),
+        t('tripMsgAmount', { amount: amount.toFixed(2) }),
+        !isValidUpiId(upiId) && mobileNumber ? t('tripMsgContact', { mobile: mobileNumber }) : '',
+        t('tripMsgPlease'),
+        isValidUpiId(upiId) ? t('tripMsgUpiId', { upiId: upiId!.trim() }) : '',
+      ].filter(Boolean).join('\n')
+    : isValidUpiId(upiId)
     ? generatePayerPayeePaymentMessage(payerName, payeeName, amount, tripName, upiId)
     : [
         'Trip Settlement Request',
@@ -132,7 +143,7 @@ export async function sharePaymentRequest(payerName: string, payeeName: string, 
   const text = link ? `${message}\n\n${link}` : message;
 
   const didShare = await shareLink(
-    `Payment Request - ${tripName}`,
+    t ? t('tripMsgShareTitle', { name: tripName }) : `Payment Request - ${tripName}`,
     text,
     link || undefined,
   );

@@ -45,14 +45,14 @@ export default function EditMemberDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!member || !name.trim()) {
-      alert(t('enterMemberName') || 'Please enter a member name');
+      alert(t('enterMemberName'));
       return;
     }
 
     // Check if name already exists (excluding current member)
     const nameExists = trip.members.some(m => m.id !== member.id && m.name.toLowerCase() === name.toLowerCase());
     if (nameExists) {
-      alert(t('memberAlreadyExists') || 'A member with this name already exists');
+      alert(t('memberAlreadyExists'));
       return;
     }
 
@@ -70,20 +70,20 @@ export default function EditMemberDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-2 border-black rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="font-black text-black text-xl">{t('editMember') || 'Edit Member'}</DialogTitle>
+          <DialogTitle className="font-black text-black text-xl">{t('editMember')}</DialogTitle>
           <DialogDescription className="text-gray-600 text-sm">
-            {t('updateMemberName') || "Update the member's name"}
+            {t('updateMemberName')}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name" className="font-bold text-black">
-              {t('memberName') || 'Member Name'} *
+              {t('memberName')} *
             </Label>
             <Input
               id="name"
-              placeholder={t('enterMemberNamePlaceholder') || 'Enter member name'}
+              placeholder={t('enterMemberNamePlaceholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="border-2 border-black rounded-lg mt-1"
@@ -94,11 +94,11 @@ export default function EditMemberDialog({
 
           <div>
             <Label htmlFor="mobile" className="font-bold text-black">
-              {t('mobileNumberOptional') || 'Mobile Number (Optional)'}
+              {t('mobileNumberOptional')}
             </Label>
             <Input
               id="mobile"
-              placeholder={t('tenDigitNumber') || '10-digit number'}
+              placeholder={t('tenDigitNumber')}
               value={mobileNumber}
               onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
               className="border-2 border-black rounded-lg mt-1"
@@ -108,18 +108,18 @@ export default function EditMemberDialog({
 
           <div>
             <Label htmlFor="upi" className="font-bold text-black">
-              {t('upiIdOptional') || 'UPI ID (Optional)'}
+              {t('upiIdOptional')}
             </Label>
             <Input
               id="upi"
-              placeholder={t('upiPlaceholder') || 'name@bankcode'}
+              placeholder={t('upiPlaceholder')}
               value={upiId}
               onChange={(e) => setUpiId(e.target.value)}
               className="border-2 border-black rounded-lg mt-1"
             />
 <UpiIdHint value={upiId} />
             <p className="text-xs text-gray-500 mt-1">
-              {t('upiExample') || 'Example: user@okhdfcbank, name@ybl'}
+              {t('upiExample')}
             </p>
           </div>
 
@@ -130,13 +130,13 @@ export default function EditMemberDialog({
               onClick={() => onOpenChange(false)}
               className="border-2 border-black font-bold rounded-lg"
             >
-              {t('cancel') || 'Cancel'}
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
               className="bg-black text-white font-bold rounded-lg hover:bg-gray-800"
             >
-              {t('saveChanges') || 'Save Changes'}
+              {t('saveChanges')}
             </Button>
           </DialogFooter>
         </form>

@@ -3,9 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, Home } from "lucide-react";
 import { useLocation } from "wouter";
 import AppSectionHeader from "@/components/AppSectionHeader";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function NotFound() {
   const [, setLocation] = useLocation();
+  const { t } = useLanguage();
 
   const handleGoHome = () => {
     setLocation("/");
@@ -14,7 +16,7 @@ export default function NotFound() {
   return (
     <div className="min-h-screen w-full bg-kharcha-cream p-4">
       <div className="mx-auto max-w-3xl">
-        <AppSectionHeader title="Kharcha" onBack={handleGoHome} backLabel="Go Home" />
+        <AppSectionHeader title="Kharcha" onBack={handleGoHome} backLabel={t('notFoundGoHome' as any)} />
         <Card className="mx-auto mt-4 w-full max-w-lg border-0 bg-white/80 shadow-lg backdrop-blur-sm">
           <CardContent className="pb-8 pt-8 text-center">
             <div className="mb-6 flex justify-center">
@@ -27,13 +29,13 @@ export default function NotFound() {
             <h1 className="mb-2 text-4xl font-bold text-slate-900">404</h1>
 
             <h2 className="mb-4 text-xl font-semibold text-slate-700">
-              Page Not Found
+              {t('notFoundTitle' as any)}
             </h2>
 
             <p className="mb-8 leading-relaxed text-slate-600">
-              Sorry, the page you are looking for doesn't exist.
+              {t('notFoundLine1' as any)}
               <br />
-              It may have been moved or deleted.
+              {t('notFoundLine2' as any)}
             </p>
 
             <div
@@ -45,7 +47,7 @@ export default function NotFound() {
                 className="rounded-lg bg-blue-600 px-6 py-2.5 text-white shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg"
               >
                 <Home className="mr-2 h-4 w-4" />
-                Go Home
+                {t('notFoundGoHome' as any)}
               </Button>
             </div>
           </CardContent>
