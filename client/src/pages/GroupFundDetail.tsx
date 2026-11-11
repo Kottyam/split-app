@@ -678,7 +678,7 @@ export default function GroupFundDetail() {
 
     const when = expenseDateFromInput(expenseDate);
     if (!when) {
-      showFieldError('fund-expense-date', 'Please choose the expense date.');
+      showFieldError('fund-expense-date', t('gfChooseExpenseDate' as any));
       return;
     }
 
@@ -833,7 +833,7 @@ export default function GroupFundDetail() {
             <div class="metric" style="--card-accent:#023b81">${escapePdfHtml(t('auditRemainingBalance' as any))}<strong>₹${(totalCollected - pdfTotalExpenses).toLocaleString('en-IN')}</strong></div>
             <div class="metric" style="--card-accent:#16834b">${escapePdfHtml(t('auditMembers' as any))}<strong>${fund.members.length}</strong><small>${escapePdfHtml(t('auditCollectedStatus' as any))}: ${fund.members.filter((m: GroupFundMember) => getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) === 'Collected').length} · ${escapePdfHtml(t('auditPending' as any))}: ${fund.members.filter((m: GroupFundMember) => getPeriodCollectionStatus(fund.contributions, m.id, selectedPeriod) !== 'Collected').length}</small></div>
           </div>
-          ${(() => { const b = computeBudgetStatus(fund.budgetAmount, totalCollected, totalExpenses); if (!b) return ''; const st = b.state === 'over' ? `${t('auditBudgetOver' as any)} ₹${b.overBy.toLocaleString('en-IN')}` : b.state === 'collection-short' ? `${t('auditBudgetCollectionShort' as any)} ₹${b.collectionShortBy.toLocaleString('en-IN')}` : t('auditBudgetWithin' as any); const col = b.state === 'over' ? '#dc2626' : b.state === 'collection-short' ? '#b45309' : '#16834b'; return `<div class="summary cards-4 budget-row"><div class="metric" style="--card-accent:#023b81">${escapePdfHtml(t('auditBudget' as any))}<strong>₹${b.budget.toLocaleString('en-IN')}</strong></div><div class="metric" style="--card-accent:${col}">${escapePdfHtml(t('auditBudgetRemaining' as any))}<strong>₹${b.remaining.toLocaleString('en-IN')}</strong><small style="color:${col}">${escapePdfHtml(st)}</small></div><div class="metric" style="--card-accent:#038f27">${escapePdfHtml(t('auditTotalCollected' as any))}<strong>${b.collectedPct}%</strong><small>of budget</small></div><div class="metric" style="--card-accent:#fd6d00">${escapePdfHtml(t('auditTotalExpenses' as any))}<strong>${b.spentPct}%</strong><small>of budget</small></div></div>`; })()}
+          ${(() => { const b = computeBudgetStatus(fund.budgetAmount, totalCollected, totalExpenses); if (!b) return ''; const st = b.state === 'over' ? `${t('auditBudgetOver' as any)} ₹${b.overBy.toLocaleString('en-IN')}` : b.state === 'collection-short' ? `${t('auditBudgetCollectionShort' as any)} ₹${b.collectionShortBy.toLocaleString('en-IN')}` : t('auditBudgetWithin' as any); const col = b.state === 'over' ? '#dc2626' : b.state === 'collection-short' ? '#b45309' : '#16834b'; return `<div class="summary cards-4 budget-row"><div class="metric" style="--card-accent:#023b81">${escapePdfHtml(t('auditBudget' as any))}<strong>₹${b.budget.toLocaleString('en-IN')}</strong></div><div class="metric" style="--card-accent:${col}">${escapePdfHtml(t('auditBudgetRemaining' as any))}<strong>₹${b.remaining.toLocaleString('en-IN')}</strong><small style="color:${col}">${escapePdfHtml(st)}</small></div><div class="metric" style="--card-accent:#038f27">${escapePdfHtml(t('auditTotalCollected' as any))}<strong>${b.collectedPct}%</strong><small>${escapePdfHtml(t('gfOfBudget' as any))}</small></div><div class="metric" style="--card-accent:#fd6d00">${escapePdfHtml(t('auditTotalExpenses' as any))}<strong>${b.spentPct}%</strong><small>${escapePdfHtml(t('gfOfBudget' as any))}</small></div></div>`; })()}
 
           <h3>${t('auditCollectionSummaryReport' as any)}</h3>
           <table>
@@ -2198,7 +2198,7 @@ export default function GroupFundDetail() {
                           {fund.paymentConfig?.upiId && currentVal.trim() && Number.isFinite(Number(currentVal)) && Number(currentVal) > 0 && (
                             <img
                               src={`https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(buildUpiUri({ upiId: fund.paymentConfig.upiId, payeeName: fund.name, amount: Number(currentVal), note: `Contribution ${m.name}` }))}`}
-                              alt={`UPI QR for ${m.name}, ₹${currentVal}`}
+                              alt={t('gfUpiQrFor' as any, { name: m.name, amount: currentVal })}
                               className="w-20 h-20 mx-auto rounded-md border bg-white p-1"
                             />
                           )}

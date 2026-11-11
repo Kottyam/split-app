@@ -102,6 +102,7 @@ export default function SettlementView({ summary, trip, onSettlementStatusChange
       trip.name,
       receiver.upiId,
       receiver.mobileNumber,
+      t as any,
     );
     if (result === 'shared') toast.success(t('setlRequestShared' as any));
     else if (result === 'copied') toast.success(t('setlRequestCopied' as any));

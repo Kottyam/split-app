@@ -112,7 +112,7 @@ export default function AppSettingsDialogExtended({ open, onOpenChange }: Props)
       const content = event.target?.result as string;
       const res = validateBackupJson(content);
       if (!res.valid || !res.payload || !res.summary) {
-        alert(res.error || t('auditInvalidBackup' as any));
+        alert(res.errorKey ? t(res.errorKey as any) : t('auditInvalidBackup' as any));
         return;
       }
       setImportPreview({ payload: res.payload, summary: res.summary });

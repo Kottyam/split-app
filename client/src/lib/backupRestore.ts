@@ -30,17 +30,17 @@ export function generateBackupPayload(): KharchaBackupPayload {
   };
 }
 
-export function validateBackupJson(raw: string): { valid: boolean; error?: string; payload?: KharchaBackupPayload; summary?: any } {
+export function validateBackupJson(raw: string): { valid: boolean; error?: string; errorKey?: 'backupErrInvalid' | 'backupErrVersion' | 'backupErrMissing' | 'backupErrJson'; payload?: KharchaBackupPayload; summary?: any } {
   try {
     const parsed = JSON.parse(raw);
     if (!parsed || parsed.app !== 'Kharcha') {
-      return { valid: false, error: 'This file cannot be restored because it is corrupted or is not a valid Kharcha backup.' };
+      return { valid: false, errorKey: 'backupErrInvalid', error: 'This file cannot be restored because it is corrupted or is not a valid Kharcha backup.' };
     }
     if (typeof parsed.backupVersion !== 'number' || parsed.backupVersion < 1) {
-      return { valid: false, error: 'Unsupported or invalid backup version.' };
+      return { valid: false, errorKey: 'backupErrVersion', error: 'Unsupported or invalid backup version.' };
     }
     if (!parsed.data || typeof parsed.data !== 'object') {
-      return { valid: false, error: 'Backup data payload is missing.' };
+      return { valid: false, errorKey: 'backupErrMissing', error: 'Backup data payload is missing.' };
     }
 
     const trips = Array.isArray(parsed.data.trips) ? parsed.data.trips : [];
@@ -58,7 +58,7 @@ export function validateBackupJson(raw: string): { valid: boolean; error?: strin
       },
     };
   } catch {
-    return { valid: false, error: 'Invalid JSON file format. Please select a valid Kharcha backup JSON file.' };
+    return { valid: false, errorKey: 'backupErrJson', error: 'Invalid JSON file format. Please select a valid Kharcha backup JSON file.' };
   }
 }
 

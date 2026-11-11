@@ -21,12 +21,12 @@ export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]['code'];
 export type TranslationKey =
   | 'language'
   | 'splitExpenses'
-  | 'oneTrip'
-  | 'oneTap'
+  
+  
   | 'loadingTrips'
   | 'noTrips'
   | 'createTrip'
-  | 'yourTrips'
+  
   | 'newestFirst'
   | 'oldestFirst'
   | 'nameAZ'
@@ -72,59 +72,59 @@ export type TranslationKey =
   | 'shareTrip'
   | 'shareByName'
   | 'tripToShare'
-  | 'recipientsViewOnly'
+  
   | 'close'
   | 'sharing'
   | 'copied'
   | 'tripShared'
   | 'editAndSyncTitle'
-  | 'editAndSyncDescription'
-  | 'editAndSyncShareMessage'
-  | 'editSyncSelectedItem'
-  | 'editSyncOwnerProtection'
-  | 'editSyncLinkShared'
-  | 'editSyncLinkCopied'
+  
+  
+  
+  
+  
+  
   | 'editSyncUnavailable'
-  | 'editSyncOpenTitle'
+  
   | 'editSyncRecipientDescription'
-  | 'editSyncEditCopy'
+  
   | 'editSyncSendBack'
-  | 'editSyncPending'
-  | 'editSyncReviewTitle'
-  | 'editSyncReviewDescription'
+  
+  
+  
   | 'editSyncReviewChanges'
   | 'editSyncSynchronize'
   | 'editSyncConflict'
   | 'editSyncCompleted'
-  | 'editSyncCopyCreated'
-  | 'editSyncOwnerVerificationFailed'
-  | 'editSyncRecipientUnknown'
+  
+  
+  
   | 'editSyncAdded'
   | 'editSyncChanged'
   | 'editSyncRemoved'
-  | 'editSyncConflictFields'
+  
   | 'linkCopied'
   | 'failedCopy'
   | 'addExpense'
   | 'recordExpense'
   | 'pleaseAddMembers'
   | 'fillRequired'
-  | 'customSplitError'
+  
   | 'amount'
   | 'category'
   | 'paidBy'
   | 'date'
   | 'splitType'
-  | 'equalSplit'
+  
   | 'customSplit'
-  | 'splitAmong'
+  
   | 'addMemberDetails'
   | 'addFromContacts'
   | 'addManually'
   | 'picking'
   | 'memberNameRequired'
   | 'mobileOptional'
-  | 'forUpiSharing'
+  
   | 'upiOptional'
   | 'payTo'
   | 'openUpiApp'
@@ -171,22 +171,22 @@ export type TranslationKey =
   | 'budgetBreakdown'
   | 'budgetNoSpend'
   | 'budgetSavedActivity'
-  | 'welcomeTitle'
+  
   | 'welcomeSubtitle'
   | 'kharchaNotes'
-  | 'okGotIt'
-  | 'kharchaTagline'
+  
+  
   | 'whatManage'
   | 'tripsDescription'
-  | 'sharedHomesDescription'
+  
   | 'openTrips'
-  | 'openSharedHomes'
+  
   | 'myTrips'
   | 'mySharedHomes'
   | 'addTrip'
   | 'addSharedHome'
-  | 'quickTrip'
-  | 'quickTripDescription'
+  
+  
   | 'settings'
   | 'search'
   | 'notifications'
@@ -194,7 +194,7 @@ export type TranslationKey =
   | 'chooseCategory'
   | 'home'
   | 'tripsNav'
-  | 'sharedNav'
+  
   | 'languagePersistenceNote'
   | 'searchKharchaTitle'
   | 'searchKharchaPlaceholder'
@@ -209,7 +209,7 @@ export type TranslationKey =
   | 'personalBudgetOverview'
   | 'openSettings'
   | 'backToKharcha'
-  | 'sharedHomeCurrentBalance'
+  
   | 'sharedHomeCurrentMonth'
   | 'sharedHomeRecent'
   | 'noTrips'
@@ -219,7 +219,7 @@ export type TranslationKey =
   | 'sharedHomeMembersLabel'
   | 'sharedHomeExpenseTotal'
   | 'sharedHomeBalance'
-  | 'sharedHomeOpen'
+  
   | 'tripOpen'
   | 'searchTrips'
   | 'noSearchResults'
@@ -265,7 +265,7 @@ export type TranslationKey =
   | 'sharedHomeViewOnlySnapshot'
   | 'sharedHomeOriginalNotEditable'
   | 'sharedHomePaymentHistory'
-  | 'sharedHomeMarkSettled'
+  
   | 'sharedHomeNoPaymentHistory'
   | 'sharedHomeNoCurrentMembers'
   | 'sharedHomeNoRoomHistory'
@@ -286,9 +286,9 @@ export type TranslationKey =
   | 'sharedHomeCustomMustEqual'
   | 'sharedHomePercentageMustEqual'
   | 'sharedHomeChoosePayer'
-  | 'sharedHomeSelectMembers'
-  | 'sharedHomeAddPeople'
-  | 'sharedHomeNoMembers'
+  
+  
+  
   | 'sharedHomeMemberName'
   | 'sharedHomeMobile'
   | 'sharedHomeMobileOptional'
@@ -300,18 +300,18 @@ export type TranslationKey =
   | 'sharedHomeMoveIn'
   | 'sharedHomeMoveOut'
   | 'sharedHomeActive'
-  | 'sharedHomeInactive'
+  
   | 'sharedHomeNoRoomHistory'
   | 'sharedHomeUnassigned'
   | 'sharedHomeRoomsOptional'
-  | 'sharedHomeNoRooms'
+  
   | 'sharedHomeConfigureRent'
   | 'sharedHomeEditRent'
-  | 'sharedHomeCalculation'
+  
   | 'sharedHomeShareRange'
   | 'sharedHomeShareRangeHelp'
   | 'sharedHomeShareLinkNote'
-  | 'sharedHomeShareUnable'
+  
   | 'sharedHomeRentSetup'
   | 'sharedHomeTotalRent'
   | 'sharedHomeDueDate'
@@ -340,7 +340,7 @@ export type TranslationKey =
   | 'sharedHomeSharedHomeOption'
   | 'sharedHomeGroceryItems'
   | 'sharedHomeGroceryItem'
-  | 'sharedHomeGroceryMode'
+  
   | 'sharedHomeCommon'
   | 'sharedHomePersonal'
   | 'sharedHomeAddItem'
@@ -377,7 +377,7 @@ export type TranslationKey =
   | 'sharedHomeNoRecurringRules'
   | 'sharedHomeRecurringHelp'
   | 'sharedHomeEditRule'
-  | 'sharedHomeIncludeInBudget'
+  
   | 'sharedHomeIncludeInBudgetQuestion'
   | 'sharedHomeIncludeInBudgetHelp'
   | 'sharedHomeIncludedInBudget'
@@ -412,13 +412,13 @@ export type TranslationKey =
   | 'sharedHomeCloseMonth'
   | 'sharedHomeEveryoneSettled'
   | 'sharedHomeSuggestedMinimum'
-  | 'sharedHomeMonthSummary'
-  | 'sharedHomeTotalHouseholdExpense'
-  | 'sharedHomeActivityHistory'
+  
+  
+  
   | 'sharedHomeViewCalculation'
-  | 'sharedHomeApplicableDaysRate'
+  
   | 'sharedHomeUnknown'
-  | 'sharedHomeCategoryGroceries'
+  
   | 'sharedHomeCategoryUtilities'
   | 'sharedHomeExpenseNamePlaceholder'
   | 'sharedHomeAmountPlaceholder'
@@ -430,16 +430,16 @@ export type TranslationKey =
   | 'sharedHomeVariableAmount'
   | 'sharedHomeAutoAddFixed'
   | 'sharedHomeNotFound'
-  | 'sharedHomeBack'
+  
   | 'sharedHomeBasis'
   | 'sharedHomePaidByLabel'
   | 'sharedHomeSharedByLabel'
   | 'sharedHomeInactiveLabel'
   | 'sharedHomeMoveInLabel'
   | 'sharedHomeRemovedRoom'
-  | 'sharedHomePaymentPaidTo'
-  | 'sharedHomeSummaryOf'
-  | 'sharedHomeManualOverrideActivity'
+  
+  
+  
   | 'sharedHomeEditRent'
   | 'sharedHomeConfigureRent'
   | 'sharedHomeOwesTo'
@@ -483,10 +483,10 @@ export type TranslationKey =
   | 'sharedHomeCreateNamePlaceholder'
   | 'sharedHomeBackToKharcha'
   | 'sharedHomeBackAriaLabel'
-  | 'sharedHomeEmptyPrompt'
-  | 'sharedHomeListTitle'
+  
+  
   | 'sharedHomeDescriptionFallback'
-  | 'sharedHomeMembersShort'
+  
   | 'sharedHomeCreatedActivity'
   | 'sharedHomeSearchPlaceholder'
   | 'sharedHomeFilterCategory'
@@ -515,176 +515,176 @@ export type TranslationKey =
   | 'groupFundsDescription'
   | 'openFunds'
   | 'personalBudget'
-  | 'personalBudgetDescription'
+  
   | 'personalBudgetOverview'
   | 'personalBudgetIncome'
   | 'personalBudgetExpenses'
   | 'personalBudgetRecurring'
-  | 'personalBudgetFamily'
-  | 'personalBudgetGoals'
-  | 'personalBudgetCalendar'
+  
+  
+  
   | 'personalBudgetReports'
-  | 'personalBudgetSettings'
-  | 'personalBudgetExpectedIncome'
-  | 'personalBudgetPlannedExpenses'
-  | 'personalBudgetActualExpenses'
-  | 'personalBudgetRemaining'
-  | 'personalBudgetSavings'
-  | 'personalBudgetUsed'
-  | 'personalBudgetNoIncome'
-  | 'personalBudgetAddFirstIncome'
-  | 'personalBudgetNoExpenses'
-  | 'personalBudgetAddFirstExpense'
-  | 'personalBudgetStartTitle'
-  | 'personalBudgetStartDescription'
-  | 'personalBudgetPreviousMonth'
-  | 'personalBudgetNextMonth'
-  | 'personalBudgetAddIncome'
-  | 'personalBudgetAddExpense'
-  | 'personalBudgetAddRecurring'
-  | 'personalBudgetAddGoal'
-  | 'personalBudgetComingSoon'
-  | 'personalBudgetNoData'
-  | 'personalBudgetAddIncomeSource'
-  | 'personalBudgetAddIncomeTransaction'
-  | 'personalBudgetIncomeSources'
-  | 'personalBudgetIncomeHistory'
-  | 'personalBudgetActualReceived'
-  | 'personalBudgetExpected'
-  | 'personalBudgetReceived'
-  | 'personalBudgetPending'
-  | 'personalBudgetVariable'
-  | 'personalBudgetActive'
-  | 'personalBudgetArchived'
-  | 'personalBudgetEdit'
-  | 'personalBudgetArchive'
-  | 'personalBudgetDelete'
-  | 'personalBudgetViewHistory'
-  | 'personalBudgetIncomeName'
-  | 'personalBudgetRecurringSaved'
-  | 'personalBudgetRecurringDescription'
-  | 'personalBudgetRuleName'
-  | 'personalBudgetNoRecurringRules'
-  | 'personalBudgetOccurrences'
-  | 'personalBudgetNoOccurrences'
-  | 'personalBudgetPaused'
-  | 'personalBudgetPause'
-  | 'personalBudgetResume'
-  | 'personalBudgetPaid'
-  | 'personalBudgetSkipped'
-  | 'personalBudgetMarkPaid'
-  | 'personalBudgetMarkPending'
-  | 'personalBudgetMarkSkipped'
-  | 'personalBudgetExcludeFromBudget'
-  | 'personalBudgetRecurringBudgetQuestion'
-  | 'personalBudgetCategory'
-  | 'personalBudgetAmount'
-  | 'personalBudgetFrequency'
-  | 'personalBudgetExpectedDate'
-  | 'personalBudgetStartDate'
-  | 'personalBudgetEndDate'
-  | 'personalBudgetPerson'
-  | 'personalBudgetIncludeInBudget'
-  | 'personalBudgetSave'
-  | 'personalBudgetAddTransaction'
-  | 'personalBudgetTransactionDate'
-  | 'personalBudgetActualAmount'
-  | 'personalBudgetThisMonth'
-  | 'personalBudgetLastMonth'
-  | 'personalBudgetCustomRange'
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   | 'personalBudgetFrom'
   | 'personalBudgetTo'
-  | 'personalBudgetPaymentMethod'
-  | 'personalBudgetNote'
-  | 'personalBudgetSubcategory'
-  | 'personalBudgetManageCategories'
-  | 'personalBudgetAddCustomCategory'
-  | 'personalBudgetCategoryName'
-  | 'personalBudgetIcon'
-  | 'personalBudgetCategoryBudget'
-  | 'personalBudgetBudgetAmount'
-  | 'personalBudgetSetBudget'
-  | 'personalBudgetUnderBudget'
-  | 'personalBudgetNearLimit'
-  | 'personalBudgetOverBudget'
-  | 'personalBudgetTopCategories'
-  | 'personalBudgetConfirmDelete'
-  | 'personalBudgetAdd'
-  | 'personalBudgetSuccessIncome'
-  | 'personalBudgetSuccessExpense'
-  | 'personalBudgetNoSources'
-  | 'personalBudgetNoExpensesMonth'
-  | 'personalBudgetArchiveConfirm'
-  | 'personalBudgetHistoryEmpty'
-  | 'personalBudgetExpectedAmount'
-  | 'personalBudgetNextOccurrence'
-  | 'personalBudgetMonthlyCommitment'
-  | 'personalBudgetRecurringPaid'
-  | 'personalBudgetRecurringPending'
-  | 'personalBudgetRecurringSkipped'
-  | 'personalBudgetToday'
-  | 'personalBudgetUpcoming'
-  | 'personalBudgetActiveRules'
-  | 'personalBudgetArchivedRules'
-  | 'personalBudgetSkipFrom'
-  | 'personalBudgetSkipTo'
-  | 'personalBudgetPauseFrom'
-  | 'personalBudgetPauseTo'
-  | 'personalBudgetBulkPaidConfirm'
-  | 'personalBudgetDeleteFutureConfirm'
-  | 'personalBudgetDeleteFuture'
-  | 'personalBudgetArchiveRule'
-  | 'personalBudgetCancelled'
-  | 'personalBudgetMarkCancelled'
-  | 'personalBudgetViewDetails'
-  | 'personalBudgetActualAmountPrompt'
-  | 'personalBudgetOccurrenceDetails'
-  | 'personalBudgetMonthlyProvision'
-  | 'personalBudgetUpcomingEmpty'
-  | 'personalBudgetNoSkipped'
-  | 'personalBudgetDailyExpense'
-  | 'personalBudgetWeeklyExpense'
-  | 'personalBudgetOneTimeExpense'
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
 
-  | 'personalBudgetCommitted'
-  | 'personalBudgetDaily'
-  | 'personalBudgetWeekly'
-  | 'personalBudgetRemainingCash'
-  | 'sharedHomeSummaryReport'
+  
+  
+  
+  
+  
   | 'sharedHomeTotalRent'
-  | 'sharedHomeTotalOutlay'
-  | 'sharedHomeMajorCategories'
-  | 'sharedHomeBalances'
-  | 'sharedHomeTotalExpenses'
-  | 'personalBudgetCommitted'
-  | 'personalBudgetDaily'
-  | 'personalBudgetWeekly'
-  | 'personalBudgetRemainingCash'
-  | 'personalBudgetSafeSpendingAmount'
-  | 'personalBudgetSuggestedDailyLimit'
-  | 'personalBudgetTodaysSpending'
-  | 'personalBudgetGoalCommitments'
-  | 'personalBudgetSmartGuidance'
-  | 'personalBudgetGuidanceOnly'
-  | 'personalBudgetGoalsTitle'
-  | 'personalBudgetAddToGoal'
-  | 'personalBudgetEditGoal'
-  | 'personalBudgetGoalName'
-  | 'personalBudgetTargetAmount'
-  | 'personalBudgetCurrentSavedAmount'
-  | 'personalBudgetTargetDate'
-  | 'personalBudgetPriority'
-  | 'personalBudgetMonthlyAllocation'
-  | 'personalBudgetGoalNote'
-  | 'personalBudgetActiveGoal'
-  | 'personalBudgetGoalSaved'
-  | 'personalBudgetGoalContributionSaved'
-  | 'helpGuideTitle'
-  | 'helpGuideSubtitle'
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   | 'needHelp'
   | 'emailUsAt'
-  | 'backToGuides'
+  
   | 'reportsAnalytics'
   | 'reportsSubtitle'
   | 'thisMonth'
@@ -721,12 +721,12 @@ export type TranslationKey =
   | 'saveChanges'
   | 'enterMemberName'
   | 'memberAlreadyExists'
-  | 'selectContactsToAdd'
-  | 'contactsSelected'
+  
+  
   | 'selectAll'
   | 'clearAll'
-  | 'unnamedContact'
-  | 'noPhoneEmail'
+  
+  
   | 'addSelected'
   | 'backupRestoreData'
   | 'backupDesc'
@@ -772,12 +772,9 @@ type Variables = Record<string, string | number>;
 export const english: Record<TranslationKey, string> = {
   language: 'Language',
   splitExpenses: 'Split expenses, travel smart',
-  oneTrip: 'One Trip.',
-  oneTap: 'One Tap.',
   loadingTrips: 'Loading trips...',
   noTrips: 'No trips yet. Create your first one!',
   createTrip: 'Create Trip',
-  yourTrips: 'Your Trips',
   newestFirst: 'Newest First',
   oldestFirst: 'Oldest First',
   nameAZ: 'Name A-Z',
@@ -823,59 +820,39 @@ export const english: Record<TranslationKey, string> = {
   shareTrip: 'Share Trip',
   shareByName: 'Share the trip by name. The technical URL stays hidden.',
   tripToShare: 'Trip to share',
-  recipientsViewOnly: 'Recipients can view this trip snapshot only. They cannot edit or change your original trip from the shared link.',
   close: 'Close',
   sharing: 'Sharing...',
   copied: 'Copied!',
   tripShared: 'Trip shared',
   editAndSyncTitle: 'Edit & Sync',
-  editAndSyncDescription: 'Create a temporary editable copy of {{name}}. Your original data stays unchanged until you synchronize reviewed changes.',
-  editAndSyncShareMessage: 'Edit and sync {{name}}',
-  editSyncSelectedItem: 'Selected item',
-  editSyncOwnerProtection: 'Ownership and security settings remain protected.',
-  editSyncLinkShared: 'Edit & Sync link shared',
-  editSyncLinkCopied: 'Edit & Sync link copied',
   editSyncUnavailable: 'Edit & Sync is temporarily unavailable',
-  editSyncOpenTitle: 'Editable shared copy',
   editSyncRecipientDescription: 'This is a local editable copy. Changes remain on this device until you send them back.',
-  editSyncEditCopy: 'Open editable copy',
   editSyncSendBack: 'Send to Original Sender for Synchronization',
-  editSyncPending: 'Your synchronization is pending',
-  editSyncReviewTitle: 'Review synchronization',
-  editSyncReviewDescription: 'Review changes before applying them to the original item.',
   editSyncReviewChanges: 'Review Changes',
   editSyncSynchronize: 'Synchronize Changes',
   editSyncConflict: 'Changes need review',
   editSyncCompleted: 'Synchronization completed',
-  editSyncCopyCreated: 'Editable copy saved on this device',
-  editSyncOwnerVerificationFailed: 'Owner verification failed',
-  editSyncRecipientUnknown: 'Recipient',
   editSyncAdded: 'Added',
   editSyncChanged: 'Changed',
   editSyncRemoved: 'Removed',
-  editSyncConflictFields: 'conflicting fields were found. Review before synchronizing.',
   linkCopied: 'link copied!',
   failedCopy: 'Failed to copy trip link',
   addExpense: 'Add Expense',
   recordExpense: 'Record a new expense for the trip',
   pleaseAddMembers: 'Please add members to the trip first',
   fillRequired: 'Please fill all required fields',
-  customSplitError: 'Custom splits must equal ₹{{amount}}',
   amount: 'Amount (₹)',
   category: 'Category',
   paidBy: 'Paid By',
   date: 'Date',
   splitType: 'Split Type',
-  equalSplit: 'Equal Split',
   customSplit: 'Custom Split',
-  splitAmong: 'Split Among',
   addMemberDetails: 'Add a friend or group member to this trip',
   addFromContacts: '📱 Add from Contacts',
   addManually: 'Add Manually',
   picking: 'Picking...',
   memberNameRequired: 'Member Name *',
   mobileOptional: 'Mobile Number (Optional)',
-  forUpiSharing: 'For UPI payments and sharing',
   upiOptional: 'UPI ID (Optional)',
   payTo: 'Pay ₹{{amount}} to {{name}}',
   openUpiApp: 'Open UPI App',
@@ -922,18 +899,13 @@ export const english: Record<TranslationKey, string> = {
   budgetBreakdown: 'Spending Breakdown',
   budgetNoSpend: 'No eligible spending yet.',
   budgetSavedActivity: 'Budget saved for {{period}}.',
-  kharchaTagline: 'Split Smart. Live Smart.',
   whatManage: 'What do you want to manage?',
   tripsDescription: 'Manage travel expenses and split trip costs.',
-  sharedHomesDescription: 'Manage rent, bills, groceries, and household expenses.',
   openTrips: 'Open Trips',
-  openSharedHomes: 'Open Shared Homes',
   myTrips: 'My Trips',
   mySharedHomes: 'My Shared Homes',
   addTrip: 'Add Trip',
   addSharedHome: 'Add Shared Home',
-  quickTrip: 'Quick Trip',
-  quickTripDescription: 'Start a new trip in seconds.',
   settings: 'Settings',
   search: 'Search',
   notifications: 'Notifications',
@@ -941,7 +913,6 @@ export const english: Record<TranslationKey, string> = {
   chooseCategory: 'Choose a category to get started',
   home: 'Home',
   tripsNav: 'Trips',
-  sharedNav: 'Shared',
   languagePersistenceNote: 'Your language choice is saved on this device and applies across Kharcha.',
   searchKharchaTitle: 'Search Kharcha',
   searchKharchaPlaceholder: 'Search trips, shared homes, group funds, or budget',
@@ -954,7 +925,6 @@ export const english: Record<TranslationKey, string> = {
   moreTitle: 'More features',
   openSettings: 'Manage app settings',
   backToKharcha: 'Back to Kharcha',
-  sharedHomeCurrentBalance: 'Current balance',
   sharedHomeRecent: 'Recently used',
   noSharedHomes: 'No shared homes yet. Add your first home to get started.',
   tripExpenseTotal: 'Total expenses',
@@ -962,7 +932,6 @@ export const english: Record<TranslationKey, string> = {
   sharedHomeMembersLabel: 'members',
   sharedHomeExpenseTotal: 'Total expense',
   sharedHomeBalance: 'Balance',
-  sharedHomeOpen: 'Open Shared Home',
   tripOpen: 'Open Trip',
   searchTrips: 'Search trips',
   noSearchResults: 'No matching items found.',
@@ -1008,7 +977,6 @@ export const english: Record<TranslationKey, string> = {
   sharedHomeViewOnlySnapshot: 'Read-only snapshot',
   sharedHomeOriginalNotEditable: 'Original manager data is not shared for editing.',
   sharedHomePaymentHistory: 'Payment history',
-  sharedHomeMarkSettled: 'Mark Settled',
   sharedHomeNoPaymentHistory: 'No recorded payments yet.',
   sharedHomeNoCurrentMembers: 'No current members',
   sharedHomeNoRoomHistory: 'No room history',
@@ -1029,9 +997,6 @@ export const english: Record<TranslationKey, string> = {
   sharedHomeCustomMustEqual: 'Custom shares must equal the total amount.',
   sharedHomePercentageMustEqual: 'Percentages must add up to exactly 100%.',
   sharedHomeChoosePayer: 'Choose payer',
-  sharedHomeSelectMembers: 'Select members',
-  sharedHomeAddPeople: 'Add the people who share this home.',
-  sharedHomeNoMembers: 'No members yet.',
   sharedHomeMemberName: 'Member Name',
   sharedHomeMobile: 'Mobile Number',
   sharedHomeMobileOptional: 'Optional contact number',
@@ -1043,17 +1008,13 @@ export const english: Record<TranslationKey, string> = {
   sharedHomeMoveIn: 'Move-in date',
   sharedHomeMoveOut: 'Move-out date',
   sharedHomeActive: 'Active member',
-  sharedHomeInactive: 'Inactive',
   sharedHomeUnassigned: 'Unassigned',
   sharedHomeRoomsOptional: 'Rooms are optional. Add them for room-based rent splits.',
-  sharedHomeNoRooms: 'No rooms yet.',
   sharedHomeConfigureRent: 'Configure rent to calculate each member\'s monthly share.',
   sharedHomeEditRent: 'Edit Rent',
-  sharedHomeCalculation: 'Calculation details',
   sharedHomeShareRange: 'Share range',
   sharedHomeShareRangeHelp: 'Choose how much household history to include.',
   sharedHomeShareLinkNote: 'Recipients can view this snapshot only. Your local manager data is not editable.',
-  sharedHomeShareUnable: 'Unable to share or copy the Shared Home link.',
   sharedHomeRentSetup: 'Rent Setup',
   sharedHomeTotalRent: 'Total Rent (₹)',
   sharedHomeDueDate: 'Due date',
@@ -1081,7 +1042,6 @@ export const english: Record<TranslationKey, string> = {
   sharedHomeSharedHomeOption: 'Shared Home',
   sharedHomeGroceryItems: 'Grocery items',
   sharedHomeGroceryItem: 'Item',
-  sharedHomeGroceryMode: 'Item split',
   sharedHomeCommon: 'Common',
   sharedHomePersonal: 'Personal',
   sharedHomeAddItem: 'Add item',
@@ -1118,7 +1078,6 @@ export const english: Record<TranslationKey, string> = {
   sharedHomeNoRecurringRules: 'No recurring rules yet.',
   sharedHomeRecurringHelp: 'Fixed rules auto-add once per selected month; variable rules stay pending for manual entry.',
   sharedHomeEditRule: 'Edit recurring rule',
-  sharedHomeIncludeInBudget: 'Include in Budget',
   sharedHomeIncludeInBudgetQuestion: 'Should this recurring expense reduce the Shared Home budget?',
   sharedHomeIncludeInBudgetHelp: 'Turn off if this expense should not reduce your budget. It will still be recorded normally.',
   sharedHomeIncludedInBudget: 'Included in Budget',
@@ -1150,13 +1109,8 @@ export const english: Record<TranslationKey, string> = {
   sharedHomeCloseMonth: 'Close Month',
   sharedHomeEveryoneSettled: 'Everyone is settled for this month.',
   sharedHomeSuggestedMinimum: 'Suggested minimum settlement',
-  sharedHomeMonthSummary: 'summary',
-  sharedHomeTotalHouseholdExpense: 'Total household expense',
-  sharedHomeActivityHistory: 'Activity history',
   sharedHomeViewCalculation: 'View Calculation',
-  sharedHomeApplicableDaysRate: '{{days}} applicable days · daily rate {{rate}}',
   sharedHomeUnknown: 'Unknown',
-  sharedHomeCategoryGroceries: 'Groceries',
   sharedHomeCategoryUtilities: 'Utilities',
   sharedHomeExpenseNamePlaceholder: 'Electricity, groceries, cleaning...',
   sharedHomeAmountPlaceholder: '₹100',
@@ -1168,16 +1122,12 @@ export const english: Record<TranslationKey, string> = {
   sharedHomeVariableAmount: 'Variable — enter each month',
   sharedHomeAutoAddFixed: 'Automatically add fixed amount each month',
   sharedHomeNotFound: 'Shared Home not found.',
-  sharedHomeBack: 'Back',
   sharedHomeBasis: 'basis',
   sharedHomePaidByLabel: 'Paid by',
   sharedHomeSharedByLabel: 'Shared by',
   sharedHomeInactiveLabel: 'Inactive',
   sharedHomeMoveInLabel: 'Move-in',
   sharedHomeRemovedRoom: 'Removed room',
-  sharedHomePaymentPaidTo: 'paid',
-  sharedHomeSummaryOf: 'summary',
-  sharedHomeManualOverrideActivity: 'manual override',
   sharedHomeOwesTo: 'owes',
   sharedHomePaidTo: 'paid to',
   sharedHomeCalculationDaysRate: '{{days}} applicable days · daily rate {{rate}}',
@@ -1217,10 +1167,7 @@ export const english: Record<TranslationKey, string> = {
   sharedHomeCreateNamePlaceholder: 'Kochi Flatmates',
   sharedHomeBackToKharcha: 'Back to Kharcha',
   sharedHomeBackAriaLabel: 'Back',
-  sharedHomeEmptyPrompt: 'Create your first trip or shared home.',
-  sharedHomeListTitle: 'Shared Homes',
   sharedHomeDescriptionFallback: 'Shared household expenses',
-  sharedHomeMembersShort: '{{count}} members',
   sharedHomeCreatedActivity: 'Shared Home “{{name}}” was created.',
   sharedHomeSearchPlaceholder: 'Search expense name, category, member, amount, or date',
   sharedHomeFilterCategory: 'Category',
@@ -1249,144 +1196,17 @@ export const english: Record<TranslationKey, string> = {
   groupFundsDescription: 'Manage office, club, and common collections.',
   openFunds: 'Open Funds',
   personalBudget: 'Personal Budget',
-  personalBudgetDescription: 'Private income, expenses, goals, and household planning.',
   personalBudgetOverview: 'Overview',
   personalBudgetIncome: 'Income',
   personalBudgetExpenses: 'Expenses',
   personalBudgetRecurring: 'Recurring',
-  personalBudgetFamily: 'Family',
-  personalBudgetGoals: 'Goals',
-  personalBudgetCalendar: 'Calendar',
   personalBudgetReports: 'Reports',
-  personalBudgetSettings: 'Settings',
-  personalBudgetExpectedIncome: 'Expected Income',
-  personalBudgetPlannedExpenses: 'Planned Expenses',
-  personalBudgetActualExpenses: 'Actual Expenses',
-  personalBudgetRemaining: 'Remaining',
-  personalBudgetSavings: 'Savings',
-  personalBudgetUsed: 'Budget Used',
-  personalBudgetNoIncome: 'No income added yet',
-  personalBudgetAddFirstIncome: 'Add your first income',
-  personalBudgetNoExpenses: 'No expenses planned yet',
-  personalBudgetAddFirstExpense: 'Add your first expense',
-  personalBudgetStartTitle: 'Start managing your personal finances',
-  personalBudgetStartDescription: 'Add your income and regular expenses to see your budget.',
-  personalBudgetPreviousMonth: 'Previous Month',
-  personalBudgetNextMonth: 'Next Month',
-  personalBudgetAddIncome: 'Add Income',
-  personalBudgetAddExpense: 'Add Expense',
-  personalBudgetAddRecurring: 'Add Recurring',
-  personalBudgetAddGoal: 'Add Goal',
-  personalBudgetComingSoon: 'This Step One foundation is ready. Detailed management will be added in the next step.',
-  personalBudgetNoData: 'No data for this month yet.',
-  personalBudgetAddIncomeSource: 'Add Income Source',
-  personalBudgetAddIncomeTransaction: 'Record Actual Income',
-  personalBudgetIncomeSources: 'Income Sources',
-  personalBudgetIncomeHistory: 'Income History',
-  personalBudgetActualReceived: 'Actual Received Income',
-  personalBudgetExpected: 'Expected',
-  personalBudgetReceived: 'Received',
-  personalBudgetPending: 'Pending',
-  personalBudgetVariable: 'Variable',
-  personalBudgetActive: 'Active',
-  personalBudgetArchived: 'Archived',
-  personalBudgetEdit: 'Edit',
-  personalBudgetArchive: 'Archive',
-  personalBudgetDelete: 'Delete',
-  personalBudgetViewHistory: 'View History',
-  personalBudgetIncomeName: 'Income Name',
-  personalBudgetRecurringSaved: 'Recurring expense saved',
-  personalBudgetRecurringDescription: 'Rules create planned expenses for each applicable day, week, or month.',
-  personalBudgetRuleName: 'Recurring Expense Name',
-  personalBudgetNoRecurringRules: 'No recurring expenses yet',
-  personalBudgetOccurrences: 'This Month\'s Recurring Occurrences',
-  personalBudgetNoOccurrences: 'No recurring occurrences for this month.',
-  personalBudgetPaused: 'Paused',
-  personalBudgetPause: 'Pause',
-  personalBudgetResume: 'Resume',
-  personalBudgetPaid: 'Paid',
-  personalBudgetSkipped: 'Skipped',
-  personalBudgetMarkPaid: 'Mark Paid',
-  personalBudgetMarkPending: 'Mark Pending',
-  personalBudgetMarkSkipped: 'Skip',
-  personalBudgetExcludeFromBudget: 'Excluded from budget',
-  personalBudgetRecurringBudgetQuestion: 'Include recurring expenses in this household budget',
-  personalBudgetCategory: 'Category',
-  personalBudgetAmount: 'Amount',
-  personalBudgetFrequency: 'Frequency',
-  personalBudgetExpectedDate: 'Expected Date',
-  personalBudgetStartDate: 'Start Date',
-  personalBudgetEndDate: 'End Date',
-  personalBudgetPerson: 'Person',
-  personalBudgetIncludeInBudget: 'Include in Household Budget',
-  personalBudgetSave: 'Save',
-  personalBudgetAddTransaction: 'Add Transaction',
-  personalBudgetTransactionDate: 'Transaction Date',
-  personalBudgetActualAmount: 'Actual Amount',
-  personalBudgetThisMonth: 'This Month',
-  personalBudgetLastMonth: 'Last Month',
-  personalBudgetCustomRange: 'Custom Date Range',
   personalBudgetFrom: 'From',
   personalBudgetTo: 'To',
-  personalBudgetPaymentMethod: 'Payment Method',
-  personalBudgetNote: 'Note',
-  personalBudgetSubcategory: 'Subcategory',
-  personalBudgetManageCategories: 'Manage Categories',
-  personalBudgetAddCustomCategory: 'Add Custom Category',
-  personalBudgetCategoryName: 'Category Name',
-  personalBudgetIcon: 'Icon (optional)',
-  personalBudgetCategoryBudget: 'Category Budget',
-  personalBudgetBudgetAmount: 'Budget Amount',
-  personalBudgetSetBudget: 'Set Budget',
-  personalBudgetUnderBudget: 'Under Budget',
-  personalBudgetNearLimit: 'Near Limit',
-  personalBudgetOverBudget: 'Over Budget',
-  personalBudgetTopCategories: 'Top Expense Categories',
-  personalBudgetConfirmDelete: 'Delete this record? This cannot be undone.',
-  personalBudgetAdd: 'Add',
-  personalBudgetSuccessIncome: 'Income added',
-  personalBudgetSuccessExpense: 'Expense added',
-  personalBudgetNoSources: 'No income sources yet',
-  personalBudgetNoExpensesMonth: 'No expenses recorded for this month.',
-  personalBudgetArchiveConfirm: 'Archive this income source?',
-  personalBudgetHistoryEmpty: 'No history recorded yet.',
-  personalBudgetExpectedAmount: 'Expected Amount',
-  personalBudgetDailyExpense: 'Daily Expense',
-  personalBudgetWeeklyExpense: 'Weekly Expense',
-  personalBudgetOneTimeExpense: 'Other / One-Time',
-  personalBudgetCommitted: 'Committed',
-  personalBudgetDaily: 'Daily',
-  personalBudgetWeekly: 'Weekly',
-  personalBudgetRemainingCash: 'Remaining Cash',
-  personalBudgetSafeSpendingAmount: 'Safe Spending Amount',
-  personalBudgetSuggestedDailyLimit: 'Suggested Daily Limit',
-  personalBudgetTodaysSpending: "Today's Spending",
-  personalBudgetGoalCommitments: 'Goal Commitments',
-  personalBudgetSmartGuidance: 'Smart Budget Guidance',
-  personalBudgetGuidanceOnly: 'Guidance only — Kharcha never moves money automatically.',
-  personalBudgetGoalsTitle: 'Goals',
-  personalBudgetAddToGoal: 'Add to Goal',
-  personalBudgetEditGoal: 'Edit Goal',
-  personalBudgetGoalName: 'Goal Name',
-  personalBudgetTargetAmount: 'Target Amount',
-  personalBudgetCurrentSavedAmount: 'Current Saved Amount',
-  personalBudgetTargetDate: 'Target Date',
-  personalBudgetPriority: 'Priority',
-  personalBudgetMonthlyAllocation: 'Monthly Allocation (optional)',
-  personalBudgetGoalNote: 'Goal Note (optional)',
-  personalBudgetActiveGoal: 'Active Goal',
-  personalBudgetGoalSaved: 'Goal saved',
-  personalBudgetGoalContributionSaved: 'Goal contribution saved',
-  welcomeTitle: 'Welcome to Kharcha',
   welcomeSubtitle: 'Kharcha is a secure local-first expense management app for trips, shared homes, group funds, and personal budgets. All your data is stored locally on your device for complete privacy and offline use. You manage everything locally, and can share read-only expense views with others easily.',
   kharchaNotes: 'Kharcha Notes',
-  okGotIt: 'OK, Let\'s Start',
-  personalBudgetNextOccurrence: 'Next occurrence', personalBudgetMonthlyCommitment: 'Monthly Recurring Commitment', personalBudgetRecurringPaid: 'Recurring Paid', personalBudgetRecurringPending: 'Recurring Pending', personalBudgetRecurringSkipped: 'Recurring Skipped', personalBudgetToday: 'Today', personalBudgetUpcoming: 'Upcoming', personalBudgetActiveRules: 'Active Rules', personalBudgetArchivedRules: 'Archived', personalBudgetSkipFrom: 'Skip from date', personalBudgetSkipTo: 'Skip until date', personalBudgetPauseFrom: 'Pause from date', personalBudgetPauseTo: 'Pause until date', personalBudgetBulkPaidConfirm: 'Mark all today\'s recurring expenses as paid?', personalBudgetDeleteFutureConfirm: 'Delete this recurring rule and future occurrences? Historical paid records will remain.', personalBudgetDeleteFuture: 'Delete Future Recurrence', personalBudgetArchiveRule: 'Archive Rule', personalBudgetCancelled: 'Cancelled', personalBudgetMarkCancelled: 'Cancel occurrence', personalBudgetViewDetails: 'View details', personalBudgetActualAmountPrompt: 'Enter actual amount', personalBudgetOccurrenceDetails: 'Occurrence Details', personalBudgetMonthlyProvision: 'Monthly provision/equivalent',   personalBudgetUpcomingEmpty: 'No recurring expenses due in the next 7 days.', personalBudgetNoSkipped: 'No skipped recurring expenses.',
-  helpGuideTitle: 'Help & Guide',
-  helpGuideSubtitle: 'Learn how to use Kharcha',
   needHelp: 'Need help?',
   emailUsAt: 'Email us at:',
-  backToGuides: 'Back to Guides',
   reportsAnalytics: 'Reports & Analytics',
   reportsSubtitle: 'Comprehensive financial insights and spending summaries.',
   thisMonth: 'This Month',
@@ -1425,18 +1245,9 @@ export const english: Record<TranslationKey, string> = {
   saveChanges: 'Save Changes',
   enterMemberName: 'Please enter a member name',
   memberAlreadyExists: 'A member with this name already exists',
-  selectContactsToAdd: 'Select contacts to add as trip members',
-  contactsSelected: 'contacts selected',
   selectAll: 'Select All',
   clearAll: 'Clear All',
-  unnamedContact: 'Unnamed Contact',
-  noPhoneEmail: 'No phone/email',
   addSelected: 'Add Selected',
-  sharedHomeSummaryReport: 'Summary Report',
-  sharedHomeTotalExpenses: 'Total Expenses',
-  sharedHomeTotalOutlay: 'Total Household Outlay',
-  sharedHomeMajorCategories: 'Major Expense Categories',
-  sharedHomeBalances: 'Balances',
   backupRestoreData: 'Backup & Restore Data',
   backupDesc: 'Your Kharcha data is stored locally on this device. Export regularly to prevent loss.',
   lastBackup: 'Last Backup',
@@ -1478,37 +1289,37 @@ export const english: Record<TranslationKey, string> = {
 export const translations: Record<LanguageCode, TranslationDictionary> = {
   en: english,
   ml: {
-    language: 'ഭാഷ', splitExpenses: 'ചെലവ് പങ്കിടൂ, യാത്ര സ്മാർട്ടാക്കൂ', oneTrip: 'ഒരു യാത്ര.', oneTap: 'ഒരു ടാപ്പ്.', loadingTrips: 'യാത്രകൾ ലോഡ് ചെയ്യുന്നു...', noTrips: 'ഇതുവരെ യാത്രകളില്ല. ആദ്യ യാത്ര സൃഷ്ടിക്കൂ!', createTrip: 'യാത്ര സൃഷ്ടിക്കുക', yourTrips: 'നിങ്ങളുടെ യാത്രകൾ', newestFirst: 'പുതിയത് ആദ്യം', oldestFirst: 'പഴയത് ആദ്യം', nameAZ: 'പേര് A-Z', nameZA: 'പേര് Z-A', membersCount: '{{count}} അംഗങ്ങൾ', tripNotFound: 'യാത്ര കണ്ടെത്തിയില്ല', backToTrips: 'യാത്രകളിലേക്ക് മടങ്ങുക', total: 'ആകെ', expenses: 'ചെലവുകൾ', members: 'അംഗങ്ങൾ', payAddExpenseAutomatically: 'പണമടച്ച് ചെലവ് ചേർക്കുക', shareThisTrip: 'ഈ യാത്ര പങ്കിടുക', dashboard: 'ഡാഷ്ബോർഡ്', settle: 'സെറ്റിൽ ചെയ്യുക', howToSplitAddExpense: 'എങ്ങനെ പങ്കിടാം & ചെലവ് ചേർക്കാം', addMember: 'അംഗത്തെ ചേർക്കുക', noMembers: 'ഇതുവരെ അംഗങ്ങളില്ല', paid: 'അടച്ചത്', owes: 'നൽകാനുള്ളത്', edit: 'തിരുത്തുക', delete: 'ഇല്ലാതാക്കുക', createNewTrip: 'പുതിയ യാത്ര സൃഷ്ടിക്കുക', startPlanning: 'അടുത്ത യാത്ര ആസൂത്രണം ചെയ്യാം', tripName: 'യാത്രയുടെ പേര്', description: 'വിവരണം', startDate: 'ആരംഭ തീയതി', endDate: 'അവസാന തീയതി', cancel: 'റദ്ദാക്കുക', copyLink: 'ലിങ്ക് പകർത്തുക', viewOnly: 'കാണാൻ മാത്രം',
+    language: 'ഭാഷ', splitExpenses: 'ചെലവ് പങ്കിടൂ, യാത്ര സ്മാർട്ടാക്കൂ', loadingTrips: 'യാത്രകൾ ലോഡ് ചെയ്യുന്നു...', noTrips: 'ഇതുവരെ യാത്രകളില്ല. ആദ്യ യാത്ര സൃഷ്ടിക്കൂ!', createTrip: 'യാത്ര സൃഷ്ടിക്കുക', newestFirst: 'പുതിയത് ആദ്യം', oldestFirst: 'പഴയത് ആദ്യം', nameAZ: 'പേര് A-Z', nameZA: 'പേര് Z-A', membersCount: '{{count}} അംഗങ്ങൾ', tripNotFound: 'യാത്ര കണ്ടെത്തിയില്ല', backToTrips: 'യാത്രകളിലേക്ക് മടങ്ങുക', total: 'ആകെ', expenses: 'ചെലവുകൾ', members: 'അംഗങ്ങൾ', payAddExpenseAutomatically: 'പണമടച്ച് ചെലവ് ചേർക്കുക', shareThisTrip: 'ഈ യാത്ര പങ്കിടുക', dashboard: 'ഡാഷ്ബോർഡ്', settle: 'സെറ്റിൽ ചെയ്യുക', howToSplitAddExpense: 'എങ്ങനെ പങ്കിടാം & ചെലവ് ചേർക്കാം', addMember: 'അംഗത്തെ ചേർക്കുക', noMembers: 'ഇതുവരെ അംഗങ്ങളില്ല', paid: 'അടച്ചത്', owes: 'നൽകാനുള്ളത്', edit: 'തിരുത്തുക', delete: 'ഇല്ലാതാക്കുക', createNewTrip: 'പുതിയ യാത്ര സൃഷ്ടിക്കുക', startPlanning: 'അടുത്ത യാത്ര ആസൂത്രണം ചെയ്യാം', tripName: 'യാത്രയുടെ പേര്', description: 'വിവരണം', startDate: 'ആരംഭ തീയതി', endDate: 'അവസാന തീയതി', cancel: 'റദ്ദാക്കുക', copyLink: 'ലിങ്ക് പകർത്തുക', viewOnly: 'കാണാൻ മാത്രം',
   },
   hi: {
-    language: 'भाषा', splitExpenses: 'खर्च बाँटें, यात्रा स्मार्ट बनाएं', oneTrip: 'एक यात्रा।', oneTap: 'एक टैप।', loadingTrips: 'यात्राएं लोड हो रही हैं...', noTrips: 'अभी कोई यात्रा नहीं। अपनी पहली यात्रा बनाएं!', createTrip: 'यात्रा बनाएं', yourTrips: 'आपकी यात्राएं', newestFirst: 'नवीनतम पहले', oldestFirst: 'पुरानी पहले', nameAZ: 'नाम A-Z', nameZA: 'नाम Z-A', membersCount: '{{count}} सदस्य', tripNotFound: 'यात्रा नहीं मिली', backToTrips: 'यात्राओं पर वापस जाएं', total: 'कुल', expenses: 'खर्चे', members: 'सदस्य', payAddExpenseAutomatically: 'भुगतान करें और खर्च जोड़ें', shareThisTrip: 'यह यात्रा साझा करें', dashboard: 'डैशबोर्ड', settle: 'निपटान', howToSplitAddExpense: 'कैसे बांटें और खर्च जोड़ें', addMember: 'सदस्य जोड़ें', noMembers: 'अभी कोई सदस्य नहीं', paid: 'भुगतान किया', owes: 'देना है', edit: 'संपादित करें', delete: 'हटाएं', createNewTrip: 'नई यात्रा बनाएं', startPlanning: 'अपने अगले रोमांच की योजना बनाएं', tripName: 'यात्रा का नाम', description: 'विवरण', startDate: 'आरंभ तिथि', endDate: 'अंतिम तिथि', cancel: 'रद्द करें', copyLink: 'लिंक कॉपी करें', viewOnly: 'केवल देखें',
+    language: 'भाषा', splitExpenses: 'खर्च बाँटें, यात्रा स्मार्ट बनाएं', loadingTrips: 'यात्राएं लोड हो रही हैं...', noTrips: 'अभी कोई यात्रा नहीं। अपनी पहली यात्रा बनाएं!', createTrip: 'यात्रा बनाएं', newestFirst: 'नवीनतम पहले', oldestFirst: 'पुरानी पहले', nameAZ: 'नाम A-Z', nameZA: 'नाम Z-A', membersCount: '{{count}} सदस्य', tripNotFound: 'यात्रा नहीं मिली', backToTrips: 'यात्राओं पर वापस जाएं', total: 'कुल', expenses: 'खर्चे', members: 'सदस्य', payAddExpenseAutomatically: 'भुगतान करें और खर्च जोड़ें', shareThisTrip: 'यह यात्रा साझा करें', dashboard: 'डैशबोर्ड', settle: 'निपटान', howToSplitAddExpense: 'कैसे बांटें और खर्च जोड़ें', addMember: 'सदस्य जोड़ें', noMembers: 'अभी कोई सदस्य नहीं', paid: 'भुगतान किया', owes: 'देना है', edit: 'संपादित करें', delete: 'हटाएं', createNewTrip: 'नई यात्रा बनाएं', startPlanning: 'अपने अगले रोमांच की योजना बनाएं', tripName: 'यात्रा का नाम', description: 'विवरण', startDate: 'आरंभ तिथि', endDate: 'अंतिम तिथि', cancel: 'रद्द करें', copyLink: 'लिंक कॉपी करें', viewOnly: 'केवल देखें',
   },
   ta: {
-    language: 'மொழி', splitExpenses: 'செலவைப் பகிர்ந்து, பயணத்தை எளிதாக்குங்கள்', oneTrip: 'ஒரு பயணம்.', oneTap: 'ஒரு தட்டு.', loadingTrips: 'பயணங்கள் ஏற்றப்படுகின்றன...', noTrips: 'பயணங்கள் இல்லை. முதல் பயணத்தை உருவாக்குங்கள்!', createTrip: 'பயணம் உருவாக்கு', yourTrips: 'உங்கள் பயணங்கள்', newestFirst: 'புதியது முதலில்', oldestFirst: 'பழையது முதலில்', nameAZ: 'பெயர் A-Z', nameZA: 'பெயர் Z-A', membersCount: '{{count}} உறுப்பினர்கள்', tripNotFound: 'பயணம் கிடைக்கவில்லை', backToTrips: 'பயணங்களுக்குத் திரும்பு', total: 'மொத்தம்', expenses: 'செலவுகள்', members: 'உறுப்பினர்கள்', payAddExpenseAutomatically: 'பணம் செலுத்தி செலவைச் சேர்க்கவும்', shareThisTrip: 'இந்தப் பயணத்தைப் பகிரவும்', dashboard: 'டாஷ்போர்டு', settle: 'தீர்வு', howToSplitAddExpense: 'எப்படிப் பகிர்ந்து செலவைச் சேர்ப்பது', addMember: 'உறுப்பினரைச் சேர்', noMembers: 'உறுப்பினர்கள் இல்லை', paid: 'செலுத்தியது', owes: 'செலுத்த வேண்டியது', edit: 'திருத்து', delete: 'நீக்கு', createNewTrip: 'புதிய பயணத்தை உருவாக்கு', startPlanning: 'அடுத்த சாகசத்தைத் திட்டமிடுங்கள்', tripName: 'பயணப் பெயர்', description: 'விளக்கம்', startDate: 'தொடக்க தேதி', endDate: 'முடிவு தேதி', cancel: 'ரத்து', copyLink: 'இணைப்பை நகலெடு', viewOnly: 'பார்வைக்கு மட்டும்',
+    language: 'மொழி', splitExpenses: 'செலவைப் பகிர்ந்து, பயணத்தை எளிதாக்குங்கள்', loadingTrips: 'பயணங்கள் ஏற்றப்படுகின்றன...', noTrips: 'பயணங்கள் இல்லை. முதல் பயணத்தை உருவாக்குங்கள்!', createTrip: 'பயணம் உருவாக்கு', newestFirst: 'புதியது முதலில்', oldestFirst: 'பழையது முதலில்', nameAZ: 'பெயர் A-Z', nameZA: 'பெயர் Z-A', membersCount: '{{count}} உறுப்பினர்கள்', tripNotFound: 'பயணம் கிடைக்கவில்லை', backToTrips: 'பயணங்களுக்குத் திரும்பு', total: 'மொத்தம்', expenses: 'செலவுகள்', members: 'உறுப்பினர்கள்', payAddExpenseAutomatically: 'பணம் செலுத்தி செலவைச் சேர்க்கவும்', shareThisTrip: 'இந்தப் பயணத்தைப் பகிரவும்', dashboard: 'டாஷ்போர்டு', settle: 'தீர்வு', howToSplitAddExpense: 'எப்படிப் பகிர்ந்து செலவைச் சேர்ப்பது', addMember: 'உறுப்பினரைச் சேர்', noMembers: 'உறுப்பினர்கள் இல்லை', paid: 'செலுத்தியது', owes: 'செலுத்த வேண்டியது', edit: 'திருத்து', delete: 'நீக்கு', createNewTrip: 'புதிய பயணத்தை உருவாக்கு', startPlanning: 'அடுத்த சாகசத்தைத் திட்டமிடுங்கள்', tripName: 'பயணப் பெயர்', description: 'விளக்கம்', startDate: 'தொடக்க தேதி', endDate: 'முடிவு தேதி', cancel: 'ரத்து', copyLink: 'இணைப்பை நகலெடு', viewOnly: 'பார்வைக்கு மட்டும்',
   },
   kn: {
-    language: 'ಭಾಷೆ', splitExpenses: 'ಖರ್ಚು ಹಂಚಿ, ಪ್ರಯಾಣ ಸ್ಮಾರ್ಟ್ ಮಾಡಿ', oneTrip: 'ಒಂದು ಪ್ರವಾಸ.', oneTap: 'ಒಂದು ಟ್ಯಾಪ್.', loadingTrips: 'ಪ್ರವಾಸಗಳು ಲೋಡ್ ಆಗುತ್ತಿವೆ...', noTrips: 'ಇನ್ನೂ ಪ್ರವಾಸಗಳಿಲ್ಲ. ನಿಮ್ಮ ಮೊದಲ ಪ್ರವಾಸ ರಚಿಸಿ!', createTrip: 'ಪ್ರವಾಸ ರಚಿಸಿ', yourTrips: 'ನಿಮ್ಮ ಪ್ರವಾಸಗಳು', newestFirst: 'ಹೊಸದು ಮೊದಲು', oldestFirst: 'ಹಳೆಯದು ಮೊದಲು', nameAZ: 'ಹೆಸರು A-Z', nameZA: 'ಹೆಸರು Z-A', membersCount: '{{count}} ಸದಸ್ಯರು', tripNotFound: 'ಪ್ರವಾಸ ಕಂಡುಬಂದಿಲ್ಲ', backToTrips: 'ಪ್ರವಾಸಗಳಿಗೆ ಹಿಂತಿರುಗಿ', total: 'ಒಟ್ಟು', expenses: 'ಖರ್ಚುಗಳು', members: 'ಸದಸ್ಯರು', payAddExpenseAutomatically: 'ಪಾವತಿಸಿ ಮತ್ತು ಖರ್ಚು ಸೇರಿಸಿ', shareThisTrip: 'ಈ ಪ್ರವಾಸ ಹಂಚಿಕೊಳ್ಳಿ', dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', settle: 'ಸೆಟಲ್ ಮಾಡಿ', howToSplitAddExpense: 'ಹೇಗೆ ಹಂಚಿ ಖರ್ಚು ಸೇರಿಸುವುದು', addMember: 'ಸದಸ್ಯ ಸೇರಿಸಿ', noMembers: 'ಇನ್ನೂ ಸದಸ್ಯರಿಲ್ಲ', paid: 'ಪಾವತಿಸಿದ', owes: 'ಕೊಡಬೇಕಾದದ್ದು', edit: 'ತಿದ್ದು', delete: 'ಅಳಿಸಿ', createNewTrip: 'ಹೊಸ ಪ್ರವಾಸ ರಚಿಸಿ', startPlanning: 'ಮುಂದಿನ ಸಾಹಸವನ್ನು ಯೋಜಿಸಿ', tripName: 'ಪ್ರವಾಸದ ಹೆಸರು', description: 'ವಿವರಣೆ', startDate: 'ಆರಂಭ ದಿನಾಂಕ', endDate: 'ಅಂತಿಮ ದಿನಾಂಕ', cancel: 'ರದ್ದುಮಾಡಿ', copyLink: 'ಲಿಂಕ್ ನಕಲಿಸಿ', viewOnly: 'ನೋಡಲು ಮಾತ್ರ',
+    language: 'ಭಾಷೆ', splitExpenses: 'ಖರ್ಚು ಹಂಚಿ, ಪ್ರಯಾಣ ಸ್ಮಾರ್ಟ್ ಮಾಡಿ', loadingTrips: 'ಪ್ರವಾಸಗಳು ಲೋಡ್ ಆಗುತ್ತಿವೆ...', noTrips: 'ಇನ್ನೂ ಪ್ರವಾಸಗಳಿಲ್ಲ. ನಿಮ್ಮ ಮೊದಲ ಪ್ರವಾಸ ರಚಿಸಿ!', createTrip: 'ಪ್ರವಾಸ ರಚಿಸಿ', newestFirst: 'ಹೊಸದು ಮೊದಲು', oldestFirst: 'ಹಳೆಯದು ಮೊದಲು', nameAZ: 'ಹೆಸರು A-Z', nameZA: 'ಹೆಸರು Z-A', membersCount: '{{count}} ಸದಸ್ಯರು', tripNotFound: 'ಪ್ರವಾಸ ಕಂಡುಬಂದಿಲ್ಲ', backToTrips: 'ಪ್ರವಾಸಗಳಿಗೆ ಹಿಂತಿರುಗಿ', total: 'ಒಟ್ಟು', expenses: 'ಖರ್ಚುಗಳು', members: 'ಸದಸ್ಯರು', payAddExpenseAutomatically: 'ಪಾವತಿಸಿ ಮತ್ತು ಖರ್ಚು ಸೇರಿಸಿ', shareThisTrip: 'ಈ ಪ್ರವಾಸ ಹಂಚಿಕೊಳ್ಳಿ', dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', settle: 'ಸೆಟಲ್ ಮಾಡಿ', howToSplitAddExpense: 'ಹೇಗೆ ಹಂಚಿ ಖರ್ಚು ಸೇರಿಸುವುದು', addMember: 'ಸದಸ್ಯ ಸೇರಿಸಿ', noMembers: 'ಇನ್ನೂ ಸದಸ್ಯರಿಲ್ಲ', paid: 'ಪಾವತಿಸಿದ', owes: 'ಕೊಡಬೇಕಾದದ್ದು', edit: 'ತಿದ್ದು', delete: 'ಅಳಿಸಿ', createNewTrip: 'ಹೊಸ ಪ್ರವಾಸ ರಚಿಸಿ', startPlanning: 'ಮುಂದಿನ ಸಾಹಸವನ್ನು ಯೋಜಿಸಿ', tripName: 'ಪ್ರವಾಸದ ಹೆಸರು', description: 'ವಿವರಣೆ', startDate: 'ಆರಂಭ ದಿನಾಂಕ', endDate: 'ಅಂತಿಮ ದಿನಾಂಕ', cancel: 'ರದ್ದುಮಾಡಿ', copyLink: 'ಲಿಂಕ್ ನಕಲಿಸಿ', viewOnly: 'ನೋಡಲು ಮಾತ್ರ',
   },
   te: {
-    language: 'భాష', splitExpenses: 'ఖర్చులు పంచుకోండి, ప్రయాణాన్ని స్మార్ట్‌గా చేయండి', oneTrip: 'ఒక ప్రయాణం.', oneTap: 'ఒక ట్యాప్.', loadingTrips: 'ప్రయాణాలు లోడ్ అవుతున్నాయి...', noTrips: 'ఇంకా ప్రయాణాలు లేవు. మొదటి ప్రయాణాన్ని సృష్టించండి!', createTrip: 'ప్రయాణం సృష్టించండి', yourTrips: 'మీ ప్రయాణాలు', newestFirst: 'కొత్తది ముందు', oldestFirst: 'పాతది ముందు', nameAZ: 'పేరు A-Z', nameZA: 'పేరు Z-A', membersCount: '{{count}} సభ్యులు', tripNotFound: 'ప్రయాణం కనబడలేదు', backToTrips: 'ప్రయాణాలకు తిరిగి వెళ్లండి', total: 'మొత్తం', expenses: 'ఖర్చులు', members: 'సభ్యులు', payAddExpenseAutomatically: 'చెల్లించి ఖర్చు జోడించండి', shareThisTrip: 'ఈ ప్రయాణాన్ని పంచుకోండి', dashboard: 'డాష్‌బోర్డ్', settle: 'సెటిల్', howToSplitAddExpense: 'ఎలా పంచి ఖర్చు జోడించాలి', addMember: 'సభ్యుడిని జోడించండి', noMembers: 'ఇంకా సభ్యులు లేరు', paid: 'చెల్లించినది', owes: 'చెల్లించాలి', edit: 'సవరించు', delete: 'తొలగించు', createNewTrip: 'కొత్త ప్రయాణం సృష్టించండి', startPlanning: 'మీ తదుపరి సాహసాన్ని ప్లాన్ చేయండి', tripName: 'ప్రయాణం పేరు', description: 'వివరణ', startDate: 'ప్రారంభ తేదీ', endDate: 'ముగింపు తేదీ', cancel: 'రద్దు', copyLink: 'లింక్ కాపీ చేయండి', viewOnly: 'చూడటానికి మాత్రమే',
+    language: 'భాష', splitExpenses: 'ఖర్చులు పంచుకోండి, ప్రయాణాన్ని స్మార్ట్‌గా చేయండి', loadingTrips: 'ప్రయాణాలు లోడ్ అవుతున్నాయి...', noTrips: 'ఇంకా ప్రయాణాలు లేవు. మొదటి ప్రయాణాన్ని సృష్టించండి!', createTrip: 'ప్రయాణం సృష్టించండి', newestFirst: 'కొత్తది ముందు', oldestFirst: 'పాతది ముందు', nameAZ: 'పేరు A-Z', nameZA: 'పేరు Z-A', membersCount: '{{count}} సభ్యులు', tripNotFound: 'ప్రయాణం కనబడలేదు', backToTrips: 'ప్రయాణాలకు తిరిగి వెళ్లండి', total: 'మొత్తం', expenses: 'ఖర్చులు', members: 'సభ్యులు', payAddExpenseAutomatically: 'చెల్లించి ఖర్చు జోడించండి', shareThisTrip: 'ఈ ప్రయాణాన్ని పంచుకోండి', dashboard: 'డాష్‌బోర్డ్', settle: 'సెటిల్', howToSplitAddExpense: 'ఎలా పంచి ఖర్చు జోడించాలి', addMember: 'సభ్యుడిని జోడించండి', noMembers: 'ఇంకా సభ్యులు లేరు', paid: 'చెల్లించినది', owes: 'చెల్లించాలి', edit: 'సవరించు', delete: 'తొలగించు', createNewTrip: 'కొత్త ప్రయాణం సృష్టించండి', startPlanning: 'మీ తదుపరి సాహసాన్ని ప్లాన్ చేయండి', tripName: 'ప్రయాణం పేరు', description: 'వివరణ', startDate: 'ప్రారంభ తేదీ', endDate: 'ముగింపు తేదీ', cancel: 'రద్దు', copyLink: 'లింక్ కాపీ చేయండి', viewOnly: 'చూడటానికి మాత్రమే',
   },
   mr: {
-    language: 'भाषा', splitExpenses: 'खर्च वाटा, प्रवास स्मार्ट करा', oneTrip: 'एक प्रवास.', oneTap: 'एक टॅप.', loadingTrips: 'प्रवास लोड होत आहेत...', noTrips: 'अजून प्रवास नाहीत. पहिला प्रवास तयार करा!', createTrip: 'प्रवास तयार करा', yourTrips: 'तुमचे प्रवास', newestFirst: 'नवीनतम प्रथम', oldestFirst: 'जुने प्रथम', nameAZ: 'नाव A-Z', nameZA: 'नाव Z-A', membersCount: '{{count}} सदस्य', tripNotFound: 'प्रवास सापडला नाही', backToTrips: 'प्रवासांकडे परत जा', total: 'एकूण', expenses: 'खर्च', members: 'सदस्य', payAddExpenseAutomatically: 'पैसे भरा आणि खर्च जोडा', shareThisTrip: 'हा प्रवास शेअर करा', dashboard: 'डॅशबोर्ड', settle: 'सेटल करा', howToSplitAddExpense: 'खर्च कसा वाटायचा आणि जोडायचा', addMember: 'सदस्य जोडा', noMembers: 'अजून सदस्य नाहीत', paid: 'भरले', owes: 'देणे आहे', edit: 'संपादित करा', delete: 'हटवा', createNewTrip: 'नवीन प्रवास तयार करा', startPlanning: 'पुढील साहसाचे नियोजन करा', tripName: 'प्रवासाचे नाव', description: 'वर्णन', startDate: 'सुरुवातीची तारीख', endDate: 'शेवटची तारीख', cancel: 'रद्द करा', copyLink: 'लिंक कॉपी करा', viewOnly: 'फक्त पाहण्यासाठी',
+    language: 'भाषा', splitExpenses: 'खर्च वाटा, प्रवास स्मार्ट करा', loadingTrips: 'प्रवास लोड होत आहेत...', noTrips: 'अजून प्रवास नाहीत. पहिला प्रवास तयार करा!', createTrip: 'प्रवास तयार करा', newestFirst: 'नवीनतम प्रथम', oldestFirst: 'जुने प्रथम', nameAZ: 'नाव A-Z', nameZA: 'नाव Z-A', membersCount: '{{count}} सदस्य', tripNotFound: 'प्रवास सापडला नाही', backToTrips: 'प्रवासांकडे परत जा', total: 'एकूण', expenses: 'खर्च', members: 'सदस्य', payAddExpenseAutomatically: 'पैसे भरा आणि खर्च जोडा', shareThisTrip: 'हा प्रवास शेअर करा', dashboard: 'डॅशबोर्ड', settle: 'सेटल करा', howToSplitAddExpense: 'खर्च कसा वाटायचा आणि जोडायचा', addMember: 'सदस्य जोडा', noMembers: 'अजून सदस्य नाहीत', paid: 'भरले', owes: 'देणे आहे', edit: 'संपादित करा', delete: 'हटवा', createNewTrip: 'नवीन प्रवास तयार करा', startPlanning: 'पुढील साहसाचे नियोजन करा', tripName: 'प्रवासाचे नाव', description: 'वर्णन', startDate: 'सुरुवातीची तारीख', endDate: 'शेवटची तारीख', cancel: 'रद्द करा', copyLink: 'लिंक कॉपी करा', viewOnly: 'फक्त पाहण्यासाठी',
   },
   bn: {
-    language: 'ভাষা', splitExpenses: 'খরচ ভাগ করুন, ভ্রমণ সহজ করুন', oneTrip: 'একটি ভ্রমণ।', oneTap: 'একটি ট্যাপ।', loadingTrips: 'ভ্রমণ লোড হচ্ছে...', noTrips: 'এখনও কোনো ভ্রমণ নেই। প্রথম ভ্রমণ তৈরি করুন!', createTrip: 'ভ্রমণ তৈরি করুন', yourTrips: 'আপনার ভ্রমণ', newestFirst: 'নতুন আগে', oldestFirst: 'পুরনো আগে', nameAZ: 'নাম A-Z', nameZA: 'নাম Z-A', membersCount: '{{count}} জন সদস্য', tripNotFound: 'ভ্রমণ পাওয়া যায়নি', backToTrips: 'ভ্রমণে ফিরে যান', total: 'মোট', expenses: 'খরচ', members: 'সদস্য', payAddExpenseAutomatically: 'পেমেন্ট করে খরচ যোগ করুন', shareThisTrip: 'এই ভ্রমণ শেয়ার করুন', dashboard: 'ড্যাশবোর্ড', settle: 'মীমাংসা', howToSplitAddExpense: 'কীভাবে ভাগ করে খরচ যোগ করবেন', addMember: 'সদস্য যোগ করুন', noMembers: 'এখনও কোনো সদস্য নেই', paid: 'দেওয়া হয়েছে', owes: 'দিতে হবে', edit: 'সম্পাদনা', delete: 'মুছুন', createNewTrip: 'নতুন ভ্রমণ তৈরি করুন', startPlanning: 'আপনার পরবর্তী অভিযানের পরিকল্পনা করুন', tripName: 'ভ্রমণের নাম', description: 'বিবরণ', startDate: 'শুরুর তারিখ', endDate: 'শেষের তারিখ', cancel: 'বাতিল', copyLink: 'লিঙ্ক কপি করুন', viewOnly: 'শুধু দেখুন',
+    language: 'ভাষা', splitExpenses: 'খরচ ভাগ করুন, ভ্রমণ সহজ করুন', loadingTrips: 'ভ্রমণ লোড হচ্ছে...', noTrips: 'এখনও কোনো ভ্রমণ নেই। প্রথম ভ্রমণ তৈরি করুন!', createTrip: 'ভ্রমণ তৈরি করুন', newestFirst: 'নতুন আগে', oldestFirst: 'পুরনো আগে', nameAZ: 'নাম A-Z', nameZA: 'নাম Z-A', membersCount: '{{count}} জন সদস্য', tripNotFound: 'ভ্রমণ পাওয়া যায়নি', backToTrips: 'ভ্রমণে ফিরে যান', total: 'মোট', expenses: 'খরচ', members: 'সদস্য', payAddExpenseAutomatically: 'পেমেন্ট করে খরচ যোগ করুন', shareThisTrip: 'এই ভ্রমণ শেয়ার করুন', dashboard: 'ড্যাশবোর্ড', settle: 'মীমাংসা', howToSplitAddExpense: 'কীভাবে ভাগ করে খরচ যোগ করবেন', addMember: 'সদস্য যোগ করুন', noMembers: 'এখনও কোনো সদস্য নেই', paid: 'দেওয়া হয়েছে', owes: 'দিতে হবে', edit: 'সম্পাদনা', delete: 'মুছুন', createNewTrip: 'নতুন ভ্রমণ তৈরি করুন', startPlanning: 'আপনার পরবর্তী অভিযানের পরিকল্পনা করুন', tripName: 'ভ্রমণের নাম', description: 'বিবরণ', startDate: 'শুরুর তারিখ', endDate: 'শেষের তারিখ', cancel: 'বাতিল', copyLink: 'লিঙ্ক কপি করুন', viewOnly: 'শুধু দেখুন',
   },
   gu: {
-    language: 'ભાષા', splitExpenses: 'ખર્ચ વહેંચો, પ્રવાસ સ્માર્ટ બનાવો', oneTrip: 'એક પ્રવાસ.', oneTap: 'એક ટેપ.', loadingTrips: 'પ્રવાસ લોડ થઈ રહ્યા છે...', noTrips: 'હજુ કોઈ પ્રવાસ નથી. પહેલો પ્રવાસ બનાવો!', createTrip: 'પ્રવાસ બનાવો', yourTrips: 'તમારા પ્રવાસો', newestFirst: 'નવું પહેલા', oldestFirst: 'જૂનું પહેલા', nameAZ: 'નામ A-Z', nameZA: 'નામ Z-A', membersCount: '{{count}} સભ્યો', tripNotFound: 'પ્રવાસ મળ્યો નથી', backToTrips: 'પ્રવાસો પર પાછા જાઓ', total: 'કુલ', expenses: 'ખર્ચ', members: 'સભ્યો', payAddExpenseAutomatically: 'ચુકવણી કરો અને ખર્ચ ઉમેરો', shareThisTrip: 'આ પ્રવાસ શેર કરો', dashboard: 'ડેશબોર્ડ', settle: 'સેટલ કરો', howToSplitAddExpense: 'ખર્ચ કેવી રીતે વહેંચવો અને ઉમેરવો', addMember: 'સભ્ય ઉમેરો', noMembers: 'હજુ સભ્યો નથી', paid: 'ચૂકવેલ', owes: 'ચૂકવવાનું', edit: 'ફેરફાર', delete: 'કાઢી નાખો', createNewTrip: 'નવો પ્રવાસ બનાવો', startPlanning: 'આગામી સાહસનું આયોજન કરો', tripName: 'પ્રવાસનું નામ', description: 'વર્ણન', startDate: 'શરૂઆતની તારીખ', endDate: 'અંતિમ તારીખ', cancel: 'રદ કરો', copyLink: 'લિંક કૉપી કરો', viewOnly: 'માત્ર જોવા માટે',
+    language: 'ભાષા', splitExpenses: 'ખર્ચ વહેંચો, પ્રવાસ સ્માર્ટ બનાવો', loadingTrips: 'પ્રવાસ લોડ થઈ રહ્યા છે...', noTrips: 'હજુ કોઈ પ્રવાસ નથી. પહેલો પ્રવાસ બનાવો!', createTrip: 'પ્રવાસ બનાવો', newestFirst: 'નવું પહેલા', oldestFirst: 'જૂનું પહેલા', nameAZ: 'નામ A-Z', nameZA: 'નામ Z-A', membersCount: '{{count}} સભ્યો', tripNotFound: 'પ્રવાસ મળ્યો નથી', backToTrips: 'પ્રવાસો પર પાછા જાઓ', total: 'કુલ', expenses: 'ખર્ચ', members: 'સભ્યો', payAddExpenseAutomatically: 'ચુકવણી કરો અને ખર્ચ ઉમેરો', shareThisTrip: 'આ પ્રવાસ શેર કરો', dashboard: 'ડેશબોર્ડ', settle: 'સેટલ કરો', howToSplitAddExpense: 'ખર્ચ કેવી રીતે વહેંચવો અને ઉમેરવો', addMember: 'સભ્ય ઉમેરો', noMembers: 'હજુ સભ્યો નથી', paid: 'ચૂકવેલ', owes: 'ચૂકવવાનું', edit: 'ફેરફાર', delete: 'કાઢી નાખો', createNewTrip: 'નવો પ્રવાસ બનાવો', startPlanning: 'આગામી સાહસનું આયોજન કરો', tripName: 'પ્રવાસનું નામ', description: 'વર્ણન', startDate: 'શરૂઆતની તારીખ', endDate: 'અંતિમ તારીખ', cancel: 'રદ કરો', copyLink: 'લિંક કૉપી કરો', viewOnly: 'માત્ર જોવા માટે',
   },
   pa: {
-    language: 'ਭਾਸ਼ਾ', splitExpenses: 'ਖਰਚੇ ਵੰਡੋ, ਯਾਤਰਾ ਆਸਾਨ ਬਣਾਓ', oneTrip: 'ਇੱਕ ਯਾਤਰਾ।', oneTap: 'ਇੱਕ ਟੈਪ।', loadingTrips: 'ਯਾਤਰਾਵਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ...', noTrips: 'ਹਾਲੇ ਕੋਈ ਯਾਤਰਾ ਨਹੀਂ। ਆਪਣੀ ਪਹਿਲੀ ਯਾਤਰਾ ਬਣਾਓ!', createTrip: 'ਯਾਤਰਾ ਬਣਾਓ', yourTrips: 'ਤੁਹਾਡੀਆਂ ਯਾਤਰਾਵਾਂ', newestFirst: 'ਨਵਾਂ ਪਹਿਲਾਂ', oldestFirst: 'ਪੁਰਾਣਾ ਪਹਿਲਾਂ', nameAZ: 'ਨਾਮ A-Z', nameZA: 'ਨਾਮ Z-A', membersCount: '{{count}} ਮੈਂਬਰ', tripNotFound: 'ਯਾਤਰਾ ਨਹੀਂ ਮਿਲੀ', backToTrips: 'ਯਾਤਰਾਵਾਂ ਵੱਲ ਵਾਪਸ', total: 'ਕੁੱਲ', expenses: 'ਖਰਚੇ', members: 'ਮੈਂਬਰ', payAddExpenseAutomatically: 'ਭੁਗਤਾਨ ਕਰੋ ਅਤੇ ਖਰਚਾ ਜੋੜੋ', shareThisTrip: 'ਇਹ ਯਾਤਰਾ ਸਾਂਝੀ ਕਰੋ', dashboard: 'ਡੈਸ਼ਬੋਰਡ', settle: 'ਨਿਪਟਾਰਾ', howToSplitAddExpense: 'ਖਰਚਾ ਕਿਵੇਂ ਵੰਡਣਾ ਅਤੇ ਜੋੜਨਾ ਹੈ', addMember: 'ਮੈਂਬਰ ਜੋੜੋ', noMembers: 'ਹਾਲੇ ਕੋਈ ਮੈਂਬਰ ਨਹੀਂ', paid: 'ਭੁਗਤਾਨ ਕੀਤਾ', owes: 'ਦੇਣਾ ਹੈ', edit: 'ਸੋਧੋ', delete: 'ਮਿਟਾਓ', createNewTrip: 'ਨਵੀਂ ਯਾਤਰਾ ਬਣਾਓ', startPlanning: 'ਅਗਲੇ ਸਾਹਸ ਦੀ ਯੋਜਨਾ ਬਣਾਓ', tripName: 'ਯਾਤਰਾ ਦਾ ਨਾਮ', description: 'ਵੇਰਵਾ', startDate: 'ਸ਼ੁਰੂਆਤੀ ਮਿਤੀ', endDate: 'ਅੰਤਿਮ ਮਿਤੀ', cancel: 'ਰੱਦ ਕਰੋ', copyLink: 'ਲਿੰਕ ਕਾਪੀ ਕਰੋ', viewOnly: 'ਸਿਰਫ਼ ਵੇਖਣ ਲਈ',
+    language: 'ਭਾਸ਼ਾ', splitExpenses: 'ਖਰਚੇ ਵੰਡੋ, ਯਾਤਰਾ ਆਸਾਨ ਬਣਾਓ', loadingTrips: 'ਯਾਤਰਾਵਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ...', noTrips: 'ਹਾਲੇ ਕੋਈ ਯਾਤਰਾ ਨਹੀਂ। ਆਪਣੀ ਪਹਿਲੀ ਯਾਤਰਾ ਬਣਾਓ!', createTrip: 'ਯਾਤਰਾ ਬਣਾਓ', newestFirst: 'ਨਵਾਂ ਪਹਿਲਾਂ', oldestFirst: 'ਪੁਰਾਣਾ ਪਹਿਲਾਂ', nameAZ: 'ਨਾਮ A-Z', nameZA: 'ਨਾਮ Z-A', membersCount: '{{count}} ਮੈਂਬਰ', tripNotFound: 'ਯਾਤਰਾ ਨਹੀਂ ਮਿਲੀ', backToTrips: 'ਯਾਤਰਾਵਾਂ ਵੱਲ ਵਾਪਸ', total: 'ਕੁੱਲ', expenses: 'ਖਰਚੇ', members: 'ਮੈਂਬਰ', payAddExpenseAutomatically: 'ਭੁਗਤਾਨ ਕਰੋ ਅਤੇ ਖਰਚਾ ਜੋੜੋ', shareThisTrip: 'ਇਹ ਯਾਤਰਾ ਸਾਂਝੀ ਕਰੋ', dashboard: 'ਡੈਸ਼ਬੋਰਡ', settle: 'ਨਿਪਟਾਰਾ', howToSplitAddExpense: 'ਖਰਚਾ ਕਿਵੇਂ ਵੰਡਣਾ ਅਤੇ ਜੋੜਨਾ ਹੈ', addMember: 'ਮੈਂਬਰ ਜੋੜੋ', noMembers: 'ਹਾਲੇ ਕੋਈ ਮੈਂਬਰ ਨਹੀਂ', paid: 'ਭੁਗਤਾਨ ਕੀਤਾ', owes: 'ਦੇਣਾ ਹੈ', edit: 'ਸੋਧੋ', delete: 'ਮਿਟਾਓ', createNewTrip: 'ਨਵੀਂ ਯਾਤਰਾ ਬਣਾਓ', startPlanning: 'ਅਗਲੇ ਸਾਹਸ ਦੀ ਯੋਜਨਾ ਬਣਾਓ', tripName: 'ਯਾਤਰਾ ਦਾ ਨਾਮ', description: 'ਵੇਰਵਾ', startDate: 'ਸ਼ੁਰੂਆਤੀ ਮਿਤੀ', endDate: 'ਅੰਤਿਮ ਮਿਤੀ', cancel: 'ਰੱਦ ਕਰੋ', copyLink: 'ਲਿੰਕ ਕਾਪੀ ਕਰੋ', viewOnly: 'ਸਿਰਫ਼ ਵੇਖਣ ਲਈ',
   },
   or: {
-    language: 'ଭାଷା', splitExpenses: 'ଖର୍ଚ୍ଚ ବାଣ୍ଟନ୍ତୁ, ଯାତ୍ରା ସହଜ କରନ୍ତୁ', oneTrip: 'ଗୋଟିଏ ଯାତ୍ରା।', oneTap: 'ଗୋଟିଏ ଟ୍ୟାପ୍।', loadingTrips: 'ଯାତ୍ରା ଲୋଡ୍ ହେଉଛି...', noTrips: 'ଏପର୍ଯ୍ୟନ୍ତ ଯାତ୍ରା ନାହିଁ। ପ୍ରଥମ ଯାତ୍ରା ତିଆରି କରନ୍ତୁ!', createTrip: 'ଯାତ୍ରା ତିଆରି କରନ୍ତୁ', yourTrips: 'ଆପଣଙ୍କ ଯାତ୍ରା', newestFirst: 'ନୂଆ ପ୍ରଥମେ', oldestFirst: 'ପୁରୁଣା ପ୍ରଥମେ', nameAZ: 'ନାମ A-Z', nameZA: 'ନାମ Z-A', membersCount: '{{count}} ସଦସ୍ୟ', tripNotFound: 'ଯାତ୍ରା ମିଳିଲା ନାହିଁ', backToTrips: 'ଯାତ୍ରାକୁ ଫେରନ୍ତୁ', total: 'ମୋଟ', expenses: 'ଖର୍ଚ୍ଚ', members: 'ସଦସ୍ୟ', payAddExpenseAutomatically: 'ପେମେଣ୍ଟ କରି ଖର୍ଚ୍ଚ ଯୋଡନ୍ତୁ', shareThisTrip: 'ଏହି ଯାତ୍ରା ସେୟାର କରନ୍ତୁ', dashboard: 'ଡ୍ୟାସବୋର୍ଡ', settle: 'ସମାଧାନ', howToSplitAddExpense: 'କିପରି ବାଣ୍ଟି ଖର୍ଚ୍ଚ ଯୋଡିବେ', addMember: 'ସଦସ୍ୟ ଯୋଡନ୍ତୁ', noMembers: 'ଏପର୍ଯ୍ୟନ୍ତ ସଦସ୍ୟ ନାହାନ୍ତି', paid: 'ଦିଆଯାଇଛି', owes: 'ଦେବାକୁ ଅଛି', edit: 'ସମ୍ପାଦନା', delete: 'ବିଲୋପ', createNewTrip: 'ନୂଆ ଯାତ୍ରା ତିଆରି କରନ୍ତୁ', startPlanning: 'ପରବର୍ତ୍ତୀ ଯାତ୍ରା ଯୋଜନା କରନ୍ତୁ', tripName: 'ଯାତ୍ରାର ନାମ', description: 'ବିବରଣୀ', startDate: 'ଆରମ୍ଭ ତାରିଖ', endDate: 'ଶେଷ ତାରିଖ', cancel: 'ବାତିଲ', copyLink: 'ଲିଙ୍କ କପି କରନ୍ତୁ', viewOnly: 'କେବଳ ଦେଖିବା ପାଇଁ',
+    language: 'ଭାଷା', splitExpenses: 'ଖର୍ଚ୍ଚ ବାଣ୍ଟନ୍ତୁ, ଯାତ୍ରା ସହଜ କରନ୍ତୁ', loadingTrips: 'ଯାତ୍ରା ଲୋଡ୍ ହେଉଛି...', noTrips: 'ଏପର୍ଯ୍ୟନ୍ତ ଯାତ୍ରା ନାହିଁ। ପ୍ରଥମ ଯାତ୍ରା ତିଆରି କରନ୍ତୁ!', createTrip: 'ଯାତ୍ରା ତିଆରି କରନ୍ତୁ', newestFirst: 'ନୂଆ ପ୍ରଥମେ', oldestFirst: 'ପୁରୁଣା ପ୍ରଥମେ', nameAZ: 'ନାମ A-Z', nameZA: 'ନାମ Z-A', membersCount: '{{count}} ସଦସ୍ୟ', tripNotFound: 'ଯାତ୍ରା ମିଳିଲା ନାହିଁ', backToTrips: 'ଯାତ୍ରାକୁ ଫେରନ୍ତୁ', total: 'ମୋଟ', expenses: 'ଖର୍ଚ୍ଚ', members: 'ସଦସ୍ୟ', payAddExpenseAutomatically: 'ପେମେଣ୍ଟ କରି ଖର୍ଚ୍ଚ ଯୋଡନ୍ତୁ', shareThisTrip: 'ଏହି ଯାତ୍ରା ସେୟାର କରନ୍ତୁ', dashboard: 'ଡ୍ୟାସବୋର୍ଡ', settle: 'ସମାଧାନ', howToSplitAddExpense: 'କିପରି ବାଣ୍ଟି ଖର୍ଚ୍ଚ ଯୋଡିବେ', addMember: 'ସଦସ୍ୟ ଯୋଡନ୍ତୁ', noMembers: 'ଏପର୍ଯ୍ୟନ୍ତ ସଦସ୍ୟ ନାହାନ୍ତି', paid: 'ଦିଆଯାଇଛି', owes: 'ଦେବାକୁ ଅଛି', edit: 'ସମ୍ପାଦନା', delete: 'ବିଲୋପ', createNewTrip: 'ନୂଆ ଯାତ୍ରା ତିଆରି କରନ୍ତୁ', startPlanning: 'ପରବର୍ତ୍ତୀ ଯାତ୍ରା ଯୋଜନା କରନ୍ତୁ', tripName: 'ଯାତ୍ରାର ନାମ', description: 'ବିବରଣୀ', startDate: 'ଆରମ୍ଭ ତାରିଖ', endDate: 'ଶେଷ ତାରିଖ', cancel: 'ବାତିଲ', copyLink: 'ଲିଙ୍କ କପି କରନ୍ତୁ', viewOnly: 'କେବଳ ଦେଖିବା ପାଇଁ',
   },
   as: {
-    language: 'ভাষা', splitExpenses: 'খৰচ ভাগ কৰক, ভ্ৰমণ সহজ কৰক', oneTrip: 'এটা ভ্ৰমণ।', oneTap: 'এটা টেপ।', loadingTrips: 'ভ্ৰমণ লোড হৈ আছে...', noTrips: 'এতিয়ালৈ কোনো ভ্ৰমণ নাই। প্ৰথম ভ্ৰমণ সৃষ্টি কৰক!', createTrip: 'ভ্ৰমণ সৃষ্টি কৰক', yourTrips: 'আপোনাৰ ভ্ৰমণ', newestFirst: 'নতুন প্ৰথমে', oldestFirst: 'পুৰণি প্ৰথমে', nameAZ: 'নাম A-Z', nameZA: 'নাম Z-A', membersCount: '{{count}} জন সদস্য', tripNotFound: 'ভ্ৰমণ পোৱা নগ’ল', backToTrips: 'ভ্ৰমণলৈ উভতি যাওক', total: 'মুঠ', expenses: 'খৰচ', members: 'সদস্য', payAddExpenseAutomatically: 'পেমেণ্ট কৰি খৰচ যোগ কৰক', shareThisTrip: 'এই ভ্ৰমণ শ্বেয়াৰ কৰক', dashboard: 'ডেশ্বব’ৰ্ড', settle: 'নিষ্পত্তি', howToSplitAddExpense: 'কেনেকৈ ভাগ কৰি খৰচ যোগ কৰিব', addMember: 'সদস্য যোগ কৰক', noMembers: 'এতিয়ালৈ কোনো সদস্য নাই', paid: 'দিয়া হৈছে', owes: 'দিবলগীয়া', edit: 'সম্পাদনা', delete: 'মচি পেলাওক', createNewTrip: 'নতুন ভ্ৰমণ সৃষ্টি কৰক', startPlanning: 'পৰৱৰ্তী অভিযানৰ পৰিকল্পনা কৰক', tripName: 'ভ্ৰমণৰ নাম', description: 'বিৱৰণ', startDate: 'আৰম্ভণিৰ তাৰিখ', endDate: 'শেষ তাৰিখ', cancel: 'বাতিল', copyLink: 'লিংক কপি কৰক', viewOnly: 'কেৱল চোৱাৰ বাবে',
+    language: 'ভাষা', splitExpenses: 'খৰচ ভাগ কৰক, ভ্ৰমণ সহজ কৰক', loadingTrips: 'ভ্ৰমণ লোড হৈ আছে...', noTrips: 'এতিয়ালৈ কোনো ভ্ৰমণ নাই। প্ৰথম ভ্ৰমণ সৃষ্টি কৰক!', createTrip: 'ভ্ৰমণ সৃষ্টি কৰক', newestFirst: 'নতুন প্ৰথমে', oldestFirst: 'পুৰণি প্ৰথমে', nameAZ: 'নাম A-Z', nameZA: 'নাম Z-A', membersCount: '{{count}} জন সদস্য', tripNotFound: 'ভ্ৰমণ পোৱা নগ’ল', backToTrips: 'ভ্ৰমণলৈ উভতি যাওক', total: 'মুঠ', expenses: 'খৰচ', members: 'সদস্য', payAddExpenseAutomatically: 'পেমেণ্ট কৰি খৰচ যোগ কৰক', shareThisTrip: 'এই ভ্ৰমণ শ্বেয়াৰ কৰক', dashboard: 'ডেশ্বব’ৰ্ড', settle: 'নিষ্পত্তি', howToSplitAddExpense: 'কেনেকৈ ভাগ কৰি খৰচ যোগ কৰিব', addMember: 'সদস্য যোগ কৰক', noMembers: 'এতিয়ালৈ কোনো সদস্য নাই', paid: 'দিয়া হৈছে', owes: 'দিবলগীয়া', edit: 'সম্পাদনা', delete: 'মচি পেলাওক', createNewTrip: 'নতুন ভ্ৰমণ সৃষ্টি কৰক', startPlanning: 'পৰৱৰ্তী অভিযানৰ পৰিকল্পনা কৰক', tripName: 'ভ্ৰমণৰ নাম', description: 'বিৱৰণ', startDate: 'আৰম্ভণিৰ তাৰিখ', endDate: 'শেষ তাৰিখ', cancel: 'বাতিল', copyLink: 'লিংক কপি কৰক', viewOnly: 'কেৱল চোৱাৰ বাবে',
   },
 };
 

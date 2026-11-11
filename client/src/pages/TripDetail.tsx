@@ -40,7 +40,7 @@ interface TripDetailProps {
 export default function TripDetail({ params }: TripDetailProps) {
   const [, navigate] = useLocation();
   const { trips, updateTrip } = useTrips();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const tripId = params.id;
   const trip = getTripById(tripId);
   const [showAddExpense, setShowAddExpense] = useState(false);
@@ -113,7 +113,7 @@ export default function TripDetail({ params }: TripDetailProps) {
     const report = buildTripReportModel(trip);
     const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>\"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;' }[character] ?? character));
     const money = (value: number) => formatCurrency(value);
-    const displayDate = (timestamp: number) => new Date(timestamp).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+    const displayDate = (timestamp: number) => new Date(timestamp).toLocaleDateString(language === 'en' ? 'en-IN' : `${language}-IN`, { day: '2-digit', month: 'short', year: 'numeric' });
     const reportTitle = `${trip.name} - ${t('auditPdfReport' as any)}`;
     const categoryRows = report.categoryRows.map(row => `<tr><td>${escapeHtml(t(getTripReportCategoryKey(row.category) as any))}</td><td>${money(row.amount)}</td></tr>`).join('');
     const memberRows = report.memberRows.map(row => {

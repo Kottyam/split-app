@@ -90,7 +90,7 @@ export default function CreateGroupFund() {
       expenses: [],
       closedPeriods: [],
       activity: [
-        { id: nanoid(), message: `Created group fund "${name.trim()}"`, createdAt: Date.now() },
+        { id: nanoid(), message: t('gfLogCreated' as any, { name: name.trim() }), createdAt: Date.now() },
       ],
       createdAt: Date.now(),
       updatedAt: Date.now(),
