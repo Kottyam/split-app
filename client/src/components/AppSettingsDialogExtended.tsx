@@ -9,6 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import HelpGuideModal from '@/components/HelpGuideModal';
 import { Settings, Shield, Database, Download, Upload, Share2, CheckCircle2, AlertTriangle, Sun, Moon, SmartphoneNfc } from 'lucide-react';
 import { generateBackupPayload, validateBackupJson, restoreBackupPayload, KharchaBackupPayload } from '@/lib/backupRestore';
+import { downloadBlobFile } from '@/lib/fileDownload';
 import { isAppLockEnabled, getLockMethod, getAutoLockTimeout, setAppLockConfig, hasPinConfigured, isNativeDeviceAuthAvailable, setSessionUnlocked, isValidPin, clearPin, MAX_PIN_LENGTH } from '@/lib/appLock';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { ThemePreference } from '@/lib/theme';
@@ -56,22 +57,14 @@ export default function AppSettingsDialogExtended({ open, onOpenChange }: Props)
     setPinError('');
   }, [open]);
 
-  const handleExportBackup = () => {
+  const handleExportBackup = async () => {
     try {
       const payload = generateBackupPayload();
       const jsonStr = JSON.stringify(payload, null, 2);
       const dateStr = new Date().toISOString().slice(0, 10);
       const filename = `Kharcha_Backup_${dateStr}.json`;
-
       const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.href = url;
-      downloadAnchor.download = filename;
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      document.body.removeChild(downloadAnchor);
-      URL.revokeObjectURL(url);
+      await downloadBlobFile(blob, filename);
 
       localStorage.setItem('kharcha_last_backup_at', new Date().toISOString());
       setLastGeneratedPayload({ filename, jsonStr });

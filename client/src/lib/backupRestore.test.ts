@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { generateBackupPayload, validateBackupJson } from './backupRestore';
 
 class MemoryStorage {
@@ -39,3 +41,15 @@ describe('Kharcha Backup & Restore Validation', () => {
     expect(corruptValidation.valid).toBe(false);
   });
 });
+
+describe('Backup export download path', () => {
+  const read = (relativePath: string) => fs.readFileSync(path.resolve(process.cwd(), relativePath), 'utf8');
+
+  it('saves the backup through downloadBlobFile so the Android app can write to Downloads', () => {
+    const settings = read('client/src/components/AppSettingsDialogExtended.tsx');
+    expect(settings).toContain("import { downloadBlobFile } from '@/lib/fileDownload'");
+    expect(settings).toContain('await downloadBlobFile(blob, filename)');
+    expect(settings).not.toContain('URL.createObjectURL');
+  });
+});
+

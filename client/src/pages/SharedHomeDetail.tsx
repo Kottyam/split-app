@@ -20,6 +20,7 @@ import EditSyncReviewBar from '@/components/EditSyncReviewBar';
 import SharedHomeRecurringDialog from '@/components/SharedHomeRecurringDialog';
 import SharedHomePaymentRequestDialog from '@/components/SharedHomePaymentRequestDialog';
 import { copyToClipboard, shareLink } from '@/lib/shareLink';
+import { downloadBlobFile } from '@/lib/fileDownload';
 import { appendUniqueMembers } from '@/lib/memberImport';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useDeleteConfirmation } from '@/contexts/DeleteConfirmationContext';
@@ -303,12 +304,8 @@ export default function SharedHomeDetail() {
       }),
     ];
     const csv = rows.map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(',')).join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `${home.name.replaceAll(/[^a-z0-9]+/gi, '-').toLowerCase()}-summary-${reportRange}-${monthKey}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    const fileName = `${home.name.replaceAll(/[^a-z0-9]+/gi, '-').toLowerCase()}-summary-${reportRange}-${monthKey}.csv`;
+    void downloadBlobFile(new Blob([csv], { type: 'text/csv;charset=utf-8' }), fileName);
   };
 
   const handleGeneratePdfReport = () => {
