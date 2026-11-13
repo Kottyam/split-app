@@ -5,7 +5,7 @@
  * against the exact base snapshot it shared, which it kept locally.
  */
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
-import { SHARE_ORIGIN } from '@/share/origin';
+import { buildShortShareUrl, readSharePayload } from '@/share/origin';
 
 export type SyncKind = 'trip' | 'shared_home' | 'group_fund';
 type Rec = Record<string, unknown>;
@@ -187,8 +187,8 @@ export function decodeUpdatePackage(s: string): UpdatePackage | null {
   const p = dec(s) as UpdatePackage | null;
   return p && p.v === FORMAT && KINDS.includes(p.t) && typeof p.s === 'string' && typeof p.u === 'string' && Array.isArray(p.c) ? p : null;
 }
-export const editLink = (p: EditPackage) => `${SHARE_ORIGIN}/s/e${encodeEditPackage(p)}`;
-export const updateLink = (p: UpdatePackage) => `${SHARE_ORIGIN}/s/u${encodeUpdatePackage(p)}`;
+export const editLink = (p: EditPackage) => buildShortShareUrl('e', encodeEditPackage(p));
+export const updateLink = (p: UpdatePackage) => buildShortShareUrl('u', encodeUpdatePackage(p));
 export const fitsInLink = (url: string) => url.length <= MAX_LINK_LENGTH;
 
 export interface KharchaFile { kharcha: 1; kind: 'edit' | 'update'; data: string }
@@ -198,7 +198,7 @@ export function buildKharchaFile(kind: 'edit' | 'update', p: EditPackage | Updat
 /** Turns a .kharcha file (or a pasted link) into the in-app path that opens it. */
 export function pathFromImport(text: string): string | null {
   const trimmed = text.trim();
-  const link = trimmed.match(/\/s\/([eu])([A-Za-z0-9+\-$_%]+)/);
+  const link = trimmed.match(/\/s\/([eu])\/?#?([A-Za-z0-9+\-$_%]+)/);
   if (link) return `/s/${link[1]}${link[2]}`;
   try {
     const f = JSON.parse(trimmed) as KharchaFile;
@@ -209,8 +209,6 @@ export function pathFromImport(text: string): string | null {
   } catch { /* not a file */ }
   return null;
 }
-export function payloadFromPath(kind: 'e' | 'u', pathname: string): string | null {
-  const m = pathname.match(/\/s\/([eu])(.+)$/);
-  if (!m || m[1] !== kind) return null;
-  try { return decodeURIComponent(m[2]); } catch { return m[2]; }
+export function payloadFromPath(kind: 'e' | 'u', pathname: string, hash = ''): string | null {
+  return readSharePayload(kind, pathname, hash);
 }

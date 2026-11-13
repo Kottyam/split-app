@@ -16,10 +16,14 @@ describe('serverless sync encode/decode', () => {
   it('round-trips edit and update packages through links', () => {
     const e: EditPackage = { v: 1, t: 'trip', s: 'sid1', n: 2, m: 'Munnar Trip', f: 'Amal', d: base };
     const url = editLink(e);
-    expect(url).toMatch(/^https:\/\/www\.kharchasplit\.in\/s\/e/);
-    expect(decodeEditPackage(payloadFromPath('e', new URL(url).pathname)!)).toEqual(e);
+    expect(url).toMatch(/^https:\/\/www\.kharchasplit\.in\/s\/e#/);
+    const parsed = new URL(url);
+    expect(decodeEditPackage(payloadFromPath('e', parsed.pathname, parsed.hash)!)).toEqual(e);
     const u: UpdatePackage = { v: 1, t: 'trip', s: 'sid1', n: 2, u: 'u1', m: 'Munnar Trip', c: [{ k: 'expenses', o: 'd', id: 'e2' }] };
-    expect(decodeUpdatePackage(payloadFromPath('u', new URL(updateLink(u)).pathname)!)).toEqual(u);
+    const updateUrl = new URL(updateLink(u));
+    expect(decodeUpdatePackage(payloadFromPath('u', updateUrl.pathname, updateUrl.hash)!)).toEqual(u);
+    // Older links kept the payload in the path; they must still open.
+    expect(decodeEditPackage(payloadFromPath('e', `/s/e${encodeEditPackage(e)}`)!)).toEqual(e);
   });
   it('rejects garbage and wrong kinds', () => {
     expect(decodeEditPackage('nonsense')).toBeNull();
@@ -31,7 +35,20 @@ describe('serverless sync encode/decode', () => {
     const e: EditPackage = { v: 1, t: 'group_fund', s: 's', n: 1, m: 'Fund', d: { id: 'f1', members: [] } };
     expect(pathFromImport(buildKharchaFile('edit', e))).toBe(`/s/e${encodeEditPackage(e)}`);
     expect(pathFromImport(`see ${editLink(e)}`)).toBe(`/s/e${encodeEditPackage(e)}`);
+    expect(pathFromImport(`https://www.kharchasplit.in/s/e${encodeEditPackage(e)}`)).toBe(`/s/e${encodeEditPackage(e)}`);
     expect(pathFromImport('{"hello":1}')).toBeNull();
+  });
+  it('keeps big Group Fund edit links openable: the payload never goes into the server request path', () => {
+    const members = Array.from({ length: 60 }, (_, i) => ({ id: `m${i}`, name: `Member ${i}`, isActive: true, createdAt: 1700000000000 + i }));
+    const contributions = members.flatMap((m, i) => Array.from({ length: 12 }, (_, k) => ({ id: `c${i}-${k}`, fundId: 'f1', memberId: m.id, amount: 500, method: 'UPI', date: 1700000000000 + k * 2592000000, status: 'Paid', createdAt: 1700000000000 })));
+    const fund = { id: 'f1', name: 'Office Onam Fund', members, contributions, expenses: [] };
+    const e: EditPackage = { v: 1, t: 'group_fund', s: 's', n: 1, m: fund.name, d: fund };
+    const url = new URL(editLink(e));
+    // GitHub Pages answers "414 URI Too Long" above ~8 KB of request path; the fragment is not sent.
+    expect(url.href.length).toBeGreaterThan(8192);
+    expect((url.pathname + url.search).length).toBeLessThan(16);
+    expect(decodeEditPackage(payloadFromPath('e', url.pathname, url.hash)!)?.d.id).toBe('f1');
+    expect(pathFromImport(url.href)).toBe(`/s/e${encodeEditPackage(e)}`);
   });
   it('flags long links so the file fallback is used', () => {
     const big = { ...base, expenses: Array.from({ length: 300 }, (_, i) => ({ id: `x${i}`, description: `Expense number ${i} ${Math.random()}`, amount: i })) };

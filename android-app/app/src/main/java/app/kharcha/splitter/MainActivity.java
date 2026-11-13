@@ -4,6 +4,12 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.DownloadManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.ClipData;
 import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -86,6 +92,11 @@ public class MainActivity extends FragmentActivity {
     private static final int DEVICE_AUTH_REQUEST = 4103;
     private static final int CAMERA_PERMISSION_REQUEST = 4104;
     private static final int PDF_SAVE_PERMISSION_REQUEST = 4105;
+    private static final int FILE_SAVE_PERMISSION_REQUEST = 4106;
+    private static final int NOTIFICATION_PERMISSION_REQUEST = 4107;
+    private static final String DOWNLOAD_CHANNEL_ID = "kharcha_downloads";
+    private static final String FILE_PREFS = "kharcha_files";
+    private static final String NOTIFICATION_ASKED_KEY = "notification_permission_asked";
     private static final long MIN_SPLASH_DURATION_MS = 650L;
     private static final String DEVICE_AUTH_PREFS = "kharcha_security";
     private static final String APPEARANCE_PREFS = "kharcha_appearance";
@@ -110,6 +121,9 @@ public class MainActivity extends FragmentActivity {
     private Dialog pdfReportDialog;
     private WebView pendingPdfSaveView;
     private String pendingPdfSaveTitle;
+    private String pendingFileSaveName;
+    private String pendingFileSaveMime;
+    private byte[] pendingFileSaveBytes;
     private final ExecutorService contactExecutor = Executors.newSingleThreadExecutor();
     private long launchStartedAt;
     private boolean pageReady;
@@ -387,24 +401,77 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    /**
+     * Lets the web layer save files into the phone's public Downloads folder and
+     * share files through the Android share sheet (WhatsApp, Gmail, Drive, ...).
+     * Android WebView cannot follow blob: download links and has no Web Share
+     * API for files, so both need this bridge.
+     */
     private final class FileBridge {
         @JavascriptInterface
         public boolean saveBase64File(String fileName, String mimeType, String base64) {
             try {
                 byte[] bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
-                String safeName = (fileName == null || fileName.trim().isEmpty()) ? "Kharcha-file" : fileName.replaceAll("[\\\\/:*?\"<>|]", "-");
-                String mime = (mimeType == null || mimeType.isEmpty()) ? "application/octet-stream" : mimeType;
-                writeBytesToDownloads(safeName, mime, bytes);
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Saved to Downloads: " + safeName, Toast.LENGTH_SHORT).show());
-                return true;
+                return saveDownload(safeFileName(fileName), safeMime(mimeType), bytes);
             } catch (Exception error) {
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "Could not save the file to Downloads", Toast.LENGTH_LONG).show());
                 return false;
             }
         }
+
+        @JavascriptInterface
+        public boolean shareBase64File(String fileName, String mimeType, String base64, String title) {
+            try {
+                byte[] bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
+                return shareFileBytes(safeFileName(fileName), safeMime(mimeType), bytes, title);
+            } catch (Exception error) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Could not share the file", Toast.LENGTH_LONG).show());
+                return false;
+            }
+        }
+
+        @JavascriptInterface
+        public boolean canShareFiles() {
+            return true;
+        }
     }
 
-    private void writeBytesToDownloads(String fileName, String mimeType, byte[] bytes) throws IOException {
+    static String safeFileName(String fileName) {
+        String name = fileName == null ? "" : fileName.trim().replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}]", "-");
+        return name.isEmpty() ? "Kharcha-file" : name;
+    }
+
+    private static String safeMime(String mimeType) {
+        if (mimeType == null || mimeType.trim().isEmpty()) return "application/octet-stream";
+        String mime = mimeType.trim();
+        int separator = mime.indexOf(';');
+        return separator > 0 ? mime.substring(0, separator).trim() : mime;
+    }
+
+    /** Saves into the public Downloads folder and tells the user where it went. */
+    private boolean saveDownload(String fileName, String mimeType, byte[] bytes) throws IOException {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            pendingFileSaveName = fileName;
+            pendingFileSaveMime = mimeType;
+            pendingFileSaveBytes = bytes;
+            runOnUiThread(() -> requestPermissions(new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE }, FILE_SAVE_PERMISSION_REQUEST));
+            return true;
+        }
+        SavedDownload saved = writeBytesToDownloads(fileName, mimeType, bytes);
+        runOnUiThread(() -> announceDownload(saved));
+        return true;
+    }
+
+    private static final class SavedDownload {
+        final String name;
+        final String mimeType;
+        final Uri uri;
+        SavedDownload(String name, String mimeType, Uri uri) { this.name = name; this.mimeType = mimeType; this.uri = uri; }
+    }
+
+    private SavedDownload writeBytesToDownloads(String fileName, String mimeType, byte[] bytes) throws IOException {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ContentValues values = new ContentValues();
             values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
@@ -416,23 +483,163 @@ public class MainActivity extends FragmentActivity {
             try (OutputStream output = getContentResolver().openOutputStream(uri)) {
                 if (output == null) throw new IOException("Could not open the Downloads file");
                 output.write(bytes);
-            } catch (IOException error) {
+            } catch (IOException | RuntimeException error) {
                 getContentResolver().delete(uri, null, null);
-                throw error;
+                throw error instanceof IOException ? (IOException) error : new IOException(error);
             }
             ContentValues completed = new ContentValues();
             completed.put(MediaStore.Downloads.IS_PENDING, 0);
             getContentResolver().update(uri, completed, null, null);
-            return;
+            return new SavedDownload(queryDisplayName(uri, fileName), mimeType, uri);
         }
         File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         if (!downloads.exists() && !downloads.mkdirs()) throw new IOException("Could not create the Downloads folder");
-        File outputFile = new File(downloads, fileName);
-        if (outputFile.exists()) outputFile = new File(downloads, System.currentTimeMillis() + "-" + fileName);
+        File outputFile = uniqueFile(downloads, fileName);
         try (OutputStream output = new FileOutputStream(outputFile)) {
             output.write(bytes);
         }
         MediaScannerConnection.scanFile(this, new String[] { outputFile.getAbsolutePath() }, new String[] { mimeType }, null);
+        try {
+            // Before Android 10 this lists the file in the Downloads app and posts the system "download complete" notification.
+            DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            if (manager != null) {
+                manager.addCompletedDownload(outputFile.getName(), "Saved by Kharcha", true, mimeType,
+                        outputFile.getAbsolutePath(), outputFile.length(), true);
+            }
+        } catch (RuntimeException ignored) {
+            // The file is still saved in Downloads; only the system notification is missing.
+        }
+        Uri shareUri;
+        try {
+            shareUri = FileProvider.getUriForFile(this, getString(R.string.providerAuthority), outputFile);
+        } catch (IllegalArgumentException error) {
+            shareUri = Uri.fromFile(outputFile);
+        }
+        return new SavedDownload(outputFile.getName(), mimeType, shareUri);
+    }
+
+    private static File uniqueFile(File directory, String fileName) {
+        File candidate = new File(directory, fileName);
+        if (!candidate.exists()) return candidate;
+        int dot = fileName.lastIndexOf('.');
+        String base = dot > 0 ? fileName.substring(0, dot) : fileName;
+        String extension = dot > 0 ? fileName.substring(dot) : "";
+        for (int i = 1; i < 1000; i++) {
+            candidate = new File(directory, base + " (" + i + ")" + extension);
+            if (!candidate.exists()) return candidate;
+        }
+        return new File(directory, System.currentTimeMillis() + "-" + fileName);
+    }
+
+    private String queryDisplayName(Uri uri, String fallback) {
+        try (Cursor cursor = getContentResolver().query(uri, new String[] { MediaStore.MediaColumns.DISPLAY_NAME }, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                String name = cursor.getString(0);
+                if (name != null && !name.isEmpty()) return name;
+            }
+        } catch (RuntimeException ignored) {
+            // Fall back to the requested name.
+        }
+        return fallback;
+    }
+
+    /** Toast + "Downloaded" notification + a small dialog with Open Downloads / Share. */
+    private void announceDownload(SavedDownload saved) {
+        Toast.makeText(this, "Downloaded to Downloads: " + saved.name, Toast.LENGTH_LONG).show();
+        postDownloadNotification(saved);
+        if (isFinishing()) return;
+        try {
+            new AlertDialog.Builder(this)
+                    .setTitle("Saved to Downloads")
+                    .setMessage(saved.name + "\n\nPhone storage \u203a Download")
+                    .setPositiveButton("Open Downloads", (dialog, which) -> openDownloadsFolder())
+                    .setNeutralButton("Share", (dialog, which) -> shareUri(saved.uri, saved.mimeType, saved.name, "Share " + saved.name))
+                    .setNegativeButton("OK", null)
+                    .show();
+        } catch (RuntimeException ignored) {
+            // The toast and notification already told the user where the file is.
+        }
+    }
+
+    private void openDownloadsFolder() {
+        try {
+            Intent intent = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } catch (ActivityNotFoundException error) {
+            Toast.makeText(this, "Open the Files app and choose Downloads", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void postDownloadNotification(SavedDownload saved) {
+        try {
+            NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (manager == null) return;
+            if (Build.VERSION.SDK_INT >= 33
+                    && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+                if (!getSharedPreferences(FILE_PREFS, MODE_PRIVATE).getBoolean(NOTIFICATION_ASKED_KEY, false)) {
+                    getSharedPreferences(FILE_PREFS, MODE_PRIVATE).edit().putBoolean(NOTIFICATION_ASKED_KEY, true).apply();
+                    requestPermissions(new String[] { "android.permission.POST_NOTIFICATIONS" }, NOTIFICATION_PERMISSION_REQUEST);
+                }
+                return;
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel channel = new NotificationChannel(DOWNLOAD_CHANNEL_ID, "Downloads", NotificationManager.IMPORTANCE_DEFAULT);
+                channel.setDescription("Files Kharcha saves to your Downloads folder");
+                manager.createNotificationChannel(channel);
+            }
+            Intent open = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
+            open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0);
+            PendingIntent pending = PendingIntent.getActivity(this, saved.name.hashCode(), open, flags);
+            Notification.Builder builder = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    ? new Notification.Builder(this, DOWNLOAD_CHANNEL_ID)
+                    : new Notification.Builder(this);
+            builder.setSmallIcon(android.R.drawable.stat_sys_download_done)
+                    .setContentTitle(saved.name)
+                    .setContentText("Download complete \u00b7 saved to Downloads")
+                    .setContentIntent(pending)
+                    .setAutoCancel(true);
+            manager.notify(saved.name.hashCode(), builder.build());
+        } catch (RuntimeException ignored) {
+            // Notifications are a convenience; the file is already in Downloads.
+        }
+    }
+
+    /** Writes a temporary copy in the app cache and opens the Android share sheet for it. */
+    private boolean shareFileBytes(String fileName, String mimeType, byte[] bytes, String title) throws IOException {
+        File directory = new File(getCacheDir(), "shared-files");
+        if (!directory.exists() && !directory.mkdirs()) throw new IOException("Could not prepare the file for sharing");
+        File[] old = directory.listFiles();
+        if (old != null) {
+            long cutoff = System.currentTimeMillis() - 24L * 60L * 60L * 1000L;
+            for (File file : old) if (file.lastModified() < cutoff) file.delete();
+        }
+        File outputFile = new File(directory, fileName);
+        try (OutputStream output = new FileOutputStream(outputFile)) {
+            output.write(bytes);
+        }
+        Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.providerAuthority), outputFile);
+        String chooserTitle = title == null || title.trim().isEmpty() ? "Share " + fileName : title.trim();
+        runOnUiThread(() -> shareUri(contentUri, mimeType, fileName, chooserTitle));
+        return true;
+    }
+
+    private void shareUri(Uri uri, String mimeType, String fileName, String chooserTitle) {
+        try {
+            Intent sendIntent = new Intent(Intent.ACTION_SEND);
+            sendIntent.setType(mimeType);
+            sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            sendIntent.putExtra(Intent.EXTRA_SUBJECT, fileName);
+            sendIntent.putExtra(Intent.EXTRA_TITLE, fileName);
+            sendIntent.setClipData(ClipData.newRawUri(fileName, uri));
+            sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            Intent chooser = Intent.createChooser(sendIntent, chooserTitle);
+            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(chooser);
+        } catch (ActivityNotFoundException | SecurityException error) {
+            Toast.makeText(this, "No app is available to share the file", Toast.LENGTH_LONG).show();
+        }
     }
 
     private final class PdfBridge {
@@ -1301,6 +1508,25 @@ public class MainActivity extends FragmentActivity {
             }
             return;
         }
+        if (requestCode == FILE_SAVE_PERMISSION_REQUEST) {
+            String name = pendingFileSaveName;
+            String mime = pendingFileSaveMime;
+            byte[] bytes = pendingFileSaveBytes;
+            pendingFileSaveName = null;
+            pendingFileSaveMime = null;
+            pendingFileSaveBytes = null;
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && bytes != null) {
+                try {
+                    announceDownload(writeBytesToDownloads(name, mime, bytes));
+                } catch (IOException | RuntimeException error) {
+                    Toast.makeText(this, "Could not save the file to Downloads", Toast.LENGTH_LONG).show();
+                }
+            } else {
+                Toast.makeText(this, "Storage permission is required to save to Downloads", Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST) return;
         if (requestCode == PDF_SAVE_PERMISSION_REQUEST) {
             WebView view = pendingPdfSaveView;
             String title = pendingPdfSaveTitle;

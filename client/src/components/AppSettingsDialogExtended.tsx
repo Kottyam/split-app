@@ -9,7 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import HelpGuideModal from '@/components/HelpGuideModal';
 import { Settings, Shield, Database, Download, Upload, Share2, CheckCircle2, AlertTriangle, Sun, Moon, SmartphoneNfc } from 'lucide-react';
 import { generateBackupPayload, validateBackupJson, restoreBackupPayload, KharchaBackupPayload } from '@/lib/backupRestore';
-import { downloadBlobFile } from '@/lib/fileDownload';
+import { downloadBlobFile, shareBlobFile } from '@/lib/fileDownload';
 import { isAppLockEnabled, getLockMethod, getAutoLockTimeout, setAppLockConfig, hasPinConfigured, isNativeDeviceAuthAvailable, setSessionUnlocked, isValidPin, clearPin, MAX_PIN_LENGTH } from '@/lib/appLock';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { ThemePreference } from '@/lib/theme';
@@ -76,23 +76,20 @@ export default function AppSettingsDialogExtended({ open, onOpenChange }: Props)
   };
 
   const handleShareBackup = async () => {
-    if (!lastGeneratedPayload) {
-      handleExportBackup();
-      return;
-    }
     try {
-      const blob = new Blob([lastGeneratedPayload.jsonStr], { type: 'application/json' });
-      const file = new File([blob], lastGeneratedPayload.filename, { type: 'application/json' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      // Always share a fresh backup so it includes changes made after the last export.
+      const jsonStr = JSON.stringify(generateBackupPayload(), null, 2);
+      const filename = `Kharcha_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      const fresh = { filename, jsonStr };
+      setLastGeneratedPayload(fresh);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      // Android app: native share sheet (WhatsApp, Drive, Gmail...). Browser: Web Share API with the file.
+      const result = await shareBlobFile(blob, fresh.filename, t('auditBackupShareTitle' as any), t('auditBackupShareText' as any));
+      if (result !== 'unsupported') return;
+      if (navigator.share) {
         await navigator.share({
           title: t('auditBackupShareTitle' as any),
-          text: t('auditBackupShareText' as any),
-          files: [file],
-        });
-      } else if (navigator.share) {
-        await navigator.share({
-          title: t('auditBackupShareTitle' as any),
-          text: lastGeneratedPayload.jsonStr,
+          text: fresh.jsonStr,
         });
       } else {
         alert(t('auditBackupShareUnsupported' as any));

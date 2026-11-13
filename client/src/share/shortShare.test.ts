@@ -17,9 +17,17 @@ const trip: any = {
 describe('short share links', () => {
   it('always uses the public kharchasplit.in address with a short /s/ path', () => {
     expect(SHARE_ORIGIN).toBe('https://www.kharchasplit.in');
-    expect(buildShortShareUrl('t', 'abc')).toBe('https://www.kharchasplit.in/s/tabc');
+    expect(buildShortShareUrl('t', 'abc')).toBe('https://www.kharchasplit.in/s/t#abc');
+    expect(buildShortShareUrl('f', 'abc')).toBe('https://www.kharchasplit.in/s/f#abc');
+    // New links: payload in the #fragment (never sent to GitHub Pages, so no 414 for big funds).
+    expect(getShortSharePayload('f', '/s/f', '#abc')).toBe('abc');
+    expect(getShortSharePayload('f', '/s/f/', '#abc')).toBe('abc');
+    // Old links: payload in the path.
     expect(getShortSharePayload('t', '/s/tabc')).toBe('abc');
+    expect(getShortSharePayload('t', '/s/tabc', '#ignored')).toBe('abc');
     expect(getShortSharePayload('f', '/s/tabc')).toBeNull();
+    expect(getShortSharePayload('f', '/s/f', '')).toBeNull();
+    expect(getShortSharePayload('f', '/group-funds', '#abc')).toBeNull();
   });
 
   it('round-trips a trip through the compact v3 payload, smaller than v2', () => {

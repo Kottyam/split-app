@@ -52,9 +52,9 @@ function Router() {
       <Route path={/^\/shared-home-share\/.+$/} component={SharedHomeSharedView} />
       <Route path={/^\/shared-home-payment\/.+$/} component={SharedHomePaymentRequest} />
       <Route path={/^\/share\/.+$/} component={SharedView} />
-      <Route path={/^\/s\/[tf].+$/} component={ShortShareView} />
-      <Route path={/^\/s\/e.+$/} component={EditSyncRecipient} />
-      <Route path={/^\/s\/u.+$/} component={SyncReview} />
+      <Route path={/^\/s\/[tf][^/]*\/?$/} component={ShortShareView} />
+      <Route path={/^\/s\/e[^/]*\/?$/} component={EditSyncRecipient} />
+      <Route path={/^\/s\/u[^/]*\/?$/} component={SyncReview} />
       <Route path="/import" component={ImportKharcha} />
       <Route path={/^\/edit-sync\/.+$/} component={OldSyncLink} />
       <Route path={/^\/sync-review\/.+$/} component={OldSyncLink} />

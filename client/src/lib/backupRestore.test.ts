@@ -47,9 +47,15 @@ describe('Backup export download path', () => {
 
   it('saves the backup through downloadBlobFile so the Android app can write to Downloads', () => {
     const settings = read('client/src/components/AppSettingsDialogExtended.tsx');
-    expect(settings).toContain("import { downloadBlobFile } from '@/lib/fileDownload'");
+    expect(settings).toContain("import { downloadBlobFile, shareBlobFile } from '@/lib/fileDownload'");
     expect(settings).toContain('await downloadBlobFile(blob, filename)');
     expect(settings).not.toContain('URL.createObjectURL');
+  });
+
+  it('shares the backup file through shareBlobFile so the Android share sheet opens', () => {
+    const settings = read('client/src/components/AppSettingsDialogExtended.tsx');
+    expect(settings).toContain('await shareBlobFile(blob, fresh.filename');
+    expect(settings).not.toContain('navigator.canShare');
   });
 });
 

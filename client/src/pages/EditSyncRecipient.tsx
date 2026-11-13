@@ -15,7 +15,7 @@ export default function EditSyncRecipient() {
   const [, navigate] = useLocation();
   const { t } = useLanguage();
   const kindLabel = (type: Parameters<typeof kindLabelKey>[0]) => t(kindLabelKey(type) as any);
-  const pkg = useMemo(() => { const p = payloadFromPath('e', window.location.pathname); return p ? decodeEditPackage(p) : null; }, []);
+  const pkg = useMemo(() => { const p = payloadFromPath('e', window.location.pathname, window.location.hash); return p ? decodeEditPackage(p) : null; }, []);
   if (!pkg) return <main className="mx-auto max-w-xl p-4"><Card className="p-5"><h1 className="text-xl font-black text-kharcha-navy">{t('syncEditBrokenTitle' as any)}</h1><p className="mt-2 text-sm text-gray-700">{t('syncEditBrokenBody' as any)}</p></Card></main>;
   // On the owner's device this link must update the original trip/fund, never create a second one.
   const ownerMatch = matchOwnerForEdit(pkg, { getShare, getBase: getBaseSnapshot, exists: (type, id) => Boolean(loadSnapshot(type, id)) });

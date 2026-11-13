@@ -16,4 +16,6 @@
 <paths>
     <files-path path="twa_splash/" name="twa_splash" />
     <cache-path path="shared-reports/" name="shared_reports" />
+    <cache-path path="shared-files/" name="shared_files" />
+    <external-path path="Download/" name="downloads" />
 </paths>
