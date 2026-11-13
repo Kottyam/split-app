@@ -1,22 +1,24 @@
 import { copyToClipboard, shareLink } from '@/lib/shareLink';
+import { downloadBlobFile, shareBlobFile } from '@/lib/fileDownload';
 
-/** Share a .kharcha file through the share sheet, or download it when sharing files is not possible. */
-export async function shareKharchaFile(fileName: string, contents: string, title: string): Promise<'shared' | 'downloaded' | 'failed'> {
+export function kharchaFileName(fileName: string): string {
   const safe = fileName.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'kharcha';
-  const name = `${safe}.kharcha`;
+  return `${safe}.kharcha`;
+}
+
+/**
+ * Share a .kharcha file through the phone's share sheet (WhatsApp, any app).
+ * When sharing files is not possible, save it to Downloads instead.
+ * 'saved-native' means the Android app saved it and already told the user.
+ */
+export async function shareKharchaFile(fileName: string, contents: string, title: string): Promise<'shared' | 'cancelled' | 'downloaded' | 'saved-native' | 'failed'> {
+  const name = kharchaFileName(fileName);
+  const blob = new Blob([contents], { type: 'application/octet-stream' });
+  const shared = await shareBlobFile(blob, name, title);
+  if (shared === 'shared') return 'shared';
+  if (shared === 'cancelled') return 'cancelled';
   try {
-    const file = new File([contents], name, { type: 'application/octet-stream' });
-    if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title });
-      return 'shared';
-    }
-  } catch (error) { if ((error as Error)?.name === 'AbortError') return 'failed'; }
-  try {
-    const url = URL.createObjectURL(new Blob([contents], { type: 'application/octet-stream' }));
-    const a = document.createElement('a');
-    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 5000);
-    return 'downloaded';
+    return (await downloadBlobFile(blob, name)) ? 'saved-native' : 'downloaded';
   } catch { return 'failed'; }
 }
 export { copyToClipboard, shareLink };

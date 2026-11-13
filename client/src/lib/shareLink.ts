@@ -37,7 +37,7 @@ export function generateShareLink(trip: Trip): string {
 /** Extract encoded data from the current /share/:payload route. */
 export function getEncodedDataFromUrl(): string | null {
   const path = window.location.pathname;
-  const short = getShortSharePayload('t', path);
+  const short = getShortSharePayload('t', path, window.location.hash);
   if (short) return short;
   const match = path.match(/\/share\/(.+)$/);
   return match ? decodeURIComponent(match[1]) : null;

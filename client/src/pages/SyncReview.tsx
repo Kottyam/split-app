@@ -24,7 +24,7 @@ function show(value: unknown): string {
 export default function SyncReview() {
   const [, navigate] = useLocation();
   const { t } = useLanguage();
-  const pkg = useMemo(() => { const p = payloadFromPath('u', window.location.pathname); return p ? decodeUpdatePackage(p) : null; }, []);
+  const pkg = useMemo(() => { const p = payloadFromPath('u', window.location.pathname, window.location.hash); return p ? decodeUpdatePackage(p) : null; }, []);
   const share = pkg ? getShare(pkg.s) : undefined;
   const base = pkg && share ? getBaseSnapshot(pkg.s, pkg.n) : null;
   const owner = share ? loadSnapshot(share.type, share.contextId) : undefined;
